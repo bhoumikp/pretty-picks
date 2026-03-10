@@ -12,5 +12,10 @@ export default async function AdminOrdersPage() {
     prisma.product.findMany({ orderBy: { name: "asc" } }),
   ]);
 
-  return <AdminOrders orders={orders} products={products} />;
+  const serialized = orders.map((order) => ({
+    ...order,
+    createdAt: order.createdAt.toISOString(),
+  }));
+
+  return <AdminOrders orders={serialized} products={products} />;
 }

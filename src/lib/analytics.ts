@@ -3,7 +3,8 @@ export type AnalyticsEvent =
   | "whatsapp_click"
   | "filter_used"
   | "search_suggestion_click"
-  | "wishlist_toggle";
+  | "wishlist_toggle"
+  | "load_more_products";
 
 export function trackEvent(event: AnalyticsEvent, payload?: Record<string, unknown>) {
   if (typeof window === "undefined") return;
