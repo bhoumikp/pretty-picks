@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Pretty Picks Ecommerce
 
-## Getting Started
+Production-ready ecommerce-style website with admin panel for Pretty Picks.
 
-First, run the development server:
+## Tech Stack
+- Next.js 14 App Router + TypeScript
+- Tailwind CSS
+- Prisma ORM + PostgreSQL
+- NextAuth (credentials)
 
+## Quick Start
+
+1. Install dependencies
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Create `.env.local` from `.env.example`
+```bash
+cp .env.example .env.local
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Set `DATABASE_URL` to your Supabase Postgres connection string.
+4. Set Cloudinary credentials (`CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Generate Prisma client and push schema
+```bash
+npm run prisma:generate
+npm run prisma:push
+```
 
-## Learn More
+5. Seed demo data + admin user
+```bash
+npm run seed
+```
 
-To learn more about Next.js, take a look at the following resources:
+6. Run the app
+```bash
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Admin Login
+- URL: `/admin/login`
+- Default credentials (from seed):
+  - Email: `admin@prettypicks.in`
+  - Password: `PrettyPicks123`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## WhatsApp Settings
+Update the WhatsApp number in `src/data/site.ts`.
 
-## Deploy on Vercel
+## Image Uploads
+Admin product images are uploaded to Cloudinary via `/api/uploads`. The returned URLs are stored on the product.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Deployment
+See the implementation notes in the response output for Vercel + Neon steps.

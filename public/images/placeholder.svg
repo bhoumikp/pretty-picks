@@ -1,0 +1,6 @@
+<svg width="800" height="800" viewBox="0 0 800 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="800" fill="#F8F3EC"/>
+  <circle cx="270" cy="300" r="120" fill="#EBD9C6"/>
+  <circle cx="520" cy="450" r="180" fill="#D9C2A7"/>
+  <text x="80" y="720" fill="#A8864D" font-family="Georgia" font-size="48">Pretty Picks</text>
+</svg>
