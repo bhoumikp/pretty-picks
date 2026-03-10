@@ -84,7 +84,7 @@ export default function ProductCard({ product, variant = "grid" }: ProductCardPr
             />
           </svg>
         </button>
-        <div className="absolute inset-x-4 bottom-4 z-10 flex translate-y-0 flex-col gap-2 opacity-100 transition-all duration-300 sm:translate-y-6 sm:opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100">
+        <div className="absolute inset-x-4 bottom-4 z-10 hidden translate-y-0 flex-col gap-2 opacity-0 transition-all duration-300 sm:flex sm:translate-y-6 sm:opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100">
           <button className="btn-outline text-center text-xs" onClick={() => setQuickViewOpen(true)}>
             Quick view
           </button>
@@ -99,13 +99,13 @@ export default function ProductCard({ product, variant = "grid" }: ProductCardPr
           </a>
         </div>
       </div>
-      <div className="flex flex-1 flex-col gap-2 px-4 py-4">
+      <div className="flex flex-1 flex-col gap-2 px-3 py-3 sm:px-4 sm:py-4">
         <p className="text-[11px] uppercase tracking-[0.25em] text-[var(--pp-muted)]">
           {product.category?.name ?? "Pretty Picks"}
         </p>
         <Link
           href={`/products/${product.slug}`}
-          className="text-sm font-semibold tracking-tight sm:text-base"
+          className="min-h-[40px] text-sm font-semibold leading-snug tracking-tight sm:min-h-0 sm:text-base"
           onClick={() => trackEvent("product_click", { id: product.id })}
         >
           {product.name}
@@ -113,15 +113,23 @@ export default function ProductCard({ product, variant = "grid" }: ProductCardPr
         <p className="text-base font-medium tracking-wide text-[var(--pp-gold)] sm:text-lg">
           {formatCurrency(product.price)}
         </p>
-        <a
-          href={whatsappLink}
-          target="_blank"
-          rel="noreferrer"
-          className="mt-1 rounded-lg bg-green-500 px-3 py-2 text-center text-xs font-semibold text-white transition-all duration-300 hover:bg-green-600 sm:hidden"
-          onClick={() => trackEvent("whatsapp_click", { id: product.id })}
-        >
-          Order on WhatsApp
-        </a>
+        <div className="mt-2 flex gap-2 sm:hidden">
+          <button
+            className="btn-outline flex-1 text-xs"
+            onClick={() => setQuickViewOpen(true)}
+          >
+            Quick view
+          </button>
+          <a
+            href={whatsappLink}
+            target="_blank"
+            rel="noreferrer"
+            className="flex-1 rounded-lg bg-green-500 px-3 py-2 text-center text-xs font-semibold text-white transition-all duration-300 hover:bg-green-600"
+            onClick={() => trackEvent("whatsapp_click", { id: product.id })}
+          >
+            WhatsApp
+          </a>
+        </div>
       </div>
       {quickViewOpen && (
         <QuickViewModal
