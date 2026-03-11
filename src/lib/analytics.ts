@@ -4,6 +4,10 @@ export type AnalyticsEvent =
   | "filter_used"
   | "search_suggestion_click"
   | "wishlist_toggle"
+  | "add_to_cart"
+  | "remove_from_cart"
+  | "cart_qty_increase"
+  | "cart_qty_decrease"
   | "load_more_products";
 
 export function trackEvent(event: AnalyticsEvent, payload?: Record<string, unknown>) {
