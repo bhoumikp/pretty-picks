@@ -18,6 +18,10 @@
   box-sizing: border-box;
 }
 
+html {
+  overflow-x: hidden;
+}
+
 body {
   background: var(--pp-white);
   color: var(--pp-ink);
@@ -27,6 +31,17 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   user-select: none;
+}
+
+.featured-carousel {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.featured-carousel::-webkit-scrollbar {
+  display: none;
+  height: 0;
 }
 
 input,

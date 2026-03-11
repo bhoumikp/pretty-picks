@@ -12,8 +12,8 @@ export default function ProductGrid({ products, variant = "grid" }: ProductGridP
     <div
       className={
         isScroll
-          ? "flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2"
-          : "grid grid-cols-1 gap-5 sm:gap-6 md:grid-cols-3 xl:grid-cols-4"
+          ? "flex w-full max-w-full snap-x snap-mandatory gap-5 overflow-x-auto pb-2 sm:gap-6 md:gap-7 lg:grid lg:snap-none lg:grid-cols-3 lg:gap-6 lg:overflow-visible xl:grid-cols-4"
+          : "grid w-full max-w-full grid-cols-1 gap-5 sm:gap-6 md:grid-cols-3 xl:grid-cols-4"
       }
     >
       {products.map((product) => (

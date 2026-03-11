@@ -17,48 +17,20 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const category = typeof resolvedParams.category === "string" ? resolvedParams.category : "";
   const priceCap = typeof resolvedParams.price === "string" ? Number(resolvedParams.price) : undefined;
 
-  const filters = [];
-  if (query) {
-    filters.push({
-      OR: [
-        { name: { contains: query, mode: "insensitive" as const } },
-        { category: { name: { contains: query, mode: "insensitive" as const } } },
-      ],
-    });
-  }
-  if (category) {
-    filters.push({ category: { slug: category } });
-  }
-  if (typeof priceCap === "number" && !Number.isNaN(priceCap)) {
-    filters.push({ price: { lte: priceCap } });
-  }
-  const where = filters.length ? { AND: filters } : {};
+  let products = [];
+  let categories = [];
 
-  const [categories, totalCount, filteredTotal, initialProducts] = await prisma.$transaction([
-    prisma.category.findMany({ orderBy: { name: "asc" } }),
-    prisma.product.count(),
-    prisma.product.count({ where }),
-    prisma.product.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      take: 12,
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        price: true,
-        material: true,
-        featured: true,
-        stock: true,
-        images: true,
-        category: {
-          select: { id: true, name: true, slug: true, image: true },
-        },
-      },
-    }),
-  ]);
-
-  const headerCount = query || category || typeof priceCap === "number" ? filteredTotal : totalCount;
+  try {
+    [products, categories] = await Promise.all([
+      prisma.product.findMany({
+        include: { category: true },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.category.findMany({ orderBy: { name: "asc" } }),
+    ]);
+  } catch (error) {
+    console.error("ProductsPage: Prisma unavailable, rendering empty lists.", error);
+  }
 
   return (
     <div className="page-shell section-pad">
@@ -67,7 +39,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           <p className="eyebrow">Products</p>
           <h1 className="section-title">Browse all</h1>
           <p className="mt-3 text-sm text-[var(--pp-muted)] sm:text-base">
-            Discover {headerCount} curated pieces crafted for effortless styling.
+            Discover {products.length} curated pieces crafted for effortless styling.
           </p>
           <div className="mt-5 flex flex-wrap gap-2 text-xs text-[var(--pp-muted)]">
             {["Contact-first ordering", "Under ₹199 picks", "Fast dispatch"].map((item) => (
@@ -84,8 +56,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
       </div>
       <div className="mt-10">
         <ProductsClient
-          initialProducts={initialProducts}
-          initialTotal={filteredTotal}
+          products={products}
           categories={categories}
           initialQuery={query}
           initialCategory={category}

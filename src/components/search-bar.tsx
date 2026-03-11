@@ -39,6 +39,7 @@ export default function SearchBar({ className }: SearchBarProps) {
     <div className={`relative ${className ?? ""}`}>
       <input
         value={query}
+        suppressHydrationWarning
         onChange={(event) => {
           const next = event.target.value;
           setQuery(next);
@@ -51,16 +52,25 @@ export default function SearchBar({ className }: SearchBarProps) {
             return;
           }
           debounceRef.current = setTimeout(async () => {
-            const response = await fetch(
-              `/api/products?q=${encodeURIComponent(next)}&take=6&skip=0`
-            );
+            const response = await fetch("/api/products");
             if (!response.ok) return;
-            const data = (await response.json()) as { items?: SearchResult[] };
-            setResults(data.items ?? []);
+            const data = (await response.json()) as SearchResult[];
+            const term = next.toLowerCase();
+            const filtered = data.filter((product) => {
+              const nameMatch = product.name.toLowerCase().includes(term);
+              const categoryMatch = product.category?.name.toLowerCase().includes(term);
+              return nameMatch || categoryMatch;
+            });
+            setResults(filtered.slice(0, 6));
           }, 250);
         }}
         onFocus={() => setOpen(true)}
         placeholder="Search jewelry"
+        autoComplete="off"
+        autoCapitalize="off"
+        autoCorrect="off"
+        spellCheck={false}
+        inputMode="search"
         className="w-full rounded-full border border-[var(--pp-border)] bg-white/90 px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--pp-gold)]/40"
       />
       {open && query.trim() && (

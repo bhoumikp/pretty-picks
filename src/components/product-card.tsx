@@ -15,7 +15,7 @@ import type { ProductSummary } from "@/types/catalog";
 
 interface ProductCardProps {
   product: ProductSummary;
-  variant?: "grid" | "scroll";
+  variant?: "grid" | "scroll" | "carousel";
 }
 
 export default function ProductCard({ product, variant = "grid" }: ProductCardProps) {
@@ -23,7 +23,7 @@ export default function ProductCard({ product, variant = "grid" }: ProductCardPr
   const productUrl = `https://${siteConfig.domain}/products/${product.slug}`;
   const message = `Hi, I want to order this product:\n\nProduct: ${product.name}\nPrice: ₹${product.price}\nQuantity: 1\nLink: ${productUrl}`;
   const whatsappLink = buildWhatsAppLink(message);
-  const [wishlisted, setWishlisted] = useState(() => isWishlisted(product.id));
+  const [wishlisted, setWishlisted] = useState(false);
   const [quickViewOpen, setQuickViewOpen] = useState(false);
   const [quantity, setQuantity] = useState(0);
   const [cartQty, setCartQty] = useState(0);
@@ -77,11 +77,17 @@ export default function ProductCard({ product, variant = "grid" }: ProductCardPr
 
   return (
     <div
-      className={`group flex h-full flex-col overflow-hidden rounded-2xl border border-[var(--pp-border)] bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${
-        variant === "scroll" ? "min-w-[240px] snap-start" : ""
+      className={`group flex h-full flex-col rounded-2xl border border-[var(--pp-border)] bg-white shadow-sm transition-all duration-300 hover:-translate-y-0 hover:shadow-lg ${
+        variant === "scroll"
+          ? "min-w-[240px] snap-start sm:min-w-[260px] md:min-w-[280px] lg:min-w-0"
+          : ""
+      } ${
+        variant === "carousel"
+          ? "min-w-full shrink-0 snap-start basis-full sm:min-w-[50%] sm:basis-1/2 md:min-w-[33.333%] md:basis-1/3 lg:min-w-[25%] lg:basis-1/4"
+          : ""
       }`}
     >
-      <div className="relative aspect-[3/2] w-full overflow-hidden bg-[var(--pp-beige)]">
+      <div className="relative aspect-[3/2] w-full overflow-hidden rounded-t-2xl bg-[var(--pp-beige)]">
         <Link
           href={`/products/${product.slug}`}
           className="absolute inset-0 z-0"

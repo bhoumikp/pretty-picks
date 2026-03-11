@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { siteConfig, trustBadges } from "@/data/site";
-import ProductGrid from "@/components/product-grid";
+import FeaturedCarousel from "@/components/featured-carousel";
 import CategoryCard from "@/components/category-card";
 import { primaryImage } from "@/lib/images";
 
@@ -13,70 +13,78 @@ export const metadata = {
 };
 
 export default async function HomePage() {
-  const [featuredProducts, categories, under199] = await Promise.all([
-    prisma.product.findMany({
-      where: { featured: true },
-      take: 6,
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        price: true,
-        material: true,
-        featured: true,
-        stock: true,
-        images: true,
-        category: {
-          select: { id: true, name: true, slug: true, image: true },
+  let featuredProducts = [];
+  let categories = [];
+  let under199 = [];
+
+  try {
+    [featuredProducts, categories, under199] = await Promise.all([
+      prisma.product.findMany({
+        where: { featured: true },
+        take: 6,
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          price: true,
+          material: true,
+          featured: true,
+          stock: true,
+          images: true,
+          category: {
+            select: { id: true, name: true, slug: true, image: true },
+          },
         },
-      },
-    }),
-    prisma.category.findMany({
-      orderBy: { name: "asc" },
-      select: { id: true, name: true, slug: true, image: true },
-    }),
-    prisma.product.findMany({
-      where: { price: { lte: 199 } },
-      take: 3,
-      orderBy: { price: "asc" },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        price: true,
-        images: true,
-      },
-    }),
-  ]);
+      }),
+      prisma.category.findMany({
+        orderBy: { name: "asc" },
+        select: { id: true, name: true, slug: true, image: true },
+      }),
+      prisma.product.findMany({
+        where: { price: { lte: 199 } },
+        take: 3,
+        orderBy: { price: "asc" },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          price: true,
+          images: true,
+        },
+      }),
+    ]);
+  } catch (error) {
+    console.error("HomePage: Prisma unavailable, rendering empty lists.", error);
+  }
 
   return (
-    <div>
+    <div className="bg-white">
       <section className="section-pad">
         <div className="page-shell">
           <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
-            <div className="space-y-6">
+            <div className="fade-in">
               <p className="eyebrow">Pretty Picks</p>
-              <h1 className="font-[var(--font-heading)] text-4xl font-medium tracking-tight text-[var(--pp-ink)] sm:text-5xl">
-                Everyday sparkle, styled for reels.
+              <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[var(--pp-ink)] sm:text-4xl md:text-5xl">
+                Affordable Jewellery for Everyday Elegance
               </h1>
-              <p className="max-w-lg text-base leading-relaxed text-[var(--pp-muted)]">
-                Premium-looking artificial jewellery designed for Instagram-first style.
-                Lightweight, anti-tarnish, and ready to elevate every outfit.
+              <p className="mt-4 text-base leading-relaxed text-[var(--pp-muted)]">
+                Curated pieces that elevate your everyday style. Instagram-friendly,
+                lightweight, and designed to shine on every reel.
               </p>
-              <div className="flex flex-wrap gap-3">
+              <div className="mt-6 flex flex-wrap gap-3">
                 <Link href="/products" className="btn-primary text-sm">
-                  Shop collection
+                  Shop Collection
                 </Link>
                 <Link href="/products" className="btn-outline text-sm">
-                  Best sellers
+                  View Best Sellers
                 </Link>
               </div>
-              <div className="mt-6 flex flex-wrap gap-3 text-xs text-[var(--pp-muted)]">
+              <div className="mt-8 grid grid-cols-1 gap-3 text-xs text-[var(--pp-muted)] sm:grid-cols-2">
                 {trustBadges.map((badge) => (
                   <span
                     key={badge}
-                    className="rounded-full border border-[var(--pp-border)] bg-white/80 px-4 py-2"
+                    className="rounded-xl border border-[var(--pp-border)] bg-[var(--pp-beige)] px-3 py-2"
                   >
                     {badge}
                   </span>
@@ -110,30 +118,23 @@ export default async function HomePage() {
           <div className="mb-6 flex items-end justify-between">
             <div>
               <p className="eyebrow">Featured</p>
-              <h2 className="section-title">Trending right now</h2>
+              <h2 className="section-title">Most loved</h2>
             </div>
             <Link href="/products" className="text-sm text-[var(--pp-gold)]">
               View all
             </Link>
           </div>
-          <div className="rounded-[28px] bg-[var(--pp-beige)]/70 p-6 md:p-8">
-            <ProductGrid products={featuredProducts} variant="scroll" />
-          </div>
+          <FeaturedCarousel products={featuredProducts} />
         </div>
       </section>
 
       <section className="section-pad">
         <div className="page-shell">
-          <div className="mb-8 flex items-end justify-between">
-            <div>
-              <p className="eyebrow">Categories</p>
-              <h2 className="section-title">Shop by vibe</h2>
-            </div>
-            <Link href="/products" className="text-sm text-[var(--pp-gold)]">
-              Explore all
-            </Link>
+          <div className="mb-6">
+            <p className="eyebrow">Categories</p>
+            <h2 className="section-title">Shop by mood</h2>
           </div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {categories.map((category) => (
               <CategoryCard key={category.id} category={category} />
             ))}
@@ -143,31 +144,31 @@ export default async function HomePage() {
 
       <section className="section-pad">
         <div className="page-shell">
-          <div className="relative overflow-hidden rounded-[28px] border border-[var(--pp-border)] bg-white px-6 py-10 md:px-10 lg:px-14">
-            <div className="grid gap-8 lg:grid-cols-[1.1fr_1fr] lg:items-center">
+          <div className="rounded-xl bg-[var(--pp-beige)] p-8 shadow-sm md:p-10">
+            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="eyebrow">Shop under ₹199</p>
-                <h2 className="mt-4 font-[var(--font-heading)] text-3xl font-medium tracking-tight">
+                <h2 className="mt-3 text-3xl font-[var(--font-heading)]">
                   Small price, big sparkle
                 </h2>
-                <p className="mt-4 text-sm leading-relaxed text-[var(--pp-muted)]">
-                  Budget-friendly picks that still feel premium. Perfect for gifting or styling
-                  every day.
+                <p className="mt-3 text-sm text-[var(--pp-muted)]">
+                  Budget-friendly picks that still look premium. Perfect for gifting
+                  or styling every day.
                 </p>
-                <div className="mt-6">
+                <div className="mt-5">
                   <Link href="/products?price=199" className="btn-primary text-sm">
-                    Explore collection
+                    Explore Collection
                   </Link>
                 </div>
               </div>
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-4 md:grid-cols-3">
                 {under199.map((product) => (
                   <Link
                     key={product.id}
                     href={`/products/${product.slug}`}
-                    className="rounded-2xl border border-[var(--pp-border)] bg-[var(--pp-beige)]/50 p-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                    className="rounded-xl bg-white p-4 shadow-sm transition-all duration-300 hover:shadow-lg"
                   >
-                    <div className="relative aspect-square overflow-hidden rounded-2xl bg-white">
+                    <div className="relative aspect-square overflow-hidden rounded-xl bg-[var(--pp-beige)]">
                       <Image
                         src={primaryImage(product.images)}
                         alt={product.name}
@@ -183,7 +184,6 @@ export default async function HomePage() {
                 ))}
               </div>
             </div>
-            <div className="pointer-events-none absolute -right-10 -top-16 h-48 w-48 rounded-full bg-[var(--pp-beige)]/70" />
           </div>
         </div>
       </section>
@@ -204,11 +204,11 @@ export default async function HomePage() {
               View Instagram
             </a>
           </div>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
             {[1, 2, 3, 4, 5, 6].map((index) => (
               <div
                 key={index}
-                className="relative aspect-square overflow-hidden rounded-2xl bg-[var(--pp-beige)]"
+                className="relative aspect-square overflow-hidden rounded-xl bg-[var(--pp-beige)]"
               >
                 <Image
                   src={`/images/product-${index}.svg`}

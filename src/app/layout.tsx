@@ -1,18 +1,18 @@
 import type { Metadata } from "next";
-import { Bree_Serif, Quicksand } from "next/font/google";
+import { Manrope, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/providers";
 import { siteConfig } from "@/data/site";
 
-const headingFont = Bree_Serif({
+const headingFont = Playfair_Display({
   variable: "--font-heading",
-  weight: ["400"],
+  weight: ["400", "500", "600", "700"],
   subsets: ["latin"],
 });
 
-const bodyFont = Quicksand({
+const bodyFont = Manrope({
   variable: "--font-body",
-  weight: ["400", "500", "600"],
+  weight: ["400", "500", "600", "700"],
   subsets: ["latin"],
 });
 
@@ -44,9 +44,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${headingFont.variable} ${bodyFont.variable} antialiased`}
+        suppressHydrationWarning
       >
         <Providers>{children}</Providers>
       </body>
