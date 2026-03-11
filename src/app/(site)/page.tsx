@@ -5,6 +5,7 @@ import { siteConfig, trustBadges } from "@/data/site";
 import FeaturedCarousel from "@/components/featured-carousel";
 import CategoryCard from "@/components/category-card";
 import { primaryImage } from "@/lib/images";
+import type { CategorySummary, ProductSummary } from "@/types/catalog";
 
 export const revalidate = 60;
 export const metadata = {
@@ -13,9 +14,9 @@ export const metadata = {
 };
 
 export default async function HomePage() {
-  let featuredProducts = [];
-  let categories = [];
-  let under199 = [];
+  let featuredProducts: ProductSummary[] = [];
+  let categories: CategorySummary[] = [];
+  let under199: ProductSummary[] = [];
 
   try {
     [featuredProducts, categories, under199] = await Promise.all([
