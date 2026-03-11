@@ -62,16 +62,18 @@ export default function ProductCard({ product, variant = "grid" }: ProductCardPr
       const customEvent = event as CustomEvent<WishlistItem[]>;
       readWishlist(customEvent.detail);
     };
+    const storageCartHandler = () => readCart();
+    const storageWishlistHandler = () => readWishlist();
 
     window.addEventListener("pp-cart-updated", cartHandler);
     window.addEventListener("pp-wishlist-updated", wishlistHandler);
-    window.addEventListener("storage", readCart);
-    window.addEventListener("storage", readWishlist);
+    window.addEventListener("storage", storageCartHandler);
+    window.addEventListener("storage", storageWishlistHandler);
     return () => {
       window.removeEventListener("pp-cart-updated", cartHandler);
       window.removeEventListener("pp-wishlist-updated", wishlistHandler);
-      window.removeEventListener("storage", readCart);
-      window.removeEventListener("storage", readWishlist);
+      window.removeEventListener("storage", storageCartHandler);
+      window.removeEventListener("storage", storageWishlistHandler);
     };
   }, [product.id]);
 
