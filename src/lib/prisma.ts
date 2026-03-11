@@ -10,10 +10,17 @@ let prismaUrl = rawUrl;
 if (rawUrl) {
   try {
     const url = new URL(rawUrl);
-    if (url.host.includes("pooler.supabase.com")) {
+    const isSupabase = url.host.includes("supabase.co");
+    const isPooler = url.host.includes("pooler.supabase.com");
+    const usesPgbouncer = url.searchParams.get("pgbouncer") === "true" || isPooler;
+
+    if (usesPgbouncer) {
       url.searchParams.set("pgbouncer", "true");
+    }
+    if (isSupabase || usesPgbouncer) {
       url.searchParams.set("statement_cache_size", "0");
     }
+
     prismaUrl = url.toString();
   } catch {
     prismaUrl = rawUrl;

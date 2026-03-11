@@ -1,8 +1,8 @@
 :root {
-  --pp-white: #ffffff;
-  --pp-beige: #f8f5f1;
-  --pp-gold: #d4af37;
-  --pp-ink: #1a1a1a;
-  --pp-muted: #6b6b6b;
-  --pp-border: rgba(26, 26, 26, 0.12);
+  --pp-white: #fcfbf9;
+  --pp-beige: #f4efe8;
+  --pp-gold: #c6a26a;
+  --pp-ink: #1f1b18;
+  --pp-muted: #6f6a63;
+  --pp-border: rgba(31, 27, 24, 0.12);
 }

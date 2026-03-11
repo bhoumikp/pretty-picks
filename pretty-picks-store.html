@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pretty Picks — Artisan Jewellery</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #FAF7F2;
+    --warm-white: #FDF9F4;
+    --gold: #C9A96E;
+    --gold-light: #E8D5A3;
+    --gold-dark: #9B7940;
+    --charcoal: #1C1C1E;
+    --mid: #4A4A4A;
+    --soft: #8A8278;
+    --border: #E8E0D4;
+    --rose: #D4A0A0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Jost', sans-serif;
+    background: var(--cream);
+    color: var(--charcoal);
+    overflow-x: hidden;
+  }
+
+  /* ─── ANNOUNCEMENT BAR ─── */
+  .announcement {
+    background: var(--charcoal);
+    color: var(--gold-light);
+    text-align: center;
+    padding: 10px;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-family: 'Jost', sans-serif;
+    font-weight: 300;
+  }
+
+  /* ─── NAV ─── */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(250, 247, 242, 0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 72px;
+  }
+
+  .nav-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 300;
+    letter-spacing: 3px;
+    color: var(--charcoal);
+    text-decoration: none;
+  }
+
+  .nav-logo span { color: var(--gold); }
+
+  .nav-links {
+    display: flex;
+    gap: 36px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    text-decoration: none;
+    color: var(--mid);
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 400;
+    transition: color 0.3s;
+    position: relative;
+  }
+
+  .nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: -4px; left: 0;
+    width: 0; height: 1px;
+    background: var(--gold);
+    transition: width 0.3s;
+  }
+
+  .nav-links a:hover { color: var(--charcoal); }
+  .nav-links a:hover::after { width: 100%; }
+
+  .nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .nav-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--mid);
+    font-size: 18px;
+    transition: color 0.3s;
+    padding: 4px;
+    position: relative;
+  }
+
+  .nav-icon:hover { color: var(--gold); }
+
+  .cart-badge {
+    position: absolute;
+    top: -4px; right: -6px;
+    background: var(--gold);
+    color: white;
+    font-size: 9px;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Jost', sans-serif;
+  }
+
+  .hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+  }
+
+  .hamburger span {
+    width: 22px; height: 1.5px;
+    background: var(--charcoal);
+    transition: all 0.3s;
+    display: block;
+  }
+
+  /* ─── HERO ─── */
+  .hero {
+    min-height: 92vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-left {
+    background: var(--charcoal);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px 60px 80px 80px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-left::before {
+    content: '';
+    position: absolute;
+    top: -100px; right: -100px;
+    width: 400px; height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(201,169,110,0.12) 0%, transparent 70%);
+  }
+
+  .hero-eyebrow {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 400;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .hero-eyebrow::before {
+    content: '';
+    width: 32px; height: 1px;
+    background: var(--gold);
+  }
+
+  .hero-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(52px, 6vw, 88px);
+    font-weight: 300;
+    line-height: 1.05;
+    color: var(--warm-white);
+    margin-bottom: 28px;
+  }
+
+  .hero-title em {
+    font-style: italic;
+    color: var(--gold-light);
+  }
+
+  .hero-desc {
+    font-size: 15px;
+    line-height: 1.8;
+    color: rgba(255,255,255,0.55);
+    max-width: 380px;
+    margin-bottom: 44px;
+    font-weight: 300;
+  }
+
+  .hero-cta {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    padding: 14px 36px;
+    background: var(--gold);
+    color: var(--charcoal);
+    border: none;
+    font-family: 'Jost', sans-serif;
+    font-size: 11px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .btn-primary:hover {
+    background: var(--gold-light);
+    transform: translateY(-1px);
+  }
+
+  .btn-outline {
+    padding: 14px 36px;
+    background: transparent;
+    color: rgba(255,255,255,0.7);
+    border: 1px solid rgba(255,255,255,0.25);
+    font-family: 'Jost', sans-serif;
+    font-size: 11px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .btn-outline:hover {
+    border-color: var(--gold);
+    color: var(--gold-light);
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 40px;
+    margin-top: 60px;
+    padding-top: 40px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .stat-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    font-weight: 300;
+    color: var(--gold-light);
+  }
+
+  .stat-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    margin-top: 4px;
+  }
+
+  .hero-right {
+    position: relative;
+    background: var(--gold-light);
+    overflow: hidden;
+  }
+
+  .hero-image-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #E8D5A3 0%, #D4B88A 40%, #C9A96E 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .hero-image-placeholder .jewel-icon {
+    font-size: 80px;
+    opacity: 0.4;
+    animation: float 4s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
+
+  .hero-badge {
+    position: absolute;
+    bottom: 40px;
+    right: 40px;
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: var(--charcoal);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+  }
+
+  .hero-badge-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 300;
+    color: var(--gold-light);
+    line-height: 1;
+  }
+
+  .hero-badge-sub {
+    font-size: 8px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    text-align: center;
+    padding: 0 10px;
+    line-height: 1.4;
+  }
+
+  /* ─── MARQUEE ─── */
+  .marquee-wrapper {
+    background: var(--gold);
+    padding: 14px 0;
+    overflow: hidden;
+  }
+
+  .marquee-track {
+    display: flex;
+    gap: 0;
+    animation: marquee 22s linear infinite;
+    white-space: nowrap;
+  }
+
+  .marquee-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 0 32px;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--charcoal);
+    font-weight: 500;
+  }
+
+  .marquee-dot { font-size: 6px; opacity: 0.5; }
+
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  /* ─── SECTION ─── */
+  section { padding: 100px 80px; }
+
+  .section-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 60px;
+  }
+
+  .section-eyebrow {
+    font-size: 10px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 12px;
+  }
+
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(34px, 4vw, 52px);
+    font-weight: 300;
+    line-height: 1.1;
+    color: var(--charcoal);
+  }
+
+  .section-title em { font-style: italic; color: var(--gold-dark); }
+
+  .view-all {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold-dark);
+    text-decoration: none;
+    border-bottom: 1px solid var(--gold-dark);
+    padding-bottom: 2px;
+    transition: all 0.3s;
+    white-space: nowrap;
+    margin-bottom: 8px;
+  }
+
+  .view-all:hover { color: var(--gold); border-color: var(--gold); }
+
+  /* ─── CATEGORIES ─── */
+  .categories-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  .category-card {
+    position: relative;
+    aspect-ratio: 3/4;
+    overflow: hidden;
+    cursor: pointer;
+  }
+
+  .category-bg {
+    width: 100%;
+    height: 100%;
+    transition: transform 0.6s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 60px;
+  }
+
+  .category-card:hover .category-bg { transform: scale(1.05); }
+
+  .cat-1 .category-bg { background: linear-gradient(160deg, #F5EDD9, #E8D5B0); }
+  .cat-2 .category-bg { background: linear-gradient(160deg, #E8D5D5, #D4B8B8); }
+  .cat-3 .category-bg { background: linear-gradient(160deg, #D5E8D5, #B8D4B8); }
+  .cat-4 .category-bg { background: linear-gradient(160deg, #D5DDE8, #B8C4D4); }
+
+  .category-info {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 28px 24px;
+    background: linear-gradient(transparent, rgba(20,18,14,0.75));
+    color: white;
+  }
+
+  .category-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 300;
+    letter-spacing: 1px;
+  }
+
+  .category-count {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+    margin-top: 4px;
+  }
+
+  /* ─── PRODUCTS ─── */
+  .products-section { background: var(--warm-white); }
+
+  .products-filter {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 48px;
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    padding: 8px 22px;
+    border: 1px solid var(--border);
+    background: transparent;
+    font-family: 'Jost', sans-serif;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--soft);
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .filter-btn.active, .filter-btn:hover {
+    background: var(--charcoal);
+    border-color: var(--charcoal);
+    color: var(--gold-light);
+  }
+
+  .products-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 28px;
+  }
+
+  .product-card {
+    cursor: pointer;
+    group: true;
+  }
+
+  .product-img-wrap {
+    position: relative;
+    aspect-ratio: 3/4;
+    background: var(--border);
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+
+  .product-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 52px;
+    transition: transform 0.5s ease;
+  }
+
+  .product-card:hover .product-placeholder { transform: scale(1.06); }
+
+  .p1 { background: linear-gradient(145deg, #F5EDD9, #DEC99A); }
+  .p2 { background: linear-gradient(145deg, #F0E8F5, #D4B8E0); }
+  .p3 { background: linear-gradient(145deg, #E8F0F5, #B8CFE0); }
+  .p4 { background: linear-gradient(145deg, #F5EDE8, #E0C4B8); }
+  .p5 { background: linear-gradient(145deg, #EAF5E8, #B8D9B4); }
+  .p6 { background: linear-gradient(145deg, #F5F0E8, #E0D4B8); }
+  .p7 { background: linear-gradient(145deg, #F5E8EE, #E0B8C8); }
+  .p8 { background: linear-gradient(145deg, #E8EEF5, #B8C8E0); }
+
+  .product-tag {
+    position: absolute;
+    top: 12px; left: 12px;
+    background: var(--charcoal);
+    color: var(--gold-light);
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+  }
+
+  .product-tag.sale { background: var(--rose); color: white; }
+
+  .product-quick-add {
+    position: absolute;
+    bottom: -48px;
+    left: 0; right: 0;
+    background: var(--charcoal);
+    color: var(--gold-light);
+    border: none;
+    padding: 14px;
+    font-family: 'Jost', sans-serif;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: bottom 0.3s ease;
+  }
+
+  .product-card:hover .product-quick-add { bottom: 0; }
+
+  .product-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--charcoal);
+    margin-bottom: 6px;
+  }
+
+  .product-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .product-price {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--gold-dark);
+  }
+
+  .product-price .original {
+    text-decoration: line-through;
+    color: var(--soft);
+    font-weight: 300;
+    margin-right: 6px;
+    font-size: 12px;
+  }
+
+  .product-rating {
+    display: flex;
+    gap: 2px;
+    font-size: 11px;
+    color: var(--gold);
+  }
+
+  /* ─── FEATURE STRIP ─── */
+  .features-strip {
+    padding: 60px 80px;
+    background: var(--charcoal);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 40px;
+  }
+
+  .feature-item {
+    text-align: center;
+  }
+
+  .feature-icon {
+    font-size: 28px;
+    margin-bottom: 14px;
+    display: block;
+  }
+
+  .feature-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 300;
+    color: var(--gold-light);
+    margin-bottom: 6px;
+  }
+
+  .feature-desc {
+    font-size: 12px;
+    color: rgba(255,255,255,0.4);
+    line-height: 1.7;
+    letter-spacing: 0.5px;
+  }
+
+  /* ─── EDITORIAL BANNER ─── */
+  .editorial {
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 500px;
+  }
+
+  .editorial-image {
+    background: linear-gradient(135deg, #2C2416, #4A3820);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 100px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .editorial-image::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to right, transparent 60%, var(--cream));
+  }
+
+  .editorial-content {
+    padding: 80px 80px 80px 60px;
+    background: var(--cream);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .editorial-content .section-eyebrow { color: var(--gold-dark); }
+
+  .editorial-content .section-title {
+    font-size: clamp(32px, 3.5vw, 50px);
+    margin-bottom: 20px;
+  }
+
+  .editorial-desc {
+    font-size: 15px;
+    line-height: 1.9;
+    color: var(--soft);
+    font-weight: 300;
+    max-width: 420px;
+    margin-bottom: 36px;
+  }
+
+  .btn-dark {
+    display: inline-block;
+    padding: 14px 36px;
+    background: var(--charcoal);
+    color: var(--gold-light);
+    border: none;
+    font-family: 'Jost', sans-serif;
+    font-size: 11px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-decoration: none;
+  }
+
+  .btn-dark:hover { background: var(--gold-dark); }
+
+  /* ─── TESTIMONIALS ─── */
+  .testimonials { background: var(--warm-white); }
+
+  .testimonials-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+  }
+
+  .testimonial-card {
+    padding: 36px;
+    background: var(--cream);
+    border: 1px solid var(--border);
+    position: relative;
+  }
+
+  .testimonial-quote {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 60px;
+    color: var(--gold-light);
+    line-height: 0.5;
+    margin-bottom: 20px;
+  }
+
+  .testimonial-text {
+    font-size: 15px;
+    line-height: 1.85;
+    color: var(--mid);
+    font-style: italic;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    margin-bottom: 24px;
+  }
+
+  .testimonial-author {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .author-avatar {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: var(--gold-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+
+  .author-name {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    color: var(--charcoal);
+  }
+
+  .author-location {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--soft);
+    margin-top: 2px;
+  }
+
+  /* ─── NEWSLETTER ─── */
+  .newsletter {
+    background: var(--charcoal);
+    text-align: center;
+    padding: 100px 80px;
+  }
+
+  .newsletter .section-title {
+    color: var(--warm-white);
+    margin-bottom: 12px;
+  }
+
+  .newsletter-desc {
+    font-size: 15px;
+    color: rgba(255,255,255,0.45);
+    margin-bottom: 40px;
+    font-weight: 300;
+  }
+
+  .newsletter-form {
+    display: flex;
+    max-width: 480px;
+    margin: 0 auto;
+    gap: 0;
+  }
+
+  .newsletter-input {
+    flex: 1;
+    padding: 16px 24px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-right: none;
+    color: white;
+    font-family: 'Jost', sans-serif;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+
+  .newsletter-input::placeholder { color: rgba(255,255,255,0.3); }
+  .newsletter-input:focus { border-color: var(--gold); }
+
+  .newsletter-submit {
+    padding: 16px 28px;
+    background: var(--gold);
+    color: var(--charcoal);
+    border: none;
+    font-family: 'Jost', sans-serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.3s;
+    white-space: nowrap;
+  }
+
+  .newsletter-submit:hover { background: var(--gold-light); }
+
+  /* ─── FOOTER ─── */
+  footer {
+    background: #141412;
+    color: rgba(255,255,255,0.5);
+    padding: 80px 80px 40px;
+  }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 60px;
+    margin-bottom: 60px;
+  }
+
+  .footer-brand .nav-logo { display: block; margin-bottom: 16px; }
+
+  .footer-tagline {
+    font-size: 13px;
+    line-height: 1.8;
+    margin-bottom: 24px;
+    font-weight: 300;
+    max-width: 260px;
+  }
+
+  .footer-social {
+    display: flex;
+    gap: 12px;
+  }
+
+  .social-link {
+    width: 36px; height: 36px;
+    border: 1px solid rgba(255,255,255,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    text-decoration: none;
+    color: rgba(255,255,255,0.4);
+    transition: all 0.3s;
+  }
+
+  .social-link:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  .footer-heading {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+  }
+
+  .footer-links { list-style: none; }
+
+  .footer-links li { margin-bottom: 10px; }
+
+  .footer-links a {
+    text-decoration: none;
+    color: rgba(255,255,255,0.4);
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    transition: color 0.3s;
+  }
+
+  .footer-links a:hover { color: var(--gold-light); }
+
+  .footer-bottom {
+    padding-top: 32px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+  }
+
+  /* ─── MOBILE MENU ─── */
+  .mobile-menu {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--charcoal);
+    z-index: 200;
+    flex-direction: column;
+    padding: 40px;
+    gap: 32px;
+    transform: translateX(-100%);
+    transition: transform 0.4s ease;
+  }
+
+  .mobile-menu.open { transform: translateX(0); }
+
+  .mobile-menu-close {
+    align-self: flex-end;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 28px;
+    cursor: pointer;
+  }
+
+  .mobile-menu a {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    font-weight: 300;
+    color: rgba(255,255,255,0.8);
+    text-decoration: none;
+    letter-spacing: 2px;
+    transition: color 0.3s;
+  }
+
+  .mobile-menu a:hover { color: var(--gold-light); }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 1100px) {
+    .products-grid { grid-template-columns: repeat(3, 1fr); }
+    .categories-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 900px) {
+    nav { padding: 0 24px; }
+    .nav-links { display: none; }
+    .hamburger { display: flex; }
+    .mobile-menu { display: flex; }
+
+    section { padding: 70px 24px; }
+    .features-strip { padding: 50px 24px; grid-template-columns: repeat(2, 1fr); gap: 28px; }
+    .footer-grid { grid-template-columns: 1fr 1fr; gap: 40px; padding: 0 0 40px; }
+    footer { padding: 60px 24px 32px; }
+    .newsletter { padding: 70px 24px; }
+    .footer-bottom { flex-direction: column; gap: 12px; text-align: center; }
+  }
+
+  @media (max-width: 768px) {
+    .hero {
+      grid-template-columns: 1fr;
+      min-height: auto;
+    }
+    .hero-right { min-height: 320px; }
+    .hero-left { padding: 60px 24px; }
+    .hero-stats { gap: 28px; }
+    .section-header { flex-direction: column; align-items: flex-start; gap: 16px; }
+    .products-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .testimonials-grid { grid-template-columns: 1fr; }
+    .editorial { grid-template-columns: 1fr; }
+    .editorial-image { min-height: 300px; }
+    .editorial-content { padding: 48px 24px; }
+    .newsletter-form { flex-direction: column; }
+    .newsletter-input { border-right: 1px solid rgba(255,255,255,0.15); border-bottom: none; }
+  }
+
+  @media (max-width: 480px) {
+    .categories-grid { grid-template-columns: repeat(2, 1fr); }
+    .features-strip { grid-template-columns: 1fr; }
+    .products-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Announcement -->
+<div class="announcement">✦ Free shipping on orders above ₹999 &nbsp;·&nbsp; New arrivals every Friday ✦</div>
+
+<!-- Nav -->
+<nav>
+  <a href="#" class="nav-logo">Pretty <span>Picks</span></a>
+  <ul class="nav-links">
+    <li><a href="#">New In</a></li>
+    <li><a href="#">Collections</a></li>
+    <li><a href="#">Earrings</a></li>
+    <li><a href="#">Necklaces</a></li>
+    <li><a href="#">Rings</a></li>
+    <li><a href="#">About</a></li>
+  </ul>
+  <div class="nav-actions">
+    <button class="nav-icon">🔍</button>
+    <button class="nav-icon">♡</button>
+    <button class="nav-icon" style="position:relative">
+      🛍
+      <span class="cart-badge">3</span>
+    </button>
+    <button class="hamburger" onclick="document.getElementById('mobileMenu').classList.toggle('open')">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobileMenu">
+  <button class="mobile-menu-close" onclick="document.getElementById('mobileMenu').classList.remove('open')">✕</button>
+  <a href="#">New In</a>
+  <a href="#">Collections</a>
+  <a href="#">Earrings</a>
+  <a href="#">Necklaces</a>
+  <a href="#">Rings</a>
+  <a href="#">About</a>
+</div>
+
+<!-- Hero -->
+<section class="hero" style="padding:0">
+  <div class="hero-left">
+    <p class="hero-eyebrow">New Collection 2025</p>
+    <h1 class="hero-title">Wear Your <em>Story,</em> Not Just Jewellery</h1>
+    <p class="hero-desc">Handcrafted artificial jewellery that blends timeless elegance with contemporary artistry. Each piece is a small work of art.</p>
+    <div class="hero-cta">
+      <a href="#" class="btn-primary">Explore Collection</a>
+      <a href="#" class="btn-outline">Our Story</a>
+    </div>
+    <div class="hero-stats">
+      <div>
+        <div class="stat-num">500+</div>
+        <div class="stat-label">Designs</div>
+      </div>
+      <div>
+        <div class="stat-num">12K+</div>
+        <div class="stat-label">Happy Clients</div>
+      </div>
+      <div>
+        <div class="stat-num">4.9★</div>
+        <div class="stat-label">Avg Rating</div>
+      </div>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="hero-image-placeholder">
+      <span class="jewel-icon">💎</span>
+    </div>
+    <div class="hero-badge">
+      <span class="hero-badge-text">NEW</span>
+      <span class="hero-badge-sub">Spring Drop</span>
+    </div>
+  </div>
+</section>
+
+<!-- Marquee -->
+<div class="marquee-wrapper">
+  <div class="marquee-track">
+    <span class="marquee-item">✦ Earrings <span class="marquee-dot">◆</span></span>
+    <span class="marquee-item">Necklaces <span class="marquee-dot">◆</span></span>
+    <span class="marquee-item">Bangles <span class="marquee-dot">◆</span></span>
+    <span class="marquee-item">Rings <span class="marquee-dot">◆</span></span>
+    <span class="marquee-item">Anklets <span class="marquee-dot">◆</span></span>
+    <span class="marquee-item">Maang Tikka <span class="marquee-dot">◆</span></span>
+    <span class="marquee-item">Bridal Sets <span class="marquee-dot">◆</span></span>
+    <span class="marquee-item">✦ Earrings <span class="marquee-dot">◆</span></span>
+    <span class="marquee-item">Necklaces <span class="marquee-dot">◆</span></span>
+    <span class="marquee-item">Bangles <span class="marquee-dot">◆</span></span>
+    <span class="marquee-item">Rings <span class="marquee-dot">◆</span></span>
+    <span class="marquee-item">Anklets <span class="marquee-dot">◆</span></span>
+    <span class="marquee-item">Maang Tikka <span class="marquee-dot">◆</span></span>
+    <span class="marquee-item">Bridal Sets <span class="marquee-dot">◆</span></span>
+  </div>
+</div>
+
+<!-- Categories -->
+<section>
+  <div class="section-header">
+    <div>
+      <p class="section-eyebrow">Shop By</p>
+      <h2 class="section-title">Browse <em>Categories</em></h2>
+    </div>
+    <a href="#" class="view-all">All Categories</a>
+  </div>
+  <div class="categories-grid">
+    <div class="category-card cat-1">
+      <div class="category-bg">💍</div>
+      <div class="category-info">
+        <div class="category-name">Rings</div>
+        <div class="category-count">48 pieces</div>
+      </div>
+    </div>
+    <div class="category-card cat-2">
+      <div class="category-bg">📿</div>
+      <div class="category-info">
+        <div class="category-name">Necklaces</div>
+        <div class="category-count">72 pieces</div>
+      </div>
+    </div>
+    <div class="category-card cat-3">
+      <div class="category-bg">✨</div>
+      <div class="category-info">
+        <div class="category-name">Earrings</div>
+        <div class="category-count">130 pieces</div>
+      </div>
+    </div>
+    <div class="category-card cat-4">
+      <div class="category-bg">💎</div>
+      <div class="category-info">
+        <div class="category-name">Bridal Sets</div>
+        <div class="category-count">34 pieces</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Products -->
+<section class="products-section">
+  <div class="section-header">
+    <div>
+      <p class="section-eyebrow">Handpicked</p>
+      <h2 class="section-title">New <em>Arrivals</em></h2>
+    </div>
+    <a href="#" class="view-all">View All</a>
+  </div>
+  <div class="products-filter">
+    <button class="filter-btn active">All</button>
+    <button class="filter-btn">Earrings</button>
+    <button class="filter-btn">Necklaces</button>
+    <button class="filter-btn">Rings</button>
+    <button class="filter-btn">Bridal</button>
+    <button class="filter-btn">Under ₹499</button>
+  </div>
+  <div class="products-grid">
+    <div class="product-card">
+      <div class="product-img-wrap">
+        <div class="product-placeholder p1">💍</div>
+        <div class="product-tag">New</div>
+        <button class="product-quick-add">Quick Add</button>
+      </div>
+      <div class="product-name">Polki Finger Ring</div>
+      <div class="product-meta">
+        <div class="product-price">₹349</div>
+        <div class="product-rating">★★★★★</div>
+      </div>
+    </div>
+    <div class="product-card">
+      <div class="product-img-wrap">
+        <div class="product-placeholder p2">📿</div>
+        <div class="product-tag sale">Sale</div>
+        <button class="product-quick-add">Quick Add</button>
+      </div>
+      <div class="product-name">Meenakari Jhumka</div>
+      <div class="product-meta">
+        <div class="product-price"><span class="original">₹699</span>₹499</div>
+        <div class="product-rating">★★★★☆</div>
+      </div>
+    </div>
+    <div class="product-card">
+      <div class="product-img-wrap">
+        <div class="product-placeholder p3">✨</div>
+        <button class="product-quick-add">Quick Add</button>
+      </div>
+      <div class="product-name">Kundan Choker Set</div>
+      <div class="product-meta">
+        <div class="product-price">₹899</div>
+        <div class="product-rating">★★★★★</div>
+      </div>
+    </div>
+    <div class="product-card">
+      <div class="product-img-wrap">
+        <div class="product-placeholder p4">💎</div>
+        <div class="product-tag">Trending</div>
+        <button class="product-quick-add">Quick Add</button>
+      </div>
+      <div class="product-name">Temple Necklace</div>
+      <div class="product-meta">
+        <div class="product-price">₹1,249</div>
+        <div class="product-rating">★★★★★</div>
+      </div>
+    </div>
+    <div class="product-card">
+      <div class="product-img-wrap">
+        <div class="product-placeholder p5">🌸</div>
+        <div class="product-tag">New</div>
+        <button class="product-quick-add">Quick Add</button>
+      </div>
+      <div class="product-name">Floral Bangles Set</div>
+      <div class="product-meta">
+        <div class="product-price">₹599</div>
+        <div class="product-rating">★★★★☆</div>
+      </div>
+    </div>
+    <div class="product-card">
+      <div class="product-img-wrap">
+        <div class="product-placeholder p6">🔮</div>
+        <button class="product-quick-add">Quick Add</button>
+      </div>
+      <div class="product-name">Oxidised Maang Tikka</div>
+      <div class="product-meta">
+        <div class="product-price">₹449</div>
+        <div class="product-rating">★★★★★</div>
+      </div>
+    </div>
+    <div class="product-card">
+      <div class="product-img-wrap">
+        <div class="product-placeholder p7">💫</div>
+        <div class="product-tag sale">Sale</div>
+        <button class="product-quick-add">Quick Add</button>
+      </div>
+      <div class="product-name">Pearl Drop Earrings</div>
+      <div class="product-meta">
+        <div class="product-price"><span class="original">₹399</span>₹279</div>
+        <div class="product-rating">★★★★☆</div>
+      </div>
+    </div>
+    <div class="product-card">
+      <div class="product-img-wrap">
+        <div class="product-placeholder p8">🌙</div>
+        <div class="product-tag">Bestseller</div>
+        <button class="product-quick-add">Quick Add</button>
+      </div>
+      <div class="product-name">Bridal Haath Phool</div>
+      <div class="product-meta">
+        <div class="product-price">₹1,799</div>
+        <div class="product-rating">★★★★★</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Features Strip -->
+<div class="features-strip">
+  <div class="feature-item">
+    <span class="feature-icon">🚚</span>
+    <div class="feature-title">Free Shipping</div>
+    <div class="feature-desc">On all orders above ₹999 across India</div>
+  </div>
+  <div class="feature-item">
+    <span class="feature-icon">✦</span>
+    <div class="feature-title">Handcrafted</div>
+    <div class="feature-desc">Every piece made with care and artistry</div>
+  </div>
+  <div class="feature-item">
+    <span class="feature-icon">↩</span>
+    <div class="feature-title">Easy Returns</div>
+    <div class="feature-desc">7-day hassle-free return policy</div>
+  </div>
+  <div class="feature-item">
+    <span class="feature-icon">🔒</span>
+    <div class="feature-title">Secure Payment</div>
+    <div class="feature-desc">UPI, Cards, COD — all accepted</div>
+  </div>
+</div>
+
+<!-- Editorial -->
+<div class="editorial">
+  <div class="editorial-image">💎</div>
+  <div class="editorial-content">
+    <p class="section-eyebrow">Bridal 2025</p>
+    <h2 class="section-title">The <em>Bridal</em> Edit</h2>
+    <p class="editorial-desc">Curated sets designed for the modern Indian bride. From intimate ceremonies to grand celebrations, find your perfect look.</p>
+    <a href="#" class="btn-dark">Explore Bridal</a>
+  </div>
+</div>
+
+<!-- Testimonials -->
+<section class="testimonials">
+  <div class="section-header">
+    <div>
+      <p class="section-eyebrow">Reviews</p>
+      <h2 class="section-title">What Our <em>Clients</em> Say</h2>
+    </div>
+  </div>
+  <div class="testimonials-grid">
+    <div class="testimonial-card">
+      <div class="testimonial-quote">"</div>
+      <p class="testimonial-text">Absolutely love my Kundan set! The quality is outstanding for the price and it looks exactly like the photos. Got so many compliments at the wedding.</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">P</div>
+        <div>
+          <div class="author-name">Priya Sharma</div>
+          <div class="author-location">Delhi, India</div>
+        </div>
+      </div>
+    </div>
+    <div class="testimonial-card">
+      <div class="testimonial-quote">"</div>
+      <p class="testimonial-text">My go-to for festive jewellery. The packaging is beautiful, shipping is fast, and the pieces always exceed my expectations. Highly recommend!</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">A</div>
+        <div>
+          <div class="author-name">Anjali Mehta</div>
+          <div class="author-location">Mumbai, India</div>
+        </div>
+      </div>
+    </div>
+    <div class="testimonial-card">
+      <div class="testimonial-quote">"</div>
+      <p class="testimonial-text">Bought three pairs of jhumkas and they're all stunning. The colour doesn't fade even after regular wear. Will definitely be ordering more!</p>
+      <div class="testimonial-author">
+        <div class="author-avatar">S</div>
+        <div>
+          <div class="author-name">Sneha Reddy</div>
+          <div class="author-location">Hyderabad, India</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Newsletter -->
+<div class="newsletter">
+  <p class="section-eyebrow" style="color:var(--gold);margin-bottom:14px">Stay in the Loop</p>
+  <h2 class="section-title" style="color:var(--warm-white);margin-bottom:12px">Get Early <em style="color:var(--gold-light)">Access</em></h2>
+  <p class="newsletter-desc">Subscribe for exclusive drops, styling tips, and member-only offers</p>
+  <div class="newsletter-form">
+    <input class="newsletter-input" type="email" placeholder="your@email.com">
+    <button class="newsletter-submit">Subscribe</button>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="#" class="nav-logo">Pretty <span>Picks</span></a>
+      <p class="footer-tagline">Artisan jewellery crafted for the modern Indian woman. Wear your story.</p>
+      <div class="footer-social">
+        <a href="#" class="social-link">f</a>
+        <a href="#" class="social-link">in</a>
+        <a href="#" class="social-link">yt</a>
+        <a href="#" class="social-link">pin</a>
+      </div>
+    </div>
+    <div>
+      <p class="footer-heading">Shop</p>
+      <ul class="footer-links">
+        <li><a href="#">New Arrivals</a></li>
+        <li><a href="#">Earrings</a></li>
+        <li><a href="#">Necklaces</a></li>
+        <li><a href="#">Rings</a></li>
+        <li><a href="#">Bridal</a></li>
+        <li><a href="#">Sale</a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="footer-heading">Help</p>
+      <ul class="footer-links">
+        <li><a href="#">Track Order</a></li>
+        <li><a href="#">Returns</a></li>
+        <li><a href="#">Shipping Info</a></li>
+        <li><a href="#">Size Guide</a></li>
+        <li><a href="#">Care Instructions</a></li>
+        <li><a href="#">Contact Us</a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="footer-heading">Company</p>
+      <ul class="footer-links">
+        <li><a href="#">About Us</a></li>
+        <li><a href="#">Careers</a></li>
+        <li><a href="#">Wholesale</a></li>
+        <li><a href="#">Press</a></li>
+        <li><a href="#">Privacy Policy</a></li>
+        <li><a href="#">Terms</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2025 Pretty Picks. All rights reserved.</span>
+    <span>Made with ♡ in India</span>
+  </div>
+</footer>
+
+<script>
+  // Filter buttons
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>

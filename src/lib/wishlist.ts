@@ -7,6 +7,7 @@ export type WishlistItem = {
 };
 
 const KEY = "pp_wishlist";
+const WISHLIST_EVENT = "pp-wishlist-updated";
 
 export function getWishlist(): WishlistItem[] {
   if (typeof window === "undefined") return [];
@@ -17,6 +18,7 @@ export function getWishlist(): WishlistItem[] {
 export function setWishlist(items: WishlistItem[]) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(KEY, JSON.stringify(items));
+  window.dispatchEvent(new CustomEvent(WISHLIST_EVENT, { detail: items }));
 }
 
 export function toggleWishlist(item: WishlistItem) {

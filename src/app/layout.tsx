@@ -1,16 +1,18 @@
 import type { Metadata } from "next";
-import { Manrope, Playfair_Display } from "next/font/google";
+import { Bree_Serif, Quicksand } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/providers";
 import { siteConfig } from "@/data/site";
 
-const headingFont = Playfair_Display({
+const headingFont = Bree_Serif({
   variable: "--font-heading",
+  weight: ["400"],
   subsets: ["latin"],
 });
 
-const bodyFont = Manrope({
+const bodyFont = Quicksand({
   variable: "--font-body",
+  weight: ["400", "500", "600"],
   subsets: ["latin"],
 });
 

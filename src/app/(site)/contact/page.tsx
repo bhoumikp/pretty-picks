@@ -23,13 +23,13 @@ export default function ContactPage() {
         <div className="soft-card rounded-xl p-6">
           <h2 className="text-xl font-[var(--font-heading)]">Quick connect</h2>
           <p className="mt-3 text-sm text-[var(--pp-muted)]">
-            Need a fast reply? Reach us on WhatsApp and we will guide you through
+            Need a fast reply? Contact us on WhatsApp and we will guide you through
             the order.
           </p>
           <div className="mt-6">
             <WhatsAppButton
               message="Hi, I want to order from Pretty Picks. Please help me with recommendations."
-              label="Chat with us"
+              label="Contact us"
             />
           </div>
           <div className="mt-6 text-sm">

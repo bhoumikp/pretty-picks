@@ -39,7 +39,7 @@ export default function ProductGallery({ images, name }: ProductGalleryProps) {
   return (
     <div className="space-y-4">
       <div
-        className="group relative aspect-square overflow-hidden rounded-xl border border-[var(--pp-border)] bg-white shadow-sm"
+        className="group relative aspect-square overflow-hidden rounded-3xl border border-[var(--pp-border)] bg-white shadow-sm"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -56,8 +56,8 @@ export default function ProductGallery({ images, name }: ProductGalleryProps) {
           <button
             key={`${image.url}-${index}`}
             onClick={() => setActiveIndex(index)}
-            className={`relative aspect-square w-20 flex-none overflow-hidden rounded-xl border bg-[var(--pp-beige)] md:w-auto ${
-              index === activeIndex ? "border-[var(--pp-gold)]" : "border-[var(--pp-border)]"
+            className={`relative aspect-square w-20 flex-none overflow-hidden rounded-2xl border bg-[var(--pp-beige)] md:w-auto ${
+              index === activeIndex ? "border-[var(--pp-ink)]" : "border-[var(--pp-border)]"
             }`}
           >
             <Image src={image.url} alt={name} fill className="object-cover" />

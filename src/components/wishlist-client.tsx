@@ -1,12 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { getWishlist, type WishlistItem } from "@/lib/wishlist";
+import { getWishlist, toggleWishlist, type WishlistItem } from "@/lib/wishlist";
 
 export default function WishlistClient() {
-  const [items] = useState<WishlistItem[]>(() => getWishlist());
+  const [items, setItems] = useState<WishlistItem[]>(() => getWishlist());
+
+  useEffect(() => {
+    const handler = () => setItems(getWishlist());
+    window.addEventListener("pp-wishlist-updated", handler);
+    window.addEventListener("storage", handler);
+    return () => {
+      window.removeEventListener("pp-wishlist-updated", handler);
+      window.removeEventListener("storage", handler);
+    };
+  }, []);
 
   return (
     <div className="page-shell section-pad">
@@ -21,23 +31,33 @@ export default function WishlistClient() {
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {items.map((item) => (
-            <Link
+            <div
               key={item.id}
-              href={`/products/${item.slug}`}
               className="soft-card rounded-xl p-4 transition-all duration-300 hover:shadow-lg"
             >
-              <div className="relative aspect-square overflow-hidden rounded-xl bg-[var(--pp-beige)]">
-                <Image
-                  src={item.image}
-                  alt={item.name}
-                  fill
-                  sizes="(max-width: 1024px) 50vw, 25vw"
-                  className="object-cover"
-                />
-              </div>
-              <p className="mt-3 text-sm font-semibold">{item.name}</p>
-              <p className="text-xs text-[var(--pp-muted)]">₹{item.price}</p>
-            </Link>
+              <Link href={`/products/${item.slug}`}>
+                <div className="relative aspect-square overflow-hidden rounded-xl bg-[var(--pp-beige)]">
+                  <Image
+                    src={item.image}
+                    alt={item.name}
+                    fill
+                    sizes="(max-width: 1024px) 50vw, 25vw"
+                    className="object-cover"
+                  />
+                </div>
+                <p className="mt-3 text-sm font-semibold">{item.name}</p>
+                <p className="text-xs text-[var(--pp-muted)]">₹{item.price}</p>
+              </Link>
+              <button
+                className="mt-3 text-xs font-semibold text-[var(--pp-muted)] underline underline-offset-4"
+                onClick={() => {
+                  const next = toggleWishlist(item);
+                  setItems(next);
+                }}
+              >
+                Remove
+              </button>
+            </div>
           ))}
         </div>
       )}

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import ProductGrid from "@/components/product-grid";
+import CategoryProductsClient from "@/components/category-products-client";
 import Breadcrumbs from "@/components/breadcrumbs";
 
 interface CategoryPageProps {
@@ -26,10 +26,32 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   const resolvedParams = await params;
   const category = await prisma.category.findUnique({
     where: { slug: resolvedParams.slug },
-    include: { products: { include: { category: true } } },
+    select: { id: true, name: true, slug: true },
   });
 
   if (!category) return notFound();
+
+  const [initialProducts, total] = await prisma.$transaction([
+    prisma.product.findMany({
+      where: { categoryId: category.id },
+      orderBy: { createdAt: "desc" },
+      take: 12,
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        price: true,
+        material: true,
+        featured: true,
+        stock: true,
+        images: true,
+        category: {
+          select: { id: true, name: true, slug: true, image: true },
+        },
+      },
+    }),
+    prisma.product.count({ where: { categoryId: category.id } }),
+  ]);
 
   return (
     <div className="page-shell section-pad">
@@ -45,22 +67,18 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           <p className="eyebrow">Category</p>
           <h1 className="section-title">{category.name}</h1>
           <p className="mt-2 text-sm text-[var(--pp-muted)]">
-            {category.products.length} pieces available
+            {total} pieces available
           </p>
         </div>
         <Link href="/products" className="text-sm text-[var(--pp-gold)]">
           Back to products
         </Link>
       </div>
-      <div className="mt-8">
-        {category.products.length === 0 ? (
-          <div className="rounded-xl border border-[var(--pp-border)] bg-white p-10 text-center text-sm text-[var(--pp-muted)]">
-            No products found in this category yet. Check back soon.
-          </div>
-        ) : (
-          <ProductGrid products={category.products} />
-        )}
-      </div>
+      <CategoryProductsClient
+        initialProducts={initialProducts}
+        initialTotal={total}
+        categorySlug={category.slug}
+      />
     </div>
   );
 }

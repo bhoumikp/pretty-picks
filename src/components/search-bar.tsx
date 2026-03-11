@@ -51,31 +51,27 @@ export default function SearchBar({ className }: SearchBarProps) {
             return;
           }
           debounceRef.current = setTimeout(async () => {
-            const response = await fetch("/api/products");
+            const response = await fetch(
+              `/api/products?q=${encodeURIComponent(next)}&take=6&skip=0`
+            );
             if (!response.ok) return;
-            const data = (await response.json()) as SearchResult[];
-            const term = next.toLowerCase();
-            const filtered = data.filter((product) => {
-              const nameMatch = product.name.toLowerCase().includes(term);
-              const categoryMatch = product.category?.name.toLowerCase().includes(term);
-              return nameMatch || categoryMatch;
-            });
-            setResults(filtered.slice(0, 6));
+            const data = (await response.json()) as { items?: SearchResult[] };
+            setResults(data.items ?? []);
           }, 250);
         }}
         onFocus={() => setOpen(true)}
         placeholder="Search jewelry"
-        className="w-full rounded-xl border border-[var(--pp-border)] bg-white px-4 py-2 text-sm"
+        className="w-full rounded-full border border-[var(--pp-border)] bg-white/90 px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--pp-gold)]/40"
       />
       {open && query.trim() && (
-        <div className="absolute left-0 right-0 top-12 z-50 max-h-72 overflow-auto rounded-xl border border-[var(--pp-border)] bg-white p-3 shadow-lg">
+        <div className="absolute left-0 right-0 top-12 z-50 max-h-72 overflow-auto rounded-2xl border border-[var(--pp-border)] bg-white p-3 shadow-xl">
           {hasResults ? (
             <div className="space-y-3">
               {results.map((product) => (
                 <Link
                   key={product.id}
                   href={`/products/${product.slug}`}
-                  className="flex items-center gap-3 rounded-lg p-2 transition hover:bg-[var(--pp-beige)]"
+                  className="flex items-center gap-3 rounded-xl p-2 transition hover:bg-[var(--pp-beige)]"
                   onClick={() => trackEvent("search_suggestion_click", { id: product.id })}
                 >
                   <div className="relative h-10 w-10 overflow-hidden rounded-lg bg-[var(--pp-beige)]">
@@ -95,12 +91,12 @@ export default function SearchBar({ className }: SearchBarProps) {
                   </div>
                 </Link>
               ))}
-              <Link
-                href={`/products?q=${encodeURIComponent(query)}`}
-                className="block rounded-lg border border-[var(--pp-border)] px-3 py-2 text-center text-xs"
-              >
-                View all results
-              </Link>
+                <Link
+                  href={`/products?q=${encodeURIComponent(query)}`}
+                  className="block rounded-xl border border-[var(--pp-border)] px-3 py-2 text-center text-xs"
+                >
+                  View all results
+                </Link>
             </div>
           ) : (
             <p className="text-sm text-[var(--pp-muted)]">No results found.</p>

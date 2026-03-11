@@ -18,8 +18,11 @@ export default function MobileBottomNav() {
         <Link href="/wishlist" className="flex flex-col items-center gap-1">
           <span>Wishlist</span>
         </Link>
+        <Link href="/cart" className="flex flex-col items-center gap-1">
+          <span>Cart</span>
+        </Link>
         <Link href="/contact" className="flex flex-col items-center gap-1">
-          <span>WhatsApp</span>
+          <span>Contact Us</span>
         </Link>
       </div>
     </div>

@@ -11,21 +11,25 @@ export default function CategoryCard({ category }: CategoryCardProps) {
   return (
     <Link
       href={`/category/${category.slug}`}
-      className="soft-card card-hover group flex items-center gap-4 rounded-xl p-4"
+      className="group overflow-hidden rounded-3xl border border-[var(--pp-border)] bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
     >
-      <div className="relative h-16 w-16 overflow-hidden rounded-xl bg-[var(--pp-beige)]">
+      <div className="relative aspect-[4/5] overflow-hidden bg-[var(--pp-beige)]">
         <Image
           src={image}
           alt={category.name}
           fill
-          className="object-cover transition-all duration-300 group-hover:scale-105"
+          className="object-cover transition-all duration-300 group-hover:scale-110"
         />
       </div>
-      <div>
-        <h3 className="text-base font-semibold tracking-tight">{category.name}</h3>
-        <p className="text-xs text-[var(--pp-muted)]">View collection</p>
+      <div className="flex items-center justify-between px-4 py-4">
+        <div>
+          <h3 className="text-base font-semibold tracking-tight">{category.name}</h3>
+          <p className="text-[11px] uppercase tracking-[0.25em] text-[var(--pp-muted)]">
+            View collection
+          </p>
+        </div>
+        <span className="text-sm text-[var(--pp-gold)]">→</span>
       </div>
-      <span className="ml-auto text-xs text-[var(--pp-gold)]">→</span>
     </Link>
   );
 }

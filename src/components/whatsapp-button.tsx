@@ -19,8 +19,8 @@ export default function WhatsAppButton({
       rel="noreferrer"
       className={
         floating
-          ? "fixed bottom-20 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg transition-all duration-300 hover:scale-105 md:bottom-6 md:right-6"
-          : "inline-flex items-center gap-2 rounded-lg bg-[#25D366] px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:bg-[#1fb95c]"
+          ? "fixed bottom-20 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-[#1f7a4f] text-white shadow-lg ring-1 ring-white/70 transition-all duration-300 hover:scale-105 md:bottom-6 md:right-6"
+          : "inline-flex items-center gap-2 rounded-full bg-[#1f7a4f] px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:bg-[#176a43]"
       }
     >
       <svg width="20" height="20" viewBox="0 0 32 32" fill="none">

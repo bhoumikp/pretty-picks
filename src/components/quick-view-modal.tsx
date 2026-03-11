@@ -41,7 +41,7 @@ export default function QuickViewModal({ product, onClose }: QuickViewModalProps
       onClick={onClose}
     >
       <div
-        className="w-full max-w-2xl rounded-xl bg-white p-6 shadow-xl sm:max-h-[85vh] sm:overflow-y-auto"
+        className="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-xl sm:max-h-[85vh] sm:overflow-y-auto"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between">
@@ -51,11 +51,11 @@ export default function QuickViewModal({ product, onClose }: QuickViewModalProps
           </button>
         </div>
         <div className="mt-4 grid gap-6 md:grid-cols-[1fr_1.1fr]">
-          <div className="relative aspect-square overflow-hidden rounded-xl bg-[var(--pp-beige)]">
+          <div className="relative aspect-square overflow-hidden rounded-2xl border border-[var(--pp-border)] bg-[var(--pp-beige)]">
             <Image src={primaryImage(product.images)} alt={product.name} fill className="object-cover" />
           </div>
           <div>
-            <p className="text-lg font-medium tracking-wide text-[var(--pp-gold)]">
+            <p className="text-lg font-semibold tracking-wide text-[var(--pp-ink)]">
               {formatCurrency(product.price)}
             </p>
             <p className="mt-3 text-sm text-[var(--pp-muted)]">
@@ -66,7 +66,7 @@ export default function QuickViewModal({ product, onClose }: QuickViewModalProps
                 href={whatsappLink}
                 target="_blank"
                 rel="noreferrer"
-                className="rounded-lg bg-green-500 px-5 py-2 text-sm font-semibold text-white"
+                className="rounded-full bg-[#1f7a4f] px-5 py-2 text-sm font-semibold text-white"
               >
                 Order on WhatsApp
               </a>

@@ -7,6 +7,7 @@ import Breadcrumbs from "@/components/breadcrumbs";
 import ProductGallery from "@/components/product-gallery";
 import ProductOrderActions from "@/components/product-order-actions";
 import { siteConfig } from "@/data/site";
+import { primaryImage } from "@/lib/images";
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
@@ -64,21 +65,21 @@ export default async function ProductPage({ params }: ProductPageProps) {
             ]}
           />
           <p className="eyebrow">{product.category.name}</p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight">
+          <h1 className="mt-4 font-[var(--font-heading)] text-4xl font-medium tracking-tight text-[var(--pp-ink)]">
             {product.name}
           </h1>
-          <p className="mt-2 text-lg font-medium tracking-wide text-[var(--pp-gold)]">
+          <p className="mt-3 text-lg font-semibold text-[var(--pp-ink)]">
             {formatCurrency(product.price)}
           </p>
           <p className="mt-4 text-base leading-relaxed text-[var(--pp-muted)]">
             {product.description}
           </p>
-          <div className="mt-6 grid gap-3 text-sm">
-            <div className="flex items-center justify-between border-b border-[var(--pp-border)] pb-2">
+          <div className="mt-6 grid gap-3 rounded-2xl border border-[var(--pp-border)] bg-white p-4 text-sm">
+            <div className="flex items-center justify-between">
               <span className="text-[var(--pp-muted)]">Material</span>
               <span className="font-medium">{product.material}</span>
             </div>
-            <div className="flex items-center justify-between border-b border-[var(--pp-border)] pb-2">
+            <div className="flex items-center justify-between">
               <span className="text-[var(--pp-muted)]">Category</span>
               <Link href={`/category/${product.category.slug}`} className="font-medium">
                 {product.category.name}
@@ -90,9 +91,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
             </div>
           </div>
           <ProductOrderActions
+            id={product.id}
             name={product.name}
             price={product.price}
             productUrl={productUrl}
+            image={primaryImage(product.images)}
           />
           <div className="mt-6">
             <Link href="/products" className="btn-outline text-sm">
