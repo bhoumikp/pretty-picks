@@ -160,13 +160,11 @@ export default function ProductsClient({
           throw new Error("Failed to load products");
         }
         const data = (await response.json()) as { items?: ProductSummary[]; total?: number };
-        if (!Array.isArray(data.items)) {
-          throw new Error("Invalid product response");
-        }
-        const nextTotal = typeof data.total === "number" ? data.total : data.items.length;
+        const items = Array.isArray(data.items) ? data.items : [];
+        const nextTotal = typeof data.total === "number" ? data.total : items.length;
         setTotal(nextTotal);
         setItems((prev) => {
-          const nextItems = append ? [...prev, ...data.items] : data.items;
+          const nextItems = append ? [...prev, ...items] : items;
           hasItemsRef.current = nextItems.length > 0;
           lastAppliedKeyRef.current = requestKey;
           return nextItems;
