@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import ProductsClient from "@/components/products-client";
+import type { CategorySummary, ProductSummary } from "@/types/catalog";
 
 export const revalidate = 60;
 export const metadata = {
@@ -17,8 +18,8 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const category = typeof resolvedParams.category === "string" ? resolvedParams.category : "";
   const priceCap = typeof resolvedParams.price === "string" ? Number(resolvedParams.price) : undefined;
 
-  let products = [];
-  let categories = [];
+  let products: ProductSummary[] = [];
+  let categories: CategorySummary[] = [];
 
   try {
     [products, categories] = await Promise.all([
