@@ -61,7 +61,7 @@ export default async function HomePage() {
 
   return (
     <div className="bg-white">
-      <section className="section-pad">
+      <section id="categories" className="section-pad">
         <div className="page-shell">
           <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
             <div className="fade-in">

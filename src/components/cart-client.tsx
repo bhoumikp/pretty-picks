@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -16,7 +16,28 @@ import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { siteConfig } from "@/data/site";
 
 export default function CartClient() {
-  const [items, setItems] = useState<CartItem[]>(() => getCart());
+  const [items, setItems] = useState<CartItem[]>([]);
+
+  useEffect(() => {
+    const sync = () => setItems(getCart());
+    const cartHandler = (event: Event) => {
+      const customEvent = event as CustomEvent<CartItem[]>;
+      if (customEvent.detail) {
+        setItems(customEvent.detail);
+      } else {
+        sync();
+      }
+    };
+    const storageHandler = () => sync();
+
+    sync();
+    window.addEventListener("pp-cart-updated", cartHandler);
+    window.addEventListener("storage", storageHandler);
+    return () => {
+      window.removeEventListener("pp-cart-updated", cartHandler);
+      window.removeEventListener("storage", storageHandler);
+    };
+  }, []);
   const total = useMemo(() => getCartTotal(items), [items]);
   const orderLink = useMemo(() => {
     if (items.length === 0) return "/contact";
@@ -120,7 +141,7 @@ export default function CartClient() {
                 Continue shopping
               </Link>
               <a href={orderLink} className="btn-primary block text-center text-xs">
-                Contact us to place order
+                Place Order on WhatsApp
               </a>
             </div>
           </div>

@@ -2,7 +2,7 @@ export const siteConfig = {
   name: "Pretty Picks",
   description: "Affordable artificial jewellery for effortless everyday style.",
   domain: "shopprettypicks.in",
-  whatsappNumber: "91XXXXXXXXXX",
+  whatsappNumber: "919112090632",
   instagramUrl: "https://www.instagram.com/",
   supportEmail: "hello@shopprettypicks.in",
   developerGithub: "https://github.com/bhoumikp",

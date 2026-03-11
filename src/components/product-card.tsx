@@ -277,7 +277,7 @@ export default function ProductCard({ product, variant = "grid" }: ProductCardPr
             )}
           </button>
         </div>
-        <a
+        {/* <a
           href={whatsappLink}
           target="_blank"
           rel="noreferrer"
@@ -285,7 +285,7 @@ export default function ProductCard({ product, variant = "grid" }: ProductCardPr
           onClick={() => trackEvent("whatsapp_click", { id: product.id })}
         >
           Order on WhatsApp
-        </a>
+        </a> */}
       </div>
       {quickViewOpen && (
         <QuickViewModal

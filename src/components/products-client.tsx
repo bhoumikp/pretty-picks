@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import ProductGrid from "@/components/product-grid";
+import ProductCard from "@/components/product-card";
 import { trackEvent } from "@/lib/analytics";
 import type { CategorySummary, ProductSummary } from "@/types/catalog";
 
@@ -430,7 +431,14 @@ export default function ProductsClient({
           </div>
         ) : (
           <>
-            <ProductGrid products={visibleItems} />
+            <div className="grid grid-cols-2 gap-3 md:hidden">
+              {visibleItems.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+            <div className="hidden md:block">
+              <ProductGrid products={visibleItems} />
+            </div>
             {visible < filtered.length && (
               <div className="flex justify-center">
                 <button
