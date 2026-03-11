@@ -7,7 +7,7 @@ import { formatCurrency } from "@/lib/utils";
 import { primaryImage } from "@/lib/images";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { siteConfig } from "@/data/site";
-import { toggleWishlist, isWishlisted, getWishlist, type WishlistItem } from "@/lib/wishlist";
+import { toggleWishlist, getWishlist, type WishlistItem } from "@/lib/wishlist";
 import { getCart, setCartItemQuantity, type CartItem } from "@/lib/cart";
 import { trackEvent } from "@/lib/analytics";
 import QuickViewModal from "@/components/quick-view-modal";
