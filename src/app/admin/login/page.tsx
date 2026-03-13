@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { siteConfig } from "@/data/site";
@@ -134,7 +134,7 @@ export default function AdminLoginPage() {
             <label className="grid gap-2 text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">
               Password
               <div
-                className={`flex items-center border bg-white px-4 py-2 ${
+                className={`flex items-center gap-2 border bg-white px-4 py-2 ${
                   fieldErrors.password
                     ? "border-red-300"
                     : "border-[var(--pp-border)]"
@@ -144,7 +144,7 @@ export default function AdminLoginPage() {
                   name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter Password"
-                  className="w-full bg-transparent py-1 pr-2 text-sm focus:outline-none"
+                  className="w-full bg-transparent text-sm focus:outline-none"
                   value={passwordValue}
                   onChange={(event) => setPasswordValue(event.target.value)}
                   onBlur={(event) => {
@@ -201,14 +201,8 @@ export default function AdminLoginPage() {
                 {fieldErrors.password ?? ""}
               </span>
             </label>
-              <button
-                type="submit"
-                className="btn-primary btn-sweep text-sm"
-                disabled={loading}
-              >
-                <span className="btn-sweep-label">
-                  {loading ? "Signing in…" : "Login"}
-                </span>
+              <button type="submit" className="btn-primary btn-sweep text-sm" disabled={loading}>
+                <span className="btn-sweep-label">{loading ? "Signing in…" : "Login"}</span>
               </button>
             {error && <p className="text-sm text-red-600">{error}</p>}
           </form>

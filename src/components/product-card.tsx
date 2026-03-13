@@ -10,6 +10,8 @@ import { getCart, setCartItemQuantity, type CartItem } from "@/lib/cart";
 import { trackEvent } from "@/lib/analytics";
 import type { ProductSummary } from "@/types/catalog";
 
+const NOW = Date.now();
+
 interface ProductCardProps {
   product: ProductSummary;
   variant?: "grid" | "scroll" | "carousel";
@@ -24,7 +26,7 @@ export default function ProductCard({ product, variant = "grid" }: ProductCardPr
   const [added, setAdded] = useState(false);
 
   const createdAt = product.createdAt ? new Date(product.createdAt) : undefined;
-  const isNew = createdAt ? Date.now() - createdAt.getTime() < 1000 * 60 * 60 * 24 * 14 : false;
+  const isNew = createdAt ? NOW - createdAt.getTime() < 1000 * 60 * 60 * 24 * 14 : false;
   const badge = isNew
     ? "New"
     : product.featured

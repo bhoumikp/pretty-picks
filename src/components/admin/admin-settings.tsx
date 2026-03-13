@@ -106,7 +106,7 @@ export default function AdminSettings() {
           <label className="grid gap-2 text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">
             Current password
             <div
-              className={`flex items-center rounded-lg border bg-white px-4 py-2 ${
+              className={`flex items-center border bg-white px-4 py-2 ${
                 fieldErrors.currentPassword ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
             >
@@ -169,7 +169,7 @@ export default function AdminSettings() {
           <label className="grid gap-2 text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">
             New password
             <div
-              className={`flex items-center rounded-lg border bg-white px-4 py-2 ${
+              className={`flex items-center border bg-white px-4 py-2 ${
                 fieldErrors.newPassword ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
             >
@@ -242,7 +242,7 @@ export default function AdminSettings() {
           <label className="grid gap-2 text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">
             Confirm password
             <div
-              className={`flex items-center rounded-lg border bg-white px-4 py-2 ${
+              className={`flex items-center border bg-white px-4 py-2 ${
                 fieldErrors.confirmPassword ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
             >
@@ -307,8 +307,12 @@ export default function AdminSettings() {
               {fieldErrors.confirmPassword ?? ""}
             </span>
           </label>
-          <button type="submit" className="btn-primary btn-sweep text-sm" disabled={status === "saving"}>
-            <span className="btn-sweep-label">
+          <button
+            type="submit"
+            className="btn-primary admin-btn admin-btn-size"
+            disabled={status === "saving"}
+          >
+            <span className="admin-btn-label">
               {status === "saving" ? "Updating…" : "Update password"}
             </span>
           </button>

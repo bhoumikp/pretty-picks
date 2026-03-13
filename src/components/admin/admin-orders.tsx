@@ -99,12 +99,12 @@ export default function AdminOrders({ orders, products }: AdminOrdersProps) {
 
   return (
     <div className="grid gap-8">
-      <form onSubmit={handleSubmit} className="soft-card rounded-2xl p-6" noValidate>
+      <form onSubmit={handleSubmit} className="soft-card p-6" noValidate>
         <h3 className="text-lg font-[var(--font-heading)]">Add manual order</h3>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <div className="grid gap-2">
             <select
-              className={`admin-select rounded-lg border px-4 py-3 text-sm ${
+              className={`admin-select border px-4 py-3 text-sm ${
                 fieldErrors.productId ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
               value={form.productId}
@@ -133,7 +133,7 @@ export default function AdminOrders({ orders, products }: AdminOrdersProps) {
           </div>
           <div className="grid gap-2">
             <input
-              className={`rounded-lg border px-4 py-3 text-sm ${
+              className={`border px-4 py-3 text-sm ${
                 fieldErrors.customerName ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
               placeholder="Customer name"
@@ -156,7 +156,7 @@ export default function AdminOrders({ orders, products }: AdminOrdersProps) {
           </div>
           <div className="grid gap-2">
             <input
-              className={`rounded-lg border px-4 py-3 text-sm ${
+              className={`border px-4 py-3 text-sm ${
                 fieldErrors.phone ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
               placeholder="Phone number"
@@ -178,7 +178,7 @@ export default function AdminOrders({ orders, products }: AdminOrdersProps) {
             </span>
           </div>
           <select
-            className="admin-select rounded-lg border border-[var(--pp-border)] px-4 py-3 text-sm"
+            className="admin-select border border-[var(--pp-border)] px-4 py-3 text-sm"
             value={form.status}
             onChange={(event) => setForm({ ...form, status: event.target.value })}
           >
@@ -190,7 +190,7 @@ export default function AdminOrders({ orders, products }: AdminOrdersProps) {
         </div>
         <button
           type="submit"
-          className="mt-4 rounded-full bg-[var(--pp-gold)] px-6 py-3 text-sm font-semibold text-white"
+          className="mt-4 bg-[var(--pp-gold)] px-6 py-3 text-sm font-semibold text-white"
           disabled={loading}
         >
           {loading ? "Saving…" : "Create order"}
@@ -198,7 +198,7 @@ export default function AdminOrders({ orders, products }: AdminOrdersProps) {
         {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
       </form>
 
-      <div className="soft-card rounded-2xl p-6">
+      <div className="soft-card p-6">
         <h3 className="text-lg font-[var(--font-heading)]">Orders</h3>
         <div className="mt-4 space-y-4">
           {orders.map((order) => (
@@ -217,7 +217,7 @@ export default function AdminOrders({ orders, products }: AdminOrdersProps) {
               </div>
               <button
                 onClick={() => handleDelete(order.id)}
-                className="rounded-full border border-red-200 px-4 py-2 text-xs text-red-600"
+                className="border border-red-200 px-4 py-2 text-xs text-red-600"
               >
                 Delete
               </button>

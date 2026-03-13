@@ -13,13 +13,14 @@ export const metadata = {
 export default async function AdminProductsPage({
   searchParams,
 }: {
-  searchParams?: { page?: string; q?: string; sort?: string; dir?: string };
+  searchParams?: Promise<{ page?: string; q?: string; sort?: string; dir?: string }>;
 }) {
+  const params = (await searchParams) ?? {};
   const pageSize = 15;
-  const page = Math.max(1, Number(searchParams?.page ?? "1") || 1);
-  const query = (searchParams?.q ?? "").trim();
-  const sort = (searchParams?.sort ?? "updatedAt").trim();
-  const dir = (searchParams?.dir ?? "desc").trim();
+  const page = Math.max(1, Number(params.page ?? "1") || 1);
+  const query = (params.q ?? "").trim();
+  const sort = (params.sort ?? "updatedAt").trim();
+  const dir = (params.dir ?? "desc").trim();
   const allowedSorts = new Set(["name", "category", "price", "stock", "status", "updatedAt"]);
   const sortKey = (allowedSorts.has(sort) ? sort : "updatedAt") as
     | "name"

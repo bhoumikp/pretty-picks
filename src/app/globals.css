@@ -285,12 +285,23 @@ button:disabled {
   }
 
   .admin-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
     box-shadow: none;
   }
 
   .admin-btn:hover {
     box-shadow: none;
   }
+
+  .admin-btn-size {
+    height: 2.5rem;
+    padding: 0 1rem;
+    font-size: 0.875rem;
+  }
+
 
   .admin-btn-label {
     display: inline-block;

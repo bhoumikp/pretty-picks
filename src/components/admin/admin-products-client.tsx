@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import AdminProductsTable from "@/components/admin/admin-products-table";
 import type { ProductImage } from "@/types/catalog";
@@ -70,38 +70,44 @@ export default function AdminProductsClient({
     [initialSort, initialDir, pageSize]
   );
 
-  const syncUrl = (
-    nextQuery: string,
-    nextPage: number,
-    nextSort: string[],
-    nextDir: Array<"asc" | "desc">,
-    nextPageSize: number
-  ) => {
-    if (typeof window === "undefined") return;
-    const params = buildQueryString(nextQuery, nextPage, nextSort, nextDir, nextPageSize, defaults);
-    const url = params ? `/admin/products?${params}` : "/admin/products";
-    window.history.replaceState(null, "", url);
-  };
+  const syncUrl = useCallback(
+    (
+      nextQuery: string,
+      nextPage: number,
+      nextSort: string[],
+      nextDir: Array<"asc" | "desc">,
+      nextPageSize: number
+    ) => {
+      if (typeof window === "undefined") return;
+      const params = buildQueryString(nextQuery, nextPage, nextSort, nextDir, nextPageSize, defaults);
+      const url = params ? `/admin/products?${params}` : "/admin/products";
+      window.history.replaceState(null, "", url);
+    },
+    [defaults]
+  );
 
-  const fetchProducts = async (
-    nextQuery: string,
-    nextPage: number,
-    nextSort: string[],
-    nextDir: Array<"asc" | "desc">
-  ) => {
-    setLoading(true);
-    const params = buildQueryString(nextQuery, nextPage, nextSort, nextDir, rowsPerPage, defaults);
-    const response = await fetch(`/api/admin/products?${params}`, { cache: "no-store" });
-    if (response.ok) {
-      const data = (await response.json()) as { items: ProductRow[]; total: number };
-      setProducts(data.items);
-      setTotal(data.total);
-    } else {
-      setProducts([]);
-      setTotal(0);
-    }
-    setLoading(false);
-  };
+  const fetchProducts = useCallback(
+    async (
+      nextQuery: string,
+      nextPage: number,
+      nextSort: string[],
+      nextDir: Array<"asc" | "desc">
+    ) => {
+      setLoading(true);
+      const params = buildQueryString(nextQuery, nextPage, nextSort, nextDir, rowsPerPage, defaults);
+      const response = await fetch(`/api/admin/products?${params}`, { cache: "no-store" });
+      if (response.ok) {
+        const data = (await response.json()) as { items: ProductRow[]; total: number };
+        setProducts(data.items);
+        setTotal(data.total);
+      } else {
+        setProducts([]);
+        setTotal(0);
+      }
+      setLoading(false);
+    },
+    [defaults, rowsPerPage]
+  );
 
   useEffect(() => {
     if (!userTypedRef.current) return;
@@ -112,7 +118,7 @@ export default function AdminProductsClient({
       syncUrl(query, nextPage, sort, dir, rowsPerPage);
     }, 300);
     return () => window.clearTimeout(handle);
-  }, [query, rowsPerPage]);
+  }, [query, rowsPerPage, sort, dir, fetchProducts, syncUrl]);
 
   const handlePageChange = (nextPage: number) => {
     fetchProducts(query, nextPage, sort, dir);
@@ -143,8 +149,6 @@ export default function AdminProductsClient({
     syncUrl(query, nextPage, sort, dir, nextRows);
   };
 
-  const totalPages = useMemo(() => Math.max(1, Math.ceil(total / pageSize)), [total, pageSize]);
-
   return (
     <div className="grid gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -161,10 +165,10 @@ export default function AdminProductsClient({
                 setQuery(event.target.value);
               }}
               placeholder="Search products"
-              className="w-full rounded-lg border border-[var(--pp-border)] bg-white px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--pp-gold)]/30"
+              className="h-10 w-full border border-[var(--pp-border)] bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--pp-gold)]/30"
             />
           </div>
-          <Link href="/admin/products/new" className="btn-primary admin-btn text-xs px-4 py-2">
+          <Link href="/admin/products/new" className="btn-primary admin-btn admin-btn-size">
             <span className="admin-btn-label">Add product</span>
           </Link>
         </div>
@@ -184,7 +188,7 @@ export default function AdminProductsClient({
             <span className="h-5 w-[2px] bg-[var(--pp-ink)]/20" />
             Rows
             <select
-              className="admin-select rounded-lg border border-[var(--pp-border)] bg-white px-3 py-1 text-xs"
+              className="admin-select border border-[var(--pp-border)] bg-white px-3 py-1 text-xs"
               value={rowsPerPage}
               onChange={(event) => handleRowsChange(Number(event.target.value))}
             >

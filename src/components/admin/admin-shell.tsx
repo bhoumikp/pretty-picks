@@ -93,11 +93,15 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               </h1>
             </div>
             <div className="flex items-center gap-3">
-              <button type="button" className="btn-outline text-xs px-3 py-2" onClick={testToasts}>
+              <button
+                type="button"
+                className="btn-outline admin-btn admin-btn-size"
+                onClick={testToasts}
+              >
                 Test toasts
               </button>
               <form action="/api/auth/signout" method="post">
-                <button className="btn-outline text-sm">Sign out</button>
+                <button className="btn-outline admin-btn admin-btn-size">Sign out</button>
               </form>
             </div>
           </div>

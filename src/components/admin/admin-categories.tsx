@@ -1,44 +1,205 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import type { CategorySummary } from "@/types/catalog";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { X } from "lucide-react";
 import ToastStack from "@/components/ui/toast-stack";
+import AdminCategoriesTable from "@/components/admin/admin-categories-table";
 import { validateRequired, validateUrlOptional } from "@/lib/validation";
 
+interface CategoryRow {
+  id: string;
+  name: string;
+  slug: string;
+  image?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface AdminCategoriesProps {
-  categories: CategorySummary[];
+  initialCategories: CategoryRow[];
+  initialTotal: number;
+  initialPage: number;
+  pageSize: number;
+  initialQuery: string;
+  initialSort: string[];
+  initialDir: Array<"asc" | "desc">;
 }
 
 const emptyForm = { id: "", name: "", image: "" };
 
-export default function AdminCategories({ categories }: AdminCategoriesProps) {
-  const router = useRouter();
-  const [form, setForm] = useState(emptyForm);
+const buildQueryString = (
+  query: string,
+  page: number,
+  sort: string[],
+  dir: Array<"asc" | "desc">,
+  pageSize: number,
+  defaults: { sort: string; dir: "asc" | "desc"; pageSize: number }
+) => {
+  const params = new URLSearchParams();
+  if (query.trim()) params.set("q", query.trim());
+  if (sort[0] && sort[0] !== defaults.sort) params.set("sort", sort[0]);
+  if (dir[0] && dir[0] !== defaults.dir) params.set("dir", dir[0]);
+  if (page > 1) params.set("page", String(page));
+  if (pageSize !== defaults.pageSize) params.set("pageSize", String(pageSize));
+  return params.toString();
+};
+
+export default function AdminCategories({
+  initialCategories,
+  initialTotal,
+  initialPage,
+  pageSize,
+  initialQuery,
+  initialSort,
+  initialDir,
+}: AdminCategoriesProps) {
+  const [categories, setCategories] = useState(initialCategories);
+  const [total, setTotal] = useState(initialTotal);
+  const [page, setPage] = useState(initialPage);
+  const [query, setQuery] = useState(initialQuery);
+  const [sort, setSort] = useState(initialSort);
+  const [dir, setDir] = useState<Array<"asc" | "desc">>(initialDir);
+  const [rowsPerPage, setRowsPerPage] = useState(pageSize);
   const [loading, setLoading] = useState(false);
+  const userTypedRef = useRef(false);
+  const defaults = useMemo(
+    () => ({
+      sort: initialSort[0] ?? "name",
+      dir: (initialDir[0] ?? "asc") as "asc" | "desc",
+      pageSize,
+    }),
+    [initialSort, initialDir, pageSize]
+  );
+
+  const [form, setForm] = useState(emptyForm);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; image?: string }>({});
   const [toasts, setToasts] = useState<
     Array<{ id: string; message: string; type?: "success" | "error" | "warning" | "primary" }>
   >([]);
-  const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<{ name?: string; image?: string }>({});
+
+  const syncUrl = useCallback(
+    (
+      nextQuery: string,
+      nextPage: number,
+      nextSort: string[],
+      nextDir: Array<"asc" | "desc">,
+      nextPageSize: number
+    ) => {
+      if (typeof window === "undefined") return;
+      const params = buildQueryString(nextQuery, nextPage, nextSort, nextDir, nextPageSize, defaults);
+      const url = params ? `/admin/categories?${params}` : "/admin/categories";
+      window.history.replaceState(null, "", url);
+    },
+    [defaults]
+  );
+
+  const fetchCategories = useCallback(
+    async (
+      nextQuery: string,
+      nextPage: number,
+      nextSort: string[],
+      nextDir: Array<"asc" | "desc">
+    ) => {
+      setLoading(true);
+      const params = buildQueryString(nextQuery, nextPage, nextSort, nextDir, rowsPerPage, defaults);
+      const response = await fetch(`/api/admin/categories?${params}`, { cache: "no-store" });
+      if (response.ok) {
+        const data = (await response.json()) as { items: CategoryRow[]; total: number };
+        setCategories(data.items);
+        setTotal(data.total);
+      } else {
+        setCategories([]);
+        setTotal(0);
+      }
+      setLoading(false);
+    },
+    [defaults, rowsPerPage]
+  );
+
+  useEffect(() => {
+    if (!userTypedRef.current) return;
+    const handle = window.setTimeout(() => {
+      const nextPage = 1;
+      fetchCategories(query, nextPage, sort, dir);
+      setPage(nextPage);
+      syncUrl(query, nextPage, sort, dir, rowsPerPage);
+    }, 300);
+    return () => window.clearTimeout(handle);
+  }, [query, rowsPerPage, sort, dir, fetchCategories, syncUrl]);
+
+  const handlePageChange = (nextPage: number) => {
+    fetchCategories(query, nextPage, sort, dir);
+    setPage(nextPage);
+    syncUrl(query, nextPage, sort, dir, rowsPerPage);
+  };
+
+  const handleSort = (key: string) => {
+    const existingIndex = sort.indexOf(key);
+    const currentDir = existingIndex >= 0 ? dir[existingIndex] : "desc";
+    const nextDirection = currentDir === "asc" ? "desc" : "asc";
+    const nextSort = [key];
+    const nextDir: Array<"asc" | "desc"> = [nextDirection];
+
+    const nextPage = 1;
+    setSort(nextSort);
+    setDir(nextDir);
+    setPage(nextPage);
+    fetchCategories(query, nextPage, nextSort, nextDir);
+    syncUrl(query, nextPage, nextSort, nextDir, rowsPerPage);
+  };
+
+  const handleRowsChange = (nextRows: number) => {
+    const nextPage = 1;
+    setRowsPerPage(nextRows);
+    setPage(nextPage);
+    fetchCategories(query, nextPage, sort, dir);
+    syncUrl(query, nextPage, sort, dir, nextRows);
+  };
+
+  const openAddModal = () => {
+    setForm(emptyForm);
+    setFieldErrors({});
+    setError(null);
+    setModalOpen(true);
+  };
+
+  const openEditModal = (category: CategoryRow) => {
+    setForm({
+      id: category.id,
+      name: category.name,
+      image: category.image ?? "",
+    });
+    setFieldErrors({});
+    setError(null);
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setForm(emptyForm);
+    setFieldErrors({});
+    setError(null);
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setLoading(true);
-    setToasts([]);
+    setSaving(true);
     setError(null);
     setFieldErrors({});
 
     const nameError = validateRequired(form.name, "Category name");
     if (nameError) {
       setFieldErrors({ name: nameError.message });
-      setLoading(false);
+      setSaving(false);
       return;
     }
     const urlError = validateUrlOptional(form.image, "Image URL");
     if (urlError) {
       setFieldErrors({ image: urlError.message });
-      setLoading(false);
+      setSaving(false);
       return;
     }
 
@@ -51,6 +212,7 @@ export default function AdminCategories({ categories }: AdminCategoriesProps) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
+
     if (!response.ok) {
       setError("Unable to save category. Please try again.");
       const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -58,141 +220,184 @@ export default function AdminCategories({ categories }: AdminCategoriesProps) {
         ...prev,
         { id, type: "error", message: "Unable to save category. Please try again." },
       ]);
-      setLoading(false);
+      setSaving(false);
       return;
     }
 
-    setForm(emptyForm);
-    setLoading(false);
     const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
     setToasts((prev) => [
       ...prev,
       { id, type: "success", message: form.id ? "Category updated." : "Category created." },
     ]);
-    router.refresh();
-  };
 
-  const handleEdit = (category: CategorySummary) => {
-    setForm({
-      id: category.id,
-      name: category.name,
-      image: category.image ?? "",
-    });
+    const nextPage = form.id ? page : 1;
+    setPage(nextPage);
+    setModalOpen(false);
+    setForm(emptyForm);
+    await fetchCategories(query, nextPage, sort, dir);
+    syncUrl(query, nextPage, sort, dir, rowsPerPage);
+    setSaving(false);
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this category?")) return;
-    await fetch(`/api/categories/${id}`, { method: "DELETE" });
-    router.refresh();
+    const response = await fetch(`/api/categories/${id}`, { method: "DELETE" });
+    const toastId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    if (!response.ok) {
+      setToasts((prev) => [
+        ...prev,
+        { id: toastId, type: "error", message: "Unable to delete category." },
+      ]);
+      return;
+    }
+    setToasts((prev) => [...prev, { id: toastId, type: "success", message: "Category deleted." }]);
+    const shouldGoBack = categories.length <= 1 && page > 1;
+    const nextPage = shouldGoBack ? page - 1 : page;
+    setPage(nextPage);
+    await fetchCategories(query, nextPage, sort, dir);
+    syncUrl(query, nextPage, sort, dir, rowsPerPage);
   };
 
   return (
     <>
-      <div className="grid gap-8">
-        <form onSubmit={handleSubmit} className="soft-card rounded-2xl p-6" noValidate>
-          <h3 className="text-lg font-[var(--font-heading)]">
-            {form.id ? "Edit category" : "Add new category"}
-          </h3>
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <div className="grid gap-2">
-            <input
-              className={`rounded-lg border px-4 py-3 text-sm ${
-                fieldErrors.name ? "border-red-300" : "border-[var(--pp-border)]"
-              }`}
-              placeholder="Category name"
-              value={form.name}
-              onChange={(event) => setForm({ ...form, name: event.target.value })}
-              onBlur={(event) => {
-                if (!fieldErrors.name) return;
-                const result = validateRequired(event.target.value, "Category name");
-                if (!result) {
-                  setFieldErrors((prev) => ({ ...prev, name: undefined }));
-                }
-              }}
-            />
-            <span
-              data-show={Boolean(fieldErrors.name)}
-              className="field-error text-xs normal-case text-red-600"
-            >
-              {fieldErrors.name ?? ""}
-            </span>
+      <div className="grid gap-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">Catalog</p>
+            <h2 className="text-2xl font-[var(--font-heading)]">Categories</h2>
           </div>
-          <div className="grid gap-2">
-            <input
-              className={`rounded-lg border px-4 py-3 text-sm ${
-                fieldErrors.image ? "border-red-300" : "border-[var(--pp-border)]"
-              }`}
-              placeholder="Image URL"
-              value={form.image}
-              onChange={(event) => setForm({ ...form, image: event.target.value })}
-              onBlur={(event) => {
-                if (!fieldErrors.image) return;
-                const result = validateUrlOptional(event.target.value, "Image URL");
-                if (!result) {
-                  setFieldErrors((prev) => ({ ...prev, image: undefined }));
-                }
-              }}
-            />
-            <span
-              data-show={Boolean(fieldErrors.image)}
-              className="field-error text-xs normal-case text-red-600"
-            >
-              {fieldErrors.image ?? ""}
-            </span>
-          </div>
-          </div>
-        <div className="mt-4 flex gap-3">
-            <button
-              type="submit"
-              className="rounded-full bg-[var(--pp-gold)] px-6 py-3 text-sm font-semibold text-white"
-              disabled={loading}
-            >
-              {loading ? "Saving…" : "Save category"}
+          <div className="flex flex-1 items-center justify-end gap-3">
+            <div className="flex w-full max-w-xs items-center gap-2">
+              <input
+                value={query}
+                onChange={(event) => {
+                  userTypedRef.current = true;
+                  setQuery(event.target.value);
+                }}
+                placeholder="Search categories"
+                className="h-10 w-full border border-[var(--pp-border)] bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--pp-gold)]/30"
+              />
+            </div>
+            <button type="button" onClick={openAddModal} className="btn-primary admin-btn admin-btn-size">
+              <span className="admin-btn-label">Add category</span>
             </button>
-          {form.id && (
+          </div>
+        </div>
+
+        <AdminCategoriesTable
+          categories={categories}
+          page={page}
+          pageSize={rowsPerPage}
+          total={total}
+          sort={sort}
+          dir={dir}
+          onSort={handleSort}
+          onPageChange={handlePageChange}
+          onEdit={openEditModal}
+          onDelete={handleDelete}
+          isLoading={loading}
+          footerSlot={
+            <div className="flex items-center gap-2 text-xs text-[var(--pp-muted)]">
+              <span className="h-5 w-[2px] bg-[var(--pp-ink)]/20" />
+              Rows
+              <select
+                className="admin-select border border-[var(--pp-border)] bg-white px-3 py-1 text-xs"
+                value={rowsPerPage}
+                onChange={(event) => handleRowsChange(Number(event.target.value))}
+              >
+                {[10, 15, 25, 50].map((value) => (
+                  <option key={value} value={value}>
+                    {value}
+                  </option>
+                ))}
+              </select>
+            </div>
+          }
+        />
+      </div>
+
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+        <div className="w-full max-w-lg bg-white p-6 shadow-lg">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-[var(--font-heading)]">
+                {form.id ? "Edit category" : "Add category"}
+              </h3>
               <button
                 type="button"
-                className="rounded-full border border-[var(--pp-border)] px-6 py-3 text-sm"
-                onClick={() => setForm(emptyForm)}
+                onClick={closeModal}
+                className="flex h-9 w-9 items-center justify-center text-[var(--pp-muted)] transition hover:text-[var(--pp-ink)]"
+                aria-label="Close modal"
               >
-                Cancel edit
+                <X className="h-4 w-4" />
               </button>
-          )}
-        </div>
-        {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
-      </form>
-
-        <div className="soft-card rounded-2xl p-6">
-          <h3 className="text-lg font-[var(--font-heading)]">Categories</h3>
-          <div className="mt-4 space-y-4">
-            {categories.map((category) => (
-              <div
-                key={category.id}
-                className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--pp-border)] pb-4"
-              >
-                <div>
-                  <p className="text-sm font-semibold">{category.name}</p>
-                  <p className="text-xs text-[var(--pp-muted)]">/{category.slug}</p>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleEdit(category)}
-                    className="rounded-full border border-[var(--pp-border)] px-4 py-2 text-xs"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(category.id)}
-                    className="rounded-full border border-red-200 px-4 py-2 text-xs text-red-600"
-                  >
-                    Delete
-                  </button>
-                </div>
+            </div>
+            <form onSubmit={handleSubmit} className="mt-4 grid gap-4" noValidate>
+              <div className="grid gap-2">
+                <input
+                  className={`border px-4 py-3 text-sm ${
+                    fieldErrors.name ? "border-red-300" : "border-[var(--pp-border)]"
+                  }`}
+                  placeholder="Category name"
+                  value={form.name}
+                  onChange={(event) => setForm({ ...form, name: event.target.value })}
+                  onBlur={(event) => {
+                    if (!fieldErrors.name) return;
+                    const result = validateRequired(event.target.value, "Category name");
+                    if (!result) {
+                      setFieldErrors((prev) => ({ ...prev, name: undefined }));
+                    }
+                  }}
+                />
+                <span
+                  data-show={Boolean(fieldErrors.name)}
+                  className="field-error text-xs normal-case text-red-600"
+                >
+                  {fieldErrors.name ?? ""}
+                </span>
               </div>
-            ))}
+              <div className="grid gap-2">
+                <input
+                  className={`border px-4 py-3 text-sm ${
+                    fieldErrors.image ? "border-red-300" : "border-[var(--pp-border)]"
+                  }`}
+                  placeholder="Image URL"
+                  value={form.image}
+                  onChange={(event) => setForm({ ...form, image: event.target.value })}
+                  onBlur={(event) => {
+                    if (!fieldErrors.image) return;
+                    const result = validateUrlOptional(event.target.value, "Image URL");
+                    if (!result) {
+                      setFieldErrors((prev) => ({ ...prev, image: undefined }));
+                    }
+                  }}
+                />
+                <span
+                  data-show={Boolean(fieldErrors.image)}
+                  className="field-error text-xs normal-case text-red-600"
+                >
+                  {fieldErrors.image ?? ""}
+                </span>
+              </div>
+              {error && <p className="text-sm text-red-600">{error}</p>}
+              <div className="flex justify-end gap-3">
+                <button type="button" className="btn-outline admin-btn admin-btn-size" onClick={closeModal}>
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn-primary admin-btn admin-btn-size"
+                  disabled={saving}
+                >
+                  <span className="admin-btn-label">
+                    {saving ? (form.id ? "Updating…" : "Saving…") : form.id ? "Update…" : "Save…"}
+                  </span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-      </div>
+      )}
       <ToastStack
         toasts={toasts}
         onClose={(id) => setToasts((prev) => prev.filter((toast) => toast.id !== id))}

@@ -17,7 +17,6 @@ export default async function HomePage() {
   let featuredProducts: ProductSummary[] = [];
   let categories: CategorySummary[] = [];
   let under199: ProductSummary[] = [];
-  let dbUnavailable = false;
 
   try {
     const [featuredResult, categoriesResult, underResult] = await Promise.allSettled([
@@ -59,21 +58,14 @@ export default async function HomePage() {
     ]);
     if (featuredResult.status === "fulfilled") {
       featuredProducts = featuredResult.value;
-    } else {
-      dbUnavailable = true;
     }
     if (categoriesResult.status === "fulfilled") {
       categories = categoriesResult.value;
-    } else {
-      dbUnavailable = true;
     }
     if (underResult.status === "fulfilled") {
       under199 = underResult.value;
-    } else {
-      dbUnavailable = true;
     }
   } catch (error) {
-    dbUnavailable = true;
     console.error("HomePage: Prisma unavailable, rendering empty lists.", error);
   }
 

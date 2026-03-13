@@ -28,7 +28,7 @@ export default async function AdminContactsPage() {
   }));
 
   return (
-    <div className="soft-card rounded-2xl p-6">
+    <div className="soft-card p-6">
       <h3 className="text-lg font-[var(--font-heading)]">Contact messages</h3>
       {dbUnavailable && (
         <div className="mt-3">

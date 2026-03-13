@@ -73,7 +73,7 @@ export default function AdminSidebar({
               </span>
               <span className={`${collapsed ? "lg:hidden" : ""}`}>{link.label}</span>
               {collapsed && (
-                <span className="pointer-events-none absolute left-12 top-1/2 hidden -translate-y-1/2 whitespace-nowrap rounded-md border border-[var(--pp-border)] bg-white px-2.5 py-1 text-xs text-[var(--pp-ink)] opacity-0 shadow-sm transition group-hover:opacity-100 lg:block">
+                <span className="pointer-events-none absolute left-12 top-1/2 hidden -translate-y-1/2 whitespace-nowrap border border-[var(--pp-border)] bg-white px-2.5 py-1 text-xs text-[var(--pp-ink)] opacity-0 shadow-sm transition group-hover:opacity-100 lg:block">
                   {link.label}
                 </span>
               )}

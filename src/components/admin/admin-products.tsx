@@ -277,14 +277,14 @@ export default function AdminProductForm({
 
   return (
     <div className="grid gap-6">
-      <form onSubmit={handleSubmit} className="soft-card rounded-2xl p-6" noValidate>
+      <form onSubmit={handleSubmit} className="soft-card p-6" noValidate>
         <h3 className="text-lg font-[var(--font-heading)]">
           {form.id ? "Edit product" : "Add new product"}
         </h3>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <div className="grid gap-2">
             <input
-              className={`rounded-lg border px-4 py-3 text-sm ${
+              className={`border px-4 py-3 text-sm ${
                 fieldErrors.name ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
               placeholder="Product name"
@@ -307,7 +307,7 @@ export default function AdminProductForm({
           </div>
           <div className="grid gap-2">
             <input
-              className={`rounded-lg border px-4 py-3 text-sm ${
+              className={`border px-4 py-3 text-sm ${
                 fieldErrors.price ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
               placeholder="Price"
@@ -332,7 +332,7 @@ export default function AdminProductForm({
           </div>
           <div className="grid gap-2">
             <input
-              className={`rounded-lg border px-4 py-3 text-sm ${
+              className={`border px-4 py-3 text-sm ${
                 fieldErrors.material ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
               placeholder="Material"
@@ -355,7 +355,7 @@ export default function AdminProductForm({
           </div>
           <div className="grid gap-2">
             <input
-              className={`rounded-lg border px-4 py-3 text-sm ${
+              className={`border px-4 py-3 text-sm ${
                 fieldErrors.stock ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
               placeholder="Stock"
@@ -380,7 +380,7 @@ export default function AdminProductForm({
           </div>
           <div className="grid gap-2">
             <select
-              className={`admin-select rounded-lg border px-4 py-3 text-sm ${
+              className={`admin-select border px-4 py-3 text-sm ${
                 fieldErrors.categoryId ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
               value={form.categoryId}
@@ -420,7 +420,7 @@ export default function AdminProductForm({
         </div>
         <div className="mt-4 grid gap-2">
           <textarea
-            className={`w-full rounded-lg border px-4 py-3 text-sm ${
+            className={`w-full border px-4 py-3 text-sm ${
               fieldErrors.description ? "border-red-300" : "border-[var(--pp-border)]"
             }`}
             placeholder="Description"
@@ -443,7 +443,7 @@ export default function AdminProductForm({
           </span>
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
-          <label className="rounded-full border border-[var(--pp-border)] px-4 py-2 cursor-pointer">
+          <label className="border border-[var(--pp-border)] px-4 py-2 cursor-pointer">
             <input
               type="file"
               multiple
@@ -455,7 +455,7 @@ export default function AdminProductForm({
             {uploading ? "Uploading..." : "Upload images"}
           </label>
           {uploading && (
-            <div className="h-2 w-40 overflow-hidden rounded-full bg-[var(--pp-beige)]">
+            <div className="h-2 w-40 overflow-hidden bg-[var(--pp-beige)]">
               <div
                 className="h-full bg-[var(--pp-gold)]"
                 style={{ width: `${uploadProgress}%` }}
@@ -475,7 +475,7 @@ export default function AdminProductForm({
         <div className="mt-3 flex flex-wrap gap-2">
           <div className="grid flex-1 gap-2">
             <input
-              className={`w-full rounded-lg border px-4 py-3 text-sm ${
+              className={`w-full border px-4 py-3 text-sm ${
                 fieldErrors.imageUrl ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
               placeholder="Paste image URL"
@@ -499,7 +499,7 @@ export default function AdminProductForm({
           <button
             type="button"
             onClick={handleAddManualUrl}
-            className="rounded-full border border-[var(--pp-border)] px-4 py-2 text-xs"
+            className="border border-[var(--pp-border)] px-4 py-2 text-xs"
           >
             Add URL
           </button>
@@ -510,7 +510,7 @@ export default function AdminProductForm({
             {form.images.map((image, index) => (
               <div
                 key={`${image.url}-${index}`}
-                className="rounded-xl border border-[var(--pp-border)] bg-white p-2"
+                className="border border-[var(--pp-border)] bg-white p-2"
               >
                 <div className="relative h-24 w-full overflow-hidden rounded-lg">
                   <Image
@@ -535,14 +535,14 @@ export default function AdminProductForm({
         <div className="mt-4 flex flex-wrap items-center justify-end gap-3">
           <button
             type="button"
-            className="btn-outline text-xs px-4 py-2"
+            className="btn-outline admin-btn admin-btn-size"
             onClick={() => router.push("/admin/products")}
           >
             Back
           </button>
           <button
             type="submit"
-            className="rounded-full bg-[var(--pp-gold)] px-6 py-3 text-sm font-semibold text-white"
+            className="btn-primary admin-btn admin-btn-size"
             disabled={loading || uploading}
           >
             {loading ? "Saving…" : "Save product"}

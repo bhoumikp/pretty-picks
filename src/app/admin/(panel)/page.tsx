@@ -44,7 +44,7 @@ export default async function AdminDashboard() {
         )}
       </div>
       <div className="grid gap-4 md:grid-cols-3">
-        <div className="soft-card rounded-2xl p-5">
+        <div className="soft-card p-5">
           <p className="text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">
             Total products
           </p>
@@ -52,7 +52,7 @@ export default async function AdminDashboard() {
             {productCount}
           </h3>
         </div>
-        <div className="soft-card rounded-2xl p-5">
+        <div className="soft-card p-5">
           <p className="text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">
             Total orders
           </p>
@@ -60,7 +60,7 @@ export default async function AdminDashboard() {
             {orderCount}
           </h3>
         </div>
-        <div className="soft-card rounded-2xl p-5">
+        <div className="soft-card p-5">
           <p className="text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">
             Total revenue
           </p>
