@@ -82,14 +82,14 @@ export default function AdminCategories({ categories }: AdminCategoriesProps) {
   return (
     <>
       <div className="grid gap-8">
-        <form onSubmit={handleSubmit} className="soft-card rounded-3xl p-6" noValidate>
+        <form onSubmit={handleSubmit} className="soft-card rounded-2xl p-6" noValidate>
           <h3 className="text-lg font-[var(--font-heading)]">
             {form.id ? "Edit category" : "Add new category"}
           </h3>
           <div className="mt-4 grid gap-4 md:grid-cols-2">
           <div className="grid gap-2">
             <input
-              className={`rounded-2xl border px-4 py-3 text-sm ${
+              className={`rounded-lg border px-4 py-3 text-sm ${
                 fieldErrors.name ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
               placeholder="Category name"
@@ -112,7 +112,7 @@ export default function AdminCategories({ categories }: AdminCategoriesProps) {
           </div>
           <div className="grid gap-2">
             <input
-              className={`rounded-2xl border px-4 py-3 text-sm ${
+              className={`rounded-lg border px-4 py-3 text-sm ${
                 fieldErrors.image ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
               placeholder="Image URL"
@@ -155,7 +155,7 @@ export default function AdminCategories({ categories }: AdminCategoriesProps) {
         {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
       </form>
 
-        <div className="soft-card rounded-3xl p-6">
+        <div className="soft-card rounded-2xl p-6">
           <h3 className="text-lg font-[var(--font-heading)]">Categories</h3>
           <div className="mt-4 space-y-4">
             {categories.map((category) => (

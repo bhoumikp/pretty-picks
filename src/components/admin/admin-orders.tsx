@@ -92,12 +92,12 @@ export default function AdminOrders({ orders, products }: AdminOrdersProps) {
 
   return (
     <div className="grid gap-8">
-      <form onSubmit={handleSubmit} className="soft-card rounded-3xl p-6" noValidate>
+      <form onSubmit={handleSubmit} className="soft-card rounded-2xl p-6" noValidate>
         <h3 className="text-lg font-[var(--font-heading)]">Add manual order</h3>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <div className="grid gap-2">
             <select
-              className={`rounded-2xl border px-4 py-3 text-sm ${
+              className={`admin-select rounded-lg border px-4 py-3 text-sm ${
                 fieldErrors.productId ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
               value={form.productId}
@@ -126,7 +126,7 @@ export default function AdminOrders({ orders, products }: AdminOrdersProps) {
           </div>
           <div className="grid gap-2">
             <input
-              className={`rounded-2xl border px-4 py-3 text-sm ${
+              className={`rounded-lg border px-4 py-3 text-sm ${
                 fieldErrors.customerName ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
               placeholder="Customer name"
@@ -149,7 +149,7 @@ export default function AdminOrders({ orders, products }: AdminOrdersProps) {
           </div>
           <div className="grid gap-2">
             <input
-              className={`rounded-2xl border px-4 py-3 text-sm ${
+              className={`rounded-lg border px-4 py-3 text-sm ${
                 fieldErrors.phone ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
               placeholder="Phone number"
@@ -157,7 +157,7 @@ export default function AdminOrders({ orders, products }: AdminOrdersProps) {
               onChange={(event) => setForm({ ...form, phone: event.target.value })}
               onBlur={(event) => {
                 if (!fieldErrors.phone) return;
-                const result = validatePhone(event.target.value, "Phone number");
+                const result = validatePhone(event.target.value);
                 if (!result) {
                   setFieldErrors((prev) => ({ ...prev, phone: undefined }));
                 }
@@ -171,7 +171,7 @@ export default function AdminOrders({ orders, products }: AdminOrdersProps) {
             </span>
           </div>
           <select
-            className="rounded-2xl border border-[var(--pp-border)] px-4 py-3 text-sm"
+            className="admin-select rounded-lg border border-[var(--pp-border)] px-4 py-3 text-sm"
             value={form.status}
             onChange={(event) => setForm({ ...form, status: event.target.value })}
           >
@@ -191,7 +191,7 @@ export default function AdminOrders({ orders, products }: AdminOrdersProps) {
         {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
       </form>
 
-      <div className="soft-card rounded-3xl p-6">
+      <div className="soft-card rounded-2xl p-6">
         <h3 className="text-lg font-[var(--font-heading)]">Orders</h3>
         <div className="mt-4 space-y-4">
           {orders.map((order) => (

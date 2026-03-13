@@ -16,7 +16,7 @@ export default async function AdminContactsPage() {
   }));
 
   return (
-    <div className="soft-card rounded-3xl p-6">
+    <div className="soft-card rounded-2xl p-6">
       <h3 className="text-lg font-[var(--font-heading)]">Contact messages</h3>
       <div className="mt-4">
         <AdminContacts contacts={serialized} />

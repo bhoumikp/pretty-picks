@@ -251,14 +251,14 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
 
   return (
     <div className="grid gap-8">
-      <form onSubmit={handleSubmit} className="soft-card rounded-3xl p-6" noValidate>
+      <form onSubmit={handleSubmit} className="soft-card rounded-2xl p-6" noValidate>
         <h3 className="text-lg font-[var(--font-heading)]">
           {form.id ? "Edit product" : "Add new product"}
         </h3>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <div className="grid gap-2">
             <input
-              className={`rounded-2xl border px-4 py-3 text-sm ${
+              className={`rounded-lg border px-4 py-3 text-sm ${
                 fieldErrors.name ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
               placeholder="Product name"
@@ -281,7 +281,7 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
           </div>
           <div className="grid gap-2">
             <input
-              className={`rounded-2xl border px-4 py-3 text-sm ${
+              className={`rounded-lg border px-4 py-3 text-sm ${
                 fieldErrors.price ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
               placeholder="Price"
@@ -306,7 +306,7 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
           </div>
           <div className="grid gap-2">
             <input
-              className={`rounded-2xl border px-4 py-3 text-sm ${
+              className={`rounded-lg border px-4 py-3 text-sm ${
                 fieldErrors.material ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
               placeholder="Material"
@@ -329,7 +329,7 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
           </div>
           <div className="grid gap-2">
             <input
-              className={`rounded-2xl border px-4 py-3 text-sm ${
+              className={`rounded-lg border px-4 py-3 text-sm ${
                 fieldErrors.stock ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
               placeholder="Stock"
@@ -354,7 +354,7 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
           </div>
           <div className="grid gap-2">
             <select
-              className={`rounded-2xl border px-4 py-3 text-sm ${
+              className={`admin-select rounded-lg border px-4 py-3 text-sm ${
                 fieldErrors.categoryId ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
               value={form.categoryId}
@@ -394,7 +394,7 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
         </div>
         <div className="mt-4 grid gap-2">
           <textarea
-            className={`w-full rounded-2xl border px-4 py-3 text-sm ${
+            className={`w-full rounded-lg border px-4 py-3 text-sm ${
               fieldErrors.description ? "border-red-300" : "border-[var(--pp-border)]"
             }`}
             placeholder="Description"
@@ -449,7 +449,7 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
         <div className="mt-3 flex flex-wrap gap-2">
           <div className="grid flex-1 gap-2">
             <input
-              className={`w-full rounded-2xl border px-4 py-3 text-sm ${
+              className={`w-full rounded-lg border px-4 py-3 text-sm ${
                 fieldErrors.imageUrl ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
               placeholder="Paste image URL"
@@ -484,9 +484,9 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
             {form.images.map((image, index) => (
               <div
                 key={`${image.url}-${index}`}
-                className="rounded-2xl border border-[var(--pp-border)] bg-white p-2"
+                className="rounded-xl border border-[var(--pp-border)] bg-white p-2"
               >
-                <div className="relative h-24 w-full overflow-hidden rounded-xl">
+                <div className="relative h-24 w-full overflow-hidden rounded-lg">
                   <Image
                     src={image.url}
                     alt={`Product image ${index + 1}`}
@@ -526,7 +526,7 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
         </div>
       </form>
 
-      <div className="soft-card rounded-3xl p-6">
+      <div className="soft-card rounded-2xl p-6">
         <h3 className="text-lg font-[var(--font-heading)]">Products list</h3>
         <div className="mt-4 space-y-4">
           {products.map((product) => (

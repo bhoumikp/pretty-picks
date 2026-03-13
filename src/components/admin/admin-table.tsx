@@ -5,7 +5,7 @@ interface AdminTableProps {
 
 export default function AdminTable({ headers, rows }: AdminTableProps) {
   return (
-    <div className="overflow-x-auto rounded-2xl border border-[var(--pp-border)] bg-white">
+    <div className="overflow-x-auto rounded-xl border border-[var(--pp-border)] bg-white">
       <table className="min-w-full text-sm">
         <thead className="bg-[var(--pp-beige)] text-left">
           <tr>
