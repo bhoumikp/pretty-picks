@@ -11,7 +11,7 @@ import {
   Users,
 } from "lucide-react";
 
-const navIcons: Record<string, JSX.Element> = {
+const navIcons: Record<string, React.ReactElement> = {
   Dashboard: <LayoutGrid className="h-4 w-4" />,
   Products: <Boxes className="h-4 w-4" />,
   Categories: <Layers className="h-4 w-4" />,

@@ -25,9 +25,10 @@ interface AdminProductsTableProps {
   total: number;
   sort: string[];
   dir: Array<"asc" | "desc">;
-  onSort: (key: string, shiftKey: boolean) => void;
+  onSort: (key: string) => void;
   onPageChange: (nextPage: number) => void;
   isLoading?: boolean;
+  footerSlot?: React.ReactNode;
 }
 
 const getPageNumbers = (current: number, total: number) => {
@@ -47,6 +48,7 @@ export default function AdminProductsTable({
   onSort,
   onPageChange,
   isLoading = false,
+  footerSlot,
 }: AdminProductsTableProps) {
   const router = useRouter();
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -90,7 +92,7 @@ export default function AdminProductsTable({
               <th className="px-5 py-4">
                 <button
                   type="button"
-                  onClick={(event) => onSort("name", event.shiftKey)}
+                  onClick={() => onSort("name")}
                   className="inline-flex items-center gap-2 cursor-pointer"
                 >
                   Product
@@ -105,7 +107,7 @@ export default function AdminProductsTable({
               <th className="px-5 py-4">
                 <button
                   type="button"
-                  onClick={(event) => onSort("category", event.shiftKey)}
+                  onClick={() => onSort("category")}
                   className="inline-flex items-center gap-2 cursor-pointer"
                 >
                   Category
@@ -120,7 +122,7 @@ export default function AdminProductsTable({
               <th className="px-5 py-4">
                 <button
                   type="button"
-                  onClick={(event) => onSort("price", event.shiftKey)}
+                  onClick={() => onSort("price")}
                   className="inline-flex items-center gap-2 cursor-pointer"
                 >
                   Price
@@ -135,7 +137,7 @@ export default function AdminProductsTable({
               <th className="px-5 py-4">
                 <button
                   type="button"
-                  onClick={(event) => onSort("stock", event.shiftKey)}
+                  onClick={() => onSort("stock")}
                   className="inline-flex items-center gap-2 cursor-pointer"
                 >
                   Stock
@@ -150,7 +152,7 @@ export default function AdminProductsTable({
               <th className="px-5 py-4">
                 <button
                   type="button"
-                  onClick={(event) => onSort("status", event.shiftKey)}
+                  onClick={() => onSort("status")}
                   className="inline-flex items-center gap-2 cursor-pointer"
                 >
                   Status
@@ -165,7 +167,7 @@ export default function AdminProductsTable({
               <th className="px-5 py-4">
                 <button
                   type="button"
-                  onClick={(event) => onSort("updatedAt", event.shiftKey)}
+                  onClick={() => onSort("updatedAt")}
                   className="inline-flex items-center gap-2 cursor-pointer"
                 >
                   Updated
@@ -273,11 +275,14 @@ export default function AdminProductsTable({
           </tbody>
         </table>
       </div>
-      <div className="sticky bottom-0 flex flex-wrap items-center justify-between gap-3 border-t border-[var(--pp-border)] bg-white px-5 py-4 text-sm">
+      <div className="sticky bottom-0 flex flex-wrap items-center gap-3 border-t border-[var(--pp-border)] bg-white px-5 py-4 text-sm">
         <span className="text-[var(--pp-muted)]">
           Page {page} of {totalPages} · {total} items
         </span>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
+          {footerSlot}
+        </div>
+        <div className="ml-auto flex items-center gap-2">
           <button
             type="button"
             onClick={() => onPageChange(Math.max(1, page - 1))}

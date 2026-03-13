@@ -21,13 +21,14 @@ export default async function AdminProductsPage({
   const sort = (searchParams?.sort ?? "updatedAt").trim();
   const dir = (searchParams?.dir ?? "desc").trim();
   const allowedSorts = new Set(["name", "category", "price", "stock", "status", "updatedAt"]);
-  const sortKeys = sort
-    .split(",")
-    .map((value) => value.trim())
-    .filter((value) => allowedSorts.has(value));
-  const dirKeys = dir.split(",").map((value) => (value === "asc" ? "asc" : "desc"));
-  if (!sortKeys.length) sortKeys.push("updatedAt");
-  while (dirKeys.length < sortKeys.length) dirKeys.push("desc");
+  const sortKey = (allowedSorts.has(sort) ? sort : "updatedAt") as
+    | "name"
+    | "category"
+    | "price"
+    | "stock"
+    | "status"
+    | "updatedAt";
+  const dirKey: Prisma.SortOrder = dir === "asc" ? "asc" : "desc";
 
   const where = query
     ? {
@@ -43,15 +44,14 @@ export default async function AdminProductsPage({
   let total = 0;
   let dbUnavailable = false;
 
-  const orderBy = sortKeys.map((key, index) => {
-    const direction = (dirKeys[index] ?? "desc") as "asc" | "desc";
-    if (key === "name") return { name: direction };
-    if (key === "category") return { category: { name: direction } };
-    if (key === "price") return { price: direction };
-    if (key === "stock") return { stock: direction };
-    if (key === "status") return { stock: direction };
-    return { updatedAt: direction };
-  });
+  const orderBy: Prisma.ProductOrderByWithRelationInput = (() => {
+    if (sortKey === "name") return { name: dirKey };
+    if (sortKey === "category") return { category: { name: dirKey } };
+    if (sortKey === "price") return { price: dirKey };
+    if (sortKey === "stock") return { stock: dirKey };
+    if (sortKey === "status") return { stock: dirKey };
+    return { updatedAt: dirKey };
+  })();
 
   try {
     const [productsResult, totalResult] = await Promise.all([
@@ -94,8 +94,8 @@ export default async function AdminProductsPage({
         initialPage={page}
         pageSize={pageSize}
         initialQuery={query}
-        initialSort={sortKeys}
-        initialDir={dirKeys}
+        initialSort={[sortKey]}
+        initialDir={[dirKey]}
       />
     </div>
   );

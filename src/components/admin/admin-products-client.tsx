@@ -31,14 +31,15 @@ const buildQueryString = (
   page: number,
   sort: string[],
   dir: Array<"asc" | "desc">,
-  pageSize: number
+  pageSize: number,
+  defaults: { sort: string; dir: "asc" | "desc"; pageSize: number }
 ) => {
   const params = new URLSearchParams();
   if (query.trim()) params.set("q", query.trim());
-  if (sort.length) params.set("sort", sort.join(","));
-  if (dir.length) params.set("dir", dir.join(","));
-  params.set("page", String(page));
-  params.set("pageSize", String(pageSize));
+  if (sort[0] && sort[0] !== defaults.sort) params.set("sort", sort[0]);
+  if (dir[0] && dir[0] !== defaults.dir) params.set("dir", dir[0]);
+  if (page > 1) params.set("page", String(page));
+  if (pageSize !== defaults.pageSize) params.set("pageSize", String(pageSize));
   return params.toString();
 };
 
@@ -57,13 +58,28 @@ export default function AdminProductsClient({
   const [query, setQuery] = useState(initialQuery);
   const [sort, setSort] = useState(initialSort);
   const [dir, setDir] = useState<Array<"asc" | "desc">>(initialDir);
+  const [rowsPerPage, setRowsPerPage] = useState(pageSize);
   const [loading, setLoading] = useState(false);
   const userTypedRef = useRef(false);
+  const defaults = useMemo(
+    () => ({
+      sort: initialSort[0] ?? "updatedAt",
+      dir: (initialDir[0] ?? "desc") as "asc" | "desc",
+      pageSize,
+    }),
+    [initialSort, initialDir, pageSize]
+  );
 
-  const syncUrl = (nextQuery: string, nextPage: number, nextSort: string[], nextDir: Array<"asc" | "desc">) => {
+  const syncUrl = (
+    nextQuery: string,
+    nextPage: number,
+    nextSort: string[],
+    nextDir: Array<"asc" | "desc">,
+    nextPageSize: number
+  ) => {
     if (typeof window === "undefined") return;
-    const params = buildQueryString(nextQuery, nextPage, nextSort, nextDir, pageSize);
-    const url = `/admin/products?${params}`;
+    const params = buildQueryString(nextQuery, nextPage, nextSort, nextDir, nextPageSize, defaults);
+    const url = params ? `/admin/products?${params}` : "/admin/products";
     window.history.replaceState(null, "", url);
   };
 
@@ -74,7 +90,7 @@ export default function AdminProductsClient({
     nextDir: Array<"asc" | "desc">
   ) => {
     setLoading(true);
-    const params = buildQueryString(nextQuery, nextPage, nextSort, nextDir, pageSize);
+    const params = buildQueryString(nextQuery, nextPage, nextSort, nextDir, rowsPerPage, defaults);
     const response = await fetch(`/api/admin/products?${params}`, { cache: "no-store" });
     if (response.ok) {
       const data = (await response.json()) as { items: ProductRow[]; total: number };
@@ -93,41 +109,38 @@ export default function AdminProductsClient({
       const nextPage = 1;
       fetchProducts(query, nextPage, sort, dir);
       setPage(nextPage);
-      syncUrl(query, nextPage, sort, dir);
+      syncUrl(query, nextPage, sort, dir, rowsPerPage);
     }, 300);
     return () => window.clearTimeout(handle);
-  }, [query]);
+  }, [query, rowsPerPage]);
 
   const handlePageChange = (nextPage: number) => {
     fetchProducts(query, nextPage, sort, dir);
     setPage(nextPage);
-    syncUrl(query, nextPage, sort, dir);
+    syncUrl(query, nextPage, sort, dir, rowsPerPage);
   };
 
-  const handleSort = (key: string, shiftKey: boolean) => {
+  const handleSort = (key: string) => {
     const existingIndex = sort.indexOf(key);
-    let nextSort = [...sort];
-    let nextDir = [...dir];
-    const nextDirection = existingIndex >= 0 && nextDir[existingIndex] === "asc" ? "desc" : "asc";
-
-    if (shiftKey) {
-      if (existingIndex >= 0) {
-        nextDir[existingIndex] = nextDirection;
-      } else {
-        nextSort.push(key);
-        nextDir.push("asc");
-      }
-    } else {
-      nextSort = [key];
-      nextDir = [nextDirection];
-    }
+    const currentDir = existingIndex >= 0 ? dir[existingIndex] : "desc";
+    const nextDirection = currentDir === "asc" ? "desc" : "asc";
+    const nextSort = [key];
+    const nextDir: Array<"asc" | "desc"> = [nextDirection];
 
     const nextPage = 1;
     setSort(nextSort);
     setDir(nextDir);
     setPage(nextPage);
     fetchProducts(query, nextPage, nextSort, nextDir);
-    syncUrl(query, nextPage, nextSort, nextDir);
+    syncUrl(query, nextPage, nextSort, nextDir, rowsPerPage);
+  };
+
+  const handleRowsChange = (nextRows: number) => {
+    const nextPage = 1;
+    setRowsPerPage(nextRows);
+    setPage(nextPage);
+    fetchProducts(query, nextPage, sort, dir);
+    syncUrl(query, nextPage, sort, dir, nextRows);
   };
 
   const totalPages = useMemo(() => Math.max(1, Math.ceil(total / pageSize)), [total, pageSize]);
@@ -159,15 +172,31 @@ export default function AdminProductsClient({
       <AdminProductsTable
         products={products}
         page={page}
-        pageSize={pageSize}
+        pageSize={rowsPerPage}
         total={total}
         sort={sort}
         dir={dir}
         onSort={handleSort}
         onPageChange={handlePageChange}
         isLoading={loading}
+        footerSlot={
+          <div className="flex items-center gap-2 text-xs text-[var(--pp-muted)]">
+            <span className="h-5 w-[2px] bg-[var(--pp-ink)]/20" />
+            Rows
+            <select
+              className="admin-select rounded-lg border border-[var(--pp-border)] bg-white px-3 py-1 text-xs"
+              value={rowsPerPage}
+              onChange={(event) => handleRowsChange(Number(event.target.value))}
+            >
+              {[10, 15, 25, 50].map((value) => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ))}
+            </select>
+          </div>
+        }
       />
-      <p className="text-xs text-[var(--pp-muted)]">Page {page} of {totalPages}</p>
     </div>
   );
 }

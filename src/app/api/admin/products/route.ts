@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin";
 import { normalizeImages } from "@/lib/images";
@@ -18,13 +19,14 @@ export async function GET(request: Request) {
   const dir = (searchParams.get("dir") ?? "desc").trim();
 
   const allowedSorts = new Set(["name", "category", "price", "stock", "status", "updatedAt"]);
-  const sortKeys = sort
-    .split(",")
-    .map((value) => value.trim())
-    .filter((value) => allowedSorts.has(value));
-  const dirKeys = dir.split(",").map((value) => (value === "asc" ? "asc" : "desc"));
-  if (!sortKeys.length) sortKeys.push("updatedAt");
-  while (dirKeys.length < sortKeys.length) dirKeys.push("desc");
+  const sortKey = (allowedSorts.has(sort) ? sort : "updatedAt") as
+    | "name"
+    | "category"
+    | "price"
+    | "stock"
+    | "status"
+    | "updatedAt";
+  const dirKey: Prisma.SortOrder = dir === "asc" ? "asc" : "desc";
 
   const where = query
     ? {
@@ -35,15 +37,14 @@ export async function GET(request: Request) {
       }
     : undefined;
 
-  const orderBy = sortKeys.map((key, index) => {
-    const direction = dirKeys[index] ?? "desc";
-    if (key === "name") return { name: direction };
-    if (key === "category") return { category: { name: direction } };
-    if (key === "price") return { price: direction };
-    if (key === "stock") return { stock: direction };
-    if (key === "status") return { stock: direction };
-    return { updatedAt: direction };
-  });
+  const orderBy: Prisma.ProductOrderByWithRelationInput = (() => {
+    if (sortKey === "name") return { name: dirKey };
+    if (sortKey === "category") return { category: { name: dirKey } };
+    if (sortKey === "price") return { price: dirKey };
+    if (sortKey === "stock") return { stock: dirKey };
+    if (sortKey === "status") return { stock: dirKey };
+    return { updatedAt: dirKey };
+  })();
 
   const [products, total] = await Promise.all([
     prisma.product.findMany({
