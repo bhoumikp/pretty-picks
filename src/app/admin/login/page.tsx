@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { siteConfig } from "@/data/site";
-import Toast from "@/components/ui/toast";
+import ToastStack from "@/components/ui/toast-stack";
 import { validateEmail, validateMinLength } from "@/lib/validation";
 
 export default function AdminLoginPage() {
@@ -13,14 +13,16 @@ export default function AdminLoginPage() {
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [toasts, setToasts] = useState<
+    Array<{ id: string; message: string; type?: "success" | "error" | "warning" | "primary" }>
+  >([]);
   const [passwordValue, setPasswordValue] = useState("");
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
     setError(null);
-    setToast(null);
+    setToasts([]);
     setFieldErrors({});
 
     const formData = new FormData(event.currentTarget);
@@ -60,11 +62,16 @@ export default function AdminLoginPage() {
       } else if (response.error === "INVALID_PASSWORD") {
         setFieldErrors({ password: friendly });
       }
-      setToast({ type: "error", message: friendly });
+      const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      setToasts((prev) => [...prev, { id, type: "error", message: friendly }]);
       setLoading(false);
       return;
     }
-    setToast({ type: "success", message: "Welcome back. Redirecting…" });
+    const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    setToasts((prev) => [
+      ...prev,
+      { id, type: "success", message: "Welcome back. Redirecting…" },
+    ]);
     router.push("/admin");
     setLoading(false);
   };
@@ -207,9 +214,10 @@ export default function AdminLoginPage() {
           </form>
         </div>
       </div>
-      {toast && (
-        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
-      )}
+      <ToastStack
+        toasts={toasts}
+        onClose={(id) => setToasts((prev) => prev.filter((toast) => toast.id !== id))}
+      />
     </div>
   );
 }

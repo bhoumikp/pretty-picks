@@ -4,12 +4,17 @@ import { useEffect } from "react";
 
 interface ToastProps {
   message: string;
-  type?: "success" | "error";
+  type?: "success" | "error" | "warning" | "primary";
   durationMs?: number;
   onClose: () => void;
 }
 
-export default function Toast({ message, type = "success", durationMs = 2500, onClose }: ToastProps) {
+export default function Toast({
+  message,
+  type = "success",
+  durationMs = 2500,
+  onClose,
+}: ToastProps) {
   useEffect(() => {
     const timer = window.setTimeout(onClose, durationMs);
     return () => window.clearTimeout(timer);
@@ -17,12 +22,28 @@ export default function Toast({ message, type = "success", durationMs = 2500, on
 
   return (
     <div
-      className={`fixed bottom-6 right-6 z-50 w-[280px] border border-[var(--pp-border)] bg-white shadow-xl ${
-        type === "error" ? "border-red-400" : "border-[var(--pp-gold)]"
+      className={`w-[280px] border bg-white shadow-xl ${
+        type === "error"
+          ? "border-red-300"
+          : type === "warning"
+          ? "border-amber-300"
+          : type === "primary"
+          ? "border-[var(--pp-gold)] bg-[var(--pp-gold)]/10"
+          : "border-emerald-300"
       }`}
     >
       <div className="flex items-start justify-between gap-4 px-4 py-3">
-        <p className={`text-sm ${type === "error" ? "text-red-600" : "text-[var(--pp-ink)]"}`}>
+        <p
+          className={`text-sm ${
+            type === "error"
+              ? "text-red-600"
+              : type === "warning"
+              ? "text-amber-700"
+              : type === "primary"
+              ? "text-[var(--pp-ink)]"
+              : "text-emerald-700"
+          }`}
+        >
           {message}
         </p>
         <button
@@ -39,7 +60,15 @@ export default function Toast({ message, type = "success", durationMs = 2500, on
       </div>
       <div className="h-0.5 w-full bg-[var(--pp-border)]">
         <div
-          className={`h-0.5 ${type === "error" ? "bg-red-500" : "bg-[var(--pp-gold)]"} toast-progress`}
+          className={`h-0.5 toast-progress ${
+            type === "error"
+              ? "bg-red-500"
+              : type === "warning"
+              ? "bg-amber-500"
+              : type === "primary"
+              ? "bg-[var(--pp-gold)]"
+              : "bg-emerald-500"
+          }`}
           style={{ animationDuration: `${durationMs}ms` }}
         />
       </div>

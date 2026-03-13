@@ -3,22 +3,23 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import type { CategorySummary, ProductImage, ProductSummary } from "@/types/catalog";
-import Toast from "@/components/ui/toast";
+import type { CategorySummary, ProductImage } from "@/types/catalog";
+import ToastStack from "@/components/ui/toast-stack";
 import { validateMinLength, validateNumberMin, validateRequired, validateUrlOptional } from "@/lib/validation";
 
-interface AdminProductsProps {
-  products: Array<
-    ProductSummary & {
-      images: ProductImage[];
-      description: string;
-      material: string;
-      featured: boolean;
-      stock: number;
-      categoryId: string;
-    }
-  >;
+interface AdminProductFormProps {
   categories: CategorySummary[];
+  initialProduct?: {
+    id: string;
+    name: string;
+    price: number;
+    description: string;
+    material: string;
+    images: ProductImage[];
+    featured: boolean;
+    stock: number;
+    categoryId: string;
+  };
 }
 
 const emptyForm = {
@@ -33,15 +34,33 @@ const emptyForm = {
   categoryId: "",
 };
 
-export default function AdminProducts({ products, categories }: AdminProductsProps) {
+export default function AdminProductForm({
+  categories,
+  initialProduct,
+}: AdminProductFormProps) {
   const router = useRouter();
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState(() => {
+    if (!initialProduct) return emptyForm;
+    return {
+      id: initialProduct.id,
+      name: initialProduct.name,
+      price: String(initialProduct.price),
+      description: initialProduct.description,
+      material: initialProduct.material,
+      images: initialProduct.images ?? [],
+      featured: initialProduct.featured,
+      stock: String(initialProduct.stock),
+      categoryId: initialProduct.categoryId,
+    };
+  });
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [manualUrl, setManualUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [toasts, setToasts] = useState<
+    Array<{ id: string; message: string; type?: "success" | "error" | "warning" | "primary" }>
+  >([]);
   const [fieldErrors, setFieldErrors] = useState<{
     name?: string;
     price?: string;
@@ -59,7 +78,7 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
-    setToast(null);
+    setToasts([]);
     setError(null);
     setFieldErrors({});
 
@@ -128,35 +147,26 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
     });
     if (!response.ok) {
       setError("Unable to save product. Please try again.");
-      setToast({ type: "error", message: "Unable to save product. Please try again." });
+      const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      setToasts((prev) => [
+        ...prev,
+        { id, type: "error", message: "Unable to save product. Please try again." },
+      ]);
       setLoading(false);
       return;
     }
 
-    setForm(emptyForm);
     setLoading(false);
-    setToast({ type: "success", message: form.id ? "Product updated." : "Product created." });
-    router.refresh();
-  };
-
-  const handleEdit = (product: AdminProductsProps["products"][number]) => {
-    setForm({
-      id: product.id,
-      name: product.name,
-      price: String(product.price),
-      description: product.description,
-      material: product.material,
-      images: product.images ?? [],
-      featured: product.featured,
-      stock: String(product.stock),
-      categoryId: product.categoryId,
-    });
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this product?")) return;
-    await fetch(`/api/products/${id}`, { method: "DELETE" });
-    router.refresh();
+    const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    setToasts((prev) => [
+      ...prev,
+      { id, type: "success", message: form.id ? "Product updated." : "Product created." },
+    ]);
+    if (form.id) {
+      router.refresh();
+    } else {
+      router.push("/admin/products");
+    }
   };
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -165,7 +175,11 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
     if (!files.length) return;
     if (form.images.length + files.length > maxFiles) {
       setError(`Maximum ${maxFiles} images allowed.`);
-      setToast({ type: "error", message: `Maximum ${maxFiles} images allowed.` });
+      const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      setToasts((prev) => [
+        ...prev,
+        { id, type: "error", message: `Maximum ${maxFiles} images allowed.` },
+      ]);
       event.target.value = "";
       return;
     }
@@ -173,7 +187,11 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
     const invalidType = files.find((file) => !file.type.startsWith("image/"));
     if (invalidType) {
       setError("Only image files are allowed.");
-      setToast({ type: "error", message: "Only image files are allowed." });
+      const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      setToasts((prev) => [
+        ...prev,
+        { id, type: "error", message: "Only image files are allowed." },
+      ]);
       event.target.value = "";
       return;
     }
@@ -181,7 +199,11 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
     const tooLarge = files.find((file) => file.size > maxSizeMb * 1024 * 1024);
     if (tooLarge) {
       setError(`Each file must be under ${maxSizeMb}MB.`);
-      setToast({ type: "error", message: `Each file must be under ${maxSizeMb}MB.` });
+      const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      setToasts((prev) => [
+        ...prev,
+        { id, type: "error", message: `Each file must be under ${maxSizeMb}MB.` },
+      ]);
       event.target.value = "";
       return;
     }
@@ -215,7 +237,11 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
       setForm({ ...form, images: [...form.images, ...uploads] });
     } catch (uploadError) {
       setError("Upload failed. Please try again.");
-      setToast({ type: "error", message: "Upload failed. Please try again." });
+      const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      setToasts((prev) => [
+        ...prev,
+        { id, type: "error", message: "Upload failed. Please try again." },
+      ]);
       console.error(uploadError);
     } finally {
       setUploading(false);
@@ -250,7 +276,7 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
   };
 
   return (
-    <div className="grid gap-8">
+    <div className="grid gap-6">
       <form onSubmit={handleSubmit} className="soft-card rounded-2xl p-6" noValidate>
         <h3 className="text-lg font-[var(--font-heading)]">
           {form.id ? "Edit product" : "Add new product"}
@@ -506,7 +532,14 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
             ))}
           </div>
         )}
-        <div className="mt-4 flex flex-wrap gap-3">
+        <div className="mt-4 flex flex-wrap items-center justify-end gap-3">
+          <button
+            type="button"
+            className="btn-outline text-xs px-4 py-2"
+            onClick={() => router.push("/admin/products")}
+          >
+            Back
+          </button>
           <button
             type="submit"
             className="rounded-full bg-[var(--pp-gold)] px-6 py-3 text-sm font-semibold text-white"
@@ -514,51 +547,12 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
           >
             {loading ? "Saving…" : "Save product"}
           </button>
-          {form.id && (
-            <button
-              type="button"
-              className="rounded-full border border-[var(--pp-border)] px-6 py-3 text-sm"
-              onClick={() => setForm(emptyForm)}
-            >
-              Cancel edit
-            </button>
-          )}
         </div>
       </form>
-
-      <div className="soft-card rounded-2xl p-6">
-        <h3 className="text-lg font-[var(--font-heading)]">Products list</h3>
-        <div className="mt-4 space-y-4">
-          {products.map((product) => (
-            <div
-              key={product.id}
-              className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--pp-border)] pb-4"
-            >
-              <div>
-                <p className="text-sm font-semibold">{product.name}</p>
-                <p className="text-xs text-[var(--pp-muted)]">
-                  ₹{product.price} · {product.category?.name}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleEdit(product)}
-                  className="rounded-full border border-[var(--pp-border)] px-4 py-2 text-xs"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(product.id)}
-                  className="rounded-full border border-red-200 px-4 py-2 text-xs text-red-600"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+      <ToastStack
+        toasts={toasts}
+        onClose={(id) => setToasts((prev) => prev.filter((toast) => toast.id !== id))}
+      />
     </div>
   );
 }

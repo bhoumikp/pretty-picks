@@ -243,15 +243,24 @@ button:disabled {
     }
   }
 
-  @keyframes btn-sweep-in {
-    from {
-      transform: translateX(-100%);
-    }
-
-    to {
-      transform: translateX(0);
-    }
+@keyframes btn-sweep-in {
+  from {
+    transform: translateX(-100%);
   }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
 
   .btn-outline {
     border: 1px solid var(--pp-border);
@@ -269,6 +278,28 @@ button:disabled {
   .btn-primary,
   .btn-outline {
     border-radius: 0 !important;
+  }
+
+  .btn-round {
+    border-radius: 999px !important;
+  }
+
+  .admin-btn {
+    box-shadow: none;
+  }
+
+  .admin-btn:hover {
+    box-shadow: none;
+  }
+
+  .admin-btn-label {
+    display: inline-block;
+    transform: translateZ(0);
+    transition: transform 0.35s ease;
+  }
+
+  .admin-btn:hover .admin-btn-label {
+    transform: scale(1.05);
   }
 
   .soft-card {

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ProductSummary } from "@/types/catalog";
 import { formatDate } from "@/lib/utils";
-import Toast from "@/components/ui/toast";
+import ToastStack from "@/components/ui/toast-stack";
 import { validatePhone, validateRequired } from "@/lib/validation";
 
 interface OrderRow {
@@ -32,7 +32,9 @@ export default function AdminOrders({ orders, products }: AdminOrdersProps) {
   const router = useRouter();
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [toasts, setToasts] = useState<
+    Array<{ id: string; message: string; type?: "success" | "error" | "warning" | "primary" }>
+  >([]);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{
     productId?: string;
@@ -43,7 +45,7 @@ export default function AdminOrders({ orders, products }: AdminOrdersProps) {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
-    setToast(null);
+    setToasts([]);
     setError(null);
     setFieldErrors({});
 
@@ -73,14 +75,19 @@ export default function AdminOrders({ orders, products }: AdminOrdersProps) {
     });
     if (!response.ok) {
       setError("Unable to create order. Please try again.");
-      setToast({ type: "error", message: "Unable to create order. Please try again." });
+      const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      setToasts((prev) => [
+        ...prev,
+        { id, type: "error", message: "Unable to create order. Please try again." },
+      ]);
       setLoading(false);
       return;
     }
 
     setForm(emptyForm);
     setLoading(false);
-    setToast({ type: "success", message: "Order created." });
+    const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    setToasts((prev) => [...prev, { id, type: "success", message: "Order created." }]);
     router.refresh();
   };
 
@@ -218,7 +225,10 @@ export default function AdminOrders({ orders, products }: AdminOrdersProps) {
           ))}
         </div>
       </div>
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+      <ToastStack
+        toasts={toasts}
+        onClose={(id) => setToasts((prev) => prev.filter((toast) => toast.id !== id))}
+      />
     </div>
   );
 }

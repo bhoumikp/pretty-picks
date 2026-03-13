@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { CategorySummary } from "@/types/catalog";
-import Toast from "@/components/ui/toast";
+import ToastStack from "@/components/ui/toast-stack";
 import { validateRequired, validateUrlOptional } from "@/lib/validation";
 
 interface AdminCategoriesProps {
@@ -16,14 +16,16 @@ export default function AdminCategories({ categories }: AdminCategoriesProps) {
   const router = useRouter();
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [toasts, setToasts] = useState<
+    Array<{ id: string; message: string; type?: "success" | "error" | "warning" | "primary" }>
+  >([]);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; image?: string }>({});
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
-    setToast(null);
+    setToasts([]);
     setError(null);
     setFieldErrors({});
 
@@ -51,17 +53,22 @@ export default function AdminCategories({ categories }: AdminCategoriesProps) {
     });
     if (!response.ok) {
       setError("Unable to save category. Please try again.");
-      setToast({ type: "error", message: "Unable to save category. Please try again." });
+      const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      setToasts((prev) => [
+        ...prev,
+        { id, type: "error", message: "Unable to save category. Please try again." },
+      ]);
       setLoading(false);
       return;
     }
 
     setForm(emptyForm);
     setLoading(false);
-    setToast({
-      type: "success",
-      message: form.id ? "Category updated." : "Category created.",
-    });
+    const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    setToasts((prev) => [
+      ...prev,
+      { id, type: "success", message: form.id ? "Category updated." : "Category created." },
+    ]);
     router.refresh();
   };
 
@@ -186,9 +193,10 @@ export default function AdminCategories({ categories }: AdminCategoriesProps) {
           </div>
         </div>
       </div>
-      {toast && (
-        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
-      )}
+      <ToastStack
+        toasts={toasts}
+        onClose={(id) => setToasts((prev) => prev.filter((toast) => toast.id !== id))}
+      />
     </>
   );
 }

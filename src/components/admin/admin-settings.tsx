@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { validateMatch, validateMinLength, validateRequired } from "@/lib/validation";
+import ToastStack from "@/components/ui/toast-stack";
 
 export default function AdminSettings() {
   const [status, setStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
@@ -10,18 +11,19 @@ export default function AdminSettings() {
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [newPasswordValue, setNewPasswordValue] = useState("");
-  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [toasts, setToasts] = useState<
+    Array<{ id: string; message: string; type?: "success" | "error" | "warning" | "primary" }>
+  >([]);
   const [fieldErrors, setFieldErrors] = useState<{
     currentPassword?: string;
     newPassword?: string;
     confirmPassword?: string;
   }>({});
 
-  useEffect(() => {
-    if (!toast) return;
-    const timer = window.setTimeout(() => setToast(null), 2500);
-    return () => window.clearTimeout(timer);
-  }, [toast]);
+  const pushToast = (message: string, type: "success" | "error" | "warning" | "primary") => {
+    const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    setToasts((prev) => [...prev, { id, message, type }]);
+  };
 
   const getStrength = (value: string) => {
     let score = 0;
@@ -78,17 +80,17 @@ export default function AdminSettings() {
         const data = (await response.json()) as { error?: string };
         setStatus("error");
         setMessage(data.error ?? "Unable to update password.");
-        setToast({ type: "error", message: data.error ?? "Unable to update password." });
+        pushToast(data.error ?? "Unable to update password.", "error");
         return;
       }
       setStatus("success");
       setMessage("Password updated.");
-      setToast({ type: "success", message: "Password updated successfully." });
+      pushToast("Password updated successfully.", "success");
       event.currentTarget.reset();
     } catch {
       setStatus("error");
       setMessage("Unable to update password.");
-      setToast({ type: "error", message: "Unable to update password." });
+      pushToast("Unable to update password.", "error");
     }
   };
 
@@ -317,17 +319,10 @@ export default function AdminSettings() {
           )}
         </form>
       </div>
-      {toast && (
-        <div
-          className={`fixed bottom-6 right-6 z-50 rounded-xl px-4 py-3 text-sm shadow-lg ${
-            toast.type === "success"
-              ? "bg-[var(--pp-ink)] text-white"
-              : "bg-red-600 text-white"
-          }`}
-        >
-          {toast.message}
-        </div>
-      )}
+      <ToastStack
+        toasts={toasts}
+        onClose={(id) => setToasts((prev) => prev.filter((toast) => toast.id !== id))}
+      />
     </div>
   );
 }

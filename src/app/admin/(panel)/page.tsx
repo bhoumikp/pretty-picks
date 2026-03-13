@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { formatCurrency } from "@/lib/utils";
+import OfflineBanner from "@/components/admin/offline-banner";
 
 export const revalidate = 0;
 export const metadata = {
@@ -7,11 +8,22 @@ export const metadata = {
 };
 
 export default async function AdminDashboard() {
-  const [productCount, orderCount, orders] = await Promise.all([
-    prisma.product.count(),
-    prisma.order.count(),
-    prisma.order.findMany({ include: { product: true } }),
-  ]);
+  let productCount = 0;
+  let orderCount = 0;
+  let orders: Array<{ product?: { price?: number | null } | null }> = [];
+  let dbUnavailable = false;
+
+  try {
+    const results = await Promise.all([
+      prisma.product.count(),
+      prisma.order.count(),
+      prisma.order.findMany({ include: { product: true } }),
+    ]);
+    [productCount, orderCount, orders] = results;
+  } catch (error) {
+    console.error("Admin dashboard DB error:", error);
+    dbUnavailable = true;
+  }
 
   const totalRevenue = orders.reduce(
     (sum, order) => sum + (order.product?.price ?? 0),
@@ -25,6 +37,11 @@ export default async function AdminDashboard() {
           Overview
         </p>
         <h2 className="text-2xl font-[var(--font-heading)]">Dashboard</h2>
+        {dbUnavailable && (
+          <div className="mt-3">
+            <OfflineBanner message="Database is currently unreachable. Showing placeholder stats." />
+          </div>
+        )}
       </div>
       <div className="grid gap-4 md:grid-cols-3">
         <div className="soft-card rounded-2xl p-5">
