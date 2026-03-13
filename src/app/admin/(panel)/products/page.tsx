@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { normalizeImages } from "@/lib/images";
 import AdminProductsClient from "@/components/admin/admin-products-client";
@@ -37,9 +38,8 @@ export default async function AdminProductsPage({
       }
     : undefined;
 
-  let products: Array<
-    Awaited<ReturnType<typeof prisma.product.findMany>>[number]
-  > = [];
+  type ProductWithCategory = Prisma.ProductGetPayload<{ include: { category: true } }>;
+  let products: ProductWithCategory[] = [];
   let total = 0;
   let dbUnavailable = false;
 
