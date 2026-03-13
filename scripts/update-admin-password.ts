@@ -13,11 +13,11 @@ if (!email || !password) {
 }
 
 async function main() {
-  const user = await prisma.user.findUnique({ where: { email } });
+  const user = await prisma.user.findUnique({ where: { email: email as string } });
   if (!user) {
     throw new Error(`No user found for email: ${email}`);
   }
-  const nextHash = await hash(password, 10);
+  const nextHash = await hash(password as string, 10);
   await prisma.user.update({
     where: { id: user.id },
     data: { password: nextHash },
