@@ -44,7 +44,7 @@ export default async function AdminProductsPage({
   let dbUnavailable = false;
 
   const orderBy = sortKeys.map((key, index) => {
-    const direction = dirKeys[index] ?? "desc";
+    const direction = (dirKeys[index] ?? "desc") as "asc" | "desc";
     if (key === "name") return { name: direction };
     if (key === "category") return { category: { name: direction } };
     if (key === "price") return { price: direction };
