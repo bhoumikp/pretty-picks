@@ -17,21 +17,25 @@ export default function AdminCategories({ categories }: AdminCategoriesProps) {
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; image?: string }>({});
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
     setToast(null);
+    setError(null);
+    setFieldErrors({});
 
     const nameError = validateRequired(form.name, "Category name");
     if (nameError) {
-      setToast({ type: "error", message: nameError.message });
+      setFieldErrors({ name: nameError.message });
       setLoading(false);
       return;
     }
     const urlError = validateUrlOptional(form.image, "Image URL");
     if (urlError) {
-      setToast({ type: "error", message: urlError.message });
+      setFieldErrors({ image: urlError.message });
       setLoading(false);
       return;
     }
@@ -46,6 +50,7 @@ export default function AdminCategories({ categories }: AdminCategoriesProps) {
       body: JSON.stringify(payload),
     });
     if (!response.ok) {
+      setError("Unable to save category. Please try again.");
       setToast({ type: "error", message: "Unable to save category. Please try again." });
       setLoading(false);
       return;
@@ -82,20 +87,54 @@ export default function AdminCategories({ categories }: AdminCategoriesProps) {
             {form.id ? "Edit category" : "Add new category"}
           </h3>
           <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div className="grid gap-2">
             <input
-              className="rounded-2xl border border-[var(--pp-border)] px-4 py-3 text-sm"
+              className={`rounded-2xl border px-4 py-3 text-sm ${
+                fieldErrors.name ? "border-red-300" : "border-[var(--pp-border)]"
+              }`}
               placeholder="Category name"
               value={form.name}
               onChange={(event) => setForm({ ...form, name: event.target.value })}
+              onBlur={(event) => {
+                if (!fieldErrors.name) return;
+                const result = validateRequired(event.target.value, "Category name");
+                if (!result) {
+                  setFieldErrors((prev) => ({ ...prev, name: undefined }));
+                }
+              }}
             />
+            <span
+              data-show={Boolean(fieldErrors.name)}
+              className="field-error text-xs normal-case text-red-600"
+            >
+              {fieldErrors.name ?? ""}
+            </span>
+          </div>
+          <div className="grid gap-2">
             <input
-              className="rounded-2xl border border-[var(--pp-border)] px-4 py-3 text-sm"
+              className={`rounded-2xl border px-4 py-3 text-sm ${
+                fieldErrors.image ? "border-red-300" : "border-[var(--pp-border)]"
+              }`}
               placeholder="Image URL"
               value={form.image}
               onChange={(event) => setForm({ ...form, image: event.target.value })}
+              onBlur={(event) => {
+                if (!fieldErrors.image) return;
+                const result = validateUrlOptional(event.target.value, "Image URL");
+                if (!result) {
+                  setFieldErrors((prev) => ({ ...prev, image: undefined }));
+                }
+              }}
             />
+            <span
+              data-show={Boolean(fieldErrors.image)}
+              className="field-error text-xs normal-case text-red-600"
+            >
+              {fieldErrors.image ?? ""}
+            </span>
           </div>
-          <div className="mt-4 flex gap-3">
+          </div>
+        <div className="mt-4 flex gap-3">
             <button
               type="submit"
               className="rounded-full bg-[var(--pp-gold)] px-6 py-3 text-sm font-semibold text-white"
@@ -103,7 +142,7 @@ export default function AdminCategories({ categories }: AdminCategoriesProps) {
             >
               {loading ? "Saving…" : "Save category"}
             </button>
-            {form.id && (
+          {form.id && (
               <button
                 type="button"
                 className="rounded-full border border-[var(--pp-border)] px-6 py-3 text-sm"
@@ -111,9 +150,10 @@ export default function AdminCategories({ categories }: AdminCategoriesProps) {
               >
                 Cancel edit
               </button>
-            )}
-          </div>
-        </form>
+          )}
+        </div>
+        {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+      </form>
 
         <div className="soft-card rounded-3xl p-6">
           <h3 className="text-lg font-[var(--font-heading)]">Categories</h3>

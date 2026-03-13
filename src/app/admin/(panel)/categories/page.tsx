@@ -3,7 +3,7 @@ import AdminCategories from "@/components/admin/admin-categories";
 
 export const revalidate = 0;
 export const metadata = {
-  title: "Categories",
+  title: { absolute: "Admin | Categories" },
 };
 
 export default async function AdminCategoriesPage() {

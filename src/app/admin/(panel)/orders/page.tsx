@@ -3,7 +3,7 @@ import AdminOrders from "@/components/admin/admin-orders";
 
 export const revalidate = 0;
 export const metadata = {
-  title: "Orders",
+  title: { absolute: "Admin | Orders" },
 };
 
 export default async function AdminOrdersPage() {

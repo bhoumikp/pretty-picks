@@ -33,27 +33,35 @@ export default function AdminOrders({ orders, products }: AdminOrdersProps) {
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{
+    productId?: string;
+    customerName?: string;
+    phone?: string;
+  }>({});
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
     setToast(null);
+    setError(null);
+    setFieldErrors({});
 
     const productError = validateRequired(form.productId, "Product");
     if (productError) {
-      setToast({ type: "error", message: "Please select a product." });
+      setFieldErrors({ productId: "Please select a product." });
       setLoading(false);
       return;
     }
     const nameError = validateRequired(form.customerName, "Customer name");
     if (nameError) {
-      setToast({ type: "error", message: nameError.message });
+      setFieldErrors({ customerName: nameError.message });
       setLoading(false);
       return;
     }
     const phoneError = validatePhone(form.phone);
     if (phoneError) {
-      setToast({ type: "error", message: phoneError.message });
+      setFieldErrors({ phone: phoneError.message });
       setLoading(false);
       return;
     }
@@ -64,6 +72,7 @@ export default function AdminOrders({ orders, products }: AdminOrdersProps) {
       body: JSON.stringify(form),
     });
     if (!response.ok) {
+      setError("Unable to create order. Please try again.");
       setToast({ type: "error", message: "Unable to create order. Please try again." });
       setLoading(false);
       return;
@@ -86,30 +95,81 @@ export default function AdminOrders({ orders, products }: AdminOrdersProps) {
       <form onSubmit={handleSubmit} className="soft-card rounded-3xl p-6" noValidate>
         <h3 className="text-lg font-[var(--font-heading)]">Add manual order</h3>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <select
-            className="rounded-2xl border border-[var(--pp-border)] px-4 py-3 text-sm"
-            value={form.productId}
-            onChange={(event) => setForm({ ...form, productId: event.target.value })}
-          >
-            <option value="">Select product</option>
-            {products.map((product) => (
-              <option key={product.id} value={product.id}>
-                {product.name}
-              </option>
-            ))}
-          </select>
-          <input
-            className="rounded-2xl border border-[var(--pp-border)] px-4 py-3 text-sm"
-            placeholder="Customer name"
-            value={form.customerName}
-            onChange={(event) => setForm({ ...form, customerName: event.target.value })}
-          />
-          <input
-            className="rounded-2xl border border-[var(--pp-border)] px-4 py-3 text-sm"
-            placeholder="Phone number"
-            value={form.phone}
-            onChange={(event) => setForm({ ...form, phone: event.target.value })}
-          />
+          <div className="grid gap-2">
+            <select
+              className={`rounded-2xl border px-4 py-3 text-sm ${
+                fieldErrors.productId ? "border-red-300" : "border-[var(--pp-border)]"
+              }`}
+              value={form.productId}
+              onChange={(event) => setForm({ ...form, productId: event.target.value })}
+              onBlur={(event) => {
+                if (!fieldErrors.productId) return;
+                const result = validateRequired(event.target.value, "Product");
+                if (!result) {
+                  setFieldErrors((prev) => ({ ...prev, productId: undefined }));
+                }
+              }}
+            >
+              <option value="">Select product</option>
+              {products.map((product) => (
+                <option key={product.id} value={product.id}>
+                  {product.name}
+                </option>
+              ))}
+            </select>
+            <span
+              data-show={Boolean(fieldErrors.productId)}
+              className="field-error text-xs normal-case text-red-600"
+            >
+              {fieldErrors.productId ?? ""}
+            </span>
+          </div>
+          <div className="grid gap-2">
+            <input
+              className={`rounded-2xl border px-4 py-3 text-sm ${
+                fieldErrors.customerName ? "border-red-300" : "border-[var(--pp-border)]"
+              }`}
+              placeholder="Customer name"
+              value={form.customerName}
+              onChange={(event) => setForm({ ...form, customerName: event.target.value })}
+              onBlur={(event) => {
+                if (!fieldErrors.customerName) return;
+                const result = validateRequired(event.target.value, "Customer name");
+                if (!result) {
+                  setFieldErrors((prev) => ({ ...prev, customerName: undefined }));
+                }
+              }}
+            />
+            <span
+              data-show={Boolean(fieldErrors.customerName)}
+              className="field-error text-xs normal-case text-red-600"
+            >
+              {fieldErrors.customerName ?? ""}
+            </span>
+          </div>
+          <div className="grid gap-2">
+            <input
+              className={`rounded-2xl border px-4 py-3 text-sm ${
+                fieldErrors.phone ? "border-red-300" : "border-[var(--pp-border)]"
+              }`}
+              placeholder="Phone number"
+              value={form.phone}
+              onChange={(event) => setForm({ ...form, phone: event.target.value })}
+              onBlur={(event) => {
+                if (!fieldErrors.phone) return;
+                const result = validatePhone(event.target.value, "Phone number");
+                if (!result) {
+                  setFieldErrors((prev) => ({ ...prev, phone: undefined }));
+                }
+              }}
+            />
+            <span
+              data-show={Boolean(fieldErrors.phone)}
+              className="field-error text-xs normal-case text-red-600"
+            >
+              {fieldErrors.phone ?? ""}
+            </span>
+          </div>
           <select
             className="rounded-2xl border border-[var(--pp-border)] px-4 py-3 text-sm"
             value={form.status}
@@ -128,6 +188,7 @@ export default function AdminOrders({ orders, products }: AdminOrdersProps) {
         >
           {loading ? "Saving…" : "Create order"}
         </button>
+        {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
       </form>
 
       <div className="soft-card rounded-3xl p-6">

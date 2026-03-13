@@ -4,7 +4,7 @@ import { normalizeImages } from "@/lib/images";
 
 export const revalidate = 0;
 export const metadata = {
-  title: "Products",
+  title: { absolute: "Admin | Products" },
 };
 
 export default async function AdminProductsPage() {

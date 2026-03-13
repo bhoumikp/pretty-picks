@@ -77,6 +77,21 @@ button:disabled {
   }
 }
 
+.field-error {
+  display: block;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-2px);
+  transition: opacity 0.2s ease, transform 0.2s ease, max-height 0.2s ease;
+}
+
+.field-error[data-show="true"] {
+  max-height: 2.5rem;
+  opacity: 1;
+  transform: translateY(0);
+}
+
 @layer utilities {
   .pp-scrollbar {
     scrollbar-width: none;

@@ -3,7 +3,7 @@ import AdminContacts from "@/components/admin/admin-contacts";
 
 export const revalidate = 0;
 export const metadata = {
-  title: "Contacts",
+  title: { absolute: "Admin | Contacts" },
 };
 
 export default async function AdminContactsPage() {

@@ -11,6 +11,11 @@ export default function AdminSettings() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [newPasswordValue, setNewPasswordValue] = useState("");
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{
+    currentPassword?: string;
+    newPassword?: string;
+    confirmPassword?: string;
+  }>({});
 
   useEffect(() => {
     if (!toast) return;
@@ -34,6 +39,7 @@ export default function AdminSettings() {
     event.preventDefault();
     setStatus("saving");
     setMessage("");
+    setFieldErrors({});
 
     const formData = new FormData(event.currentTarget);
     const currentPassword = String(formData.get("currentPassword") || "");
@@ -44,21 +50,21 @@ export default function AdminSettings() {
     if (currentError) {
       setStatus("error");
       setMessage(currentError.message);
-      setToast({ type: "error", message: currentError.message });
+      setFieldErrors({ currentPassword: currentError.message });
       return;
     }
     const newError = validateMinLength(newPassword, 8, "New password");
     if (newError) {
       setStatus("error");
       setMessage(newError.message);
-      setToast({ type: "error", message: newError.message });
+      setFieldErrors({ newPassword: newError.message });
       return;
     }
     const matchError = validateMatch(confirmPassword, newPassword, "Confirmation", "new password");
     if (matchError) {
       setStatus("error");
       setMessage("New password and confirmation do not match.");
-      setToast({ type: "error", message: "New password and confirmation do not match." });
+      setFieldErrors({ confirmPassword: "New password and confirmation do not match." });
       return;
     }
 
@@ -97,11 +103,22 @@ export default function AdminSettings() {
         <form onSubmit={handleSubmit} className="mt-6 grid gap-4" noValidate>
           <label className="grid gap-2 text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">
             Current password
-            <div className="flex items-center border border-[var(--pp-border)] bg-white px-4 py-2">
+            <div
+              className={`flex items-center border bg-white px-4 py-2 ${
+                fieldErrors.currentPassword ? "border-red-300" : "border-[var(--pp-border)]"
+              }`}
+            >
               <input
                 name="currentPassword"
                 type={showCurrent ? "text" : "password"}
                 className="w-full bg-transparent py-1 text-sm focus:outline-none"
+                onBlur={(event) => {
+                  if (!fieldErrors.currentPassword) return;
+                  const result = validateRequired(event.target.value, "Current password");
+                  if (!result) {
+                    setFieldErrors((prev) => ({ ...prev, currentPassword: undefined }));
+                  }
+                }}
               />
               <button
                 type="button"
@@ -140,15 +157,32 @@ export default function AdminSettings() {
                 )}
               </button>
             </div>
+            <span
+              data-show={Boolean(fieldErrors.currentPassword)}
+              className="field-error text-xs normal-case text-red-600"
+            >
+              {fieldErrors.currentPassword ?? ""}
+            </span>
           </label>
           <label className="grid gap-2 text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">
             New password
-            <div className="flex items-center border border-[var(--pp-border)] bg-white px-4 py-2">
+            <div
+              className={`flex items-center border bg-white px-4 py-2 ${
+                fieldErrors.newPassword ? "border-red-300" : "border-[var(--pp-border)]"
+              }`}
+            >
               <input
                 name="newPassword"
                 type={showNew ? "text" : "password"}
                 value={newPasswordValue}
                 onChange={(event) => setNewPasswordValue(event.target.value)}
+                onBlur={(event) => {
+                  if (!fieldErrors.newPassword) return;
+                  const result = validateMinLength(event.target.value, 8, "New password");
+                  if (!result) {
+                    setFieldErrors((prev) => ({ ...prev, newPassword: undefined }));
+                  }
+                }}
                 className="w-full bg-transparent py-1 pr-2 text-sm focus:outline-none"
               />
               <button
@@ -188,6 +222,12 @@ export default function AdminSettings() {
                 )}
               </button>
             </div>
+            <span
+              data-show={Boolean(fieldErrors.newPassword)}
+              className="field-error text-xs normal-case text-red-600"
+            >
+              {fieldErrors.newPassword ?? ""}
+            </span>
             <div className="flex items-center gap-3">
               <div className="h-1 w-full bg-[var(--pp-border)]">
                 <div className={`h-1 ${getStrength(newPasswordValue).color}`} style={{ width: `${Math.min(100, Math.max(10, newPasswordValue.length * 8))}%` }} />
@@ -199,11 +239,27 @@ export default function AdminSettings() {
           </label>
           <label className="grid gap-2 text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">
             Confirm password
-            <div className="flex items-center border border-[var(--pp-border)] bg-white px-4 py-2">
+            <div
+              className={`flex items-center border bg-white px-4 py-2 ${
+                fieldErrors.confirmPassword ? "border-red-300" : "border-[var(--pp-border)]"
+              }`}
+            >
               <input
                 name="confirmPassword"
                 type={showConfirm ? "text" : "password"}
                 className="w-full bg-transparent py-1 pr-2 text-sm focus:outline-none"
+                onBlur={(event) => {
+                  if (!fieldErrors.confirmPassword) return;
+                  const result = validateMatch(
+                    event.target.value,
+                    newPasswordValue,
+                    "Confirmation",
+                    "new password"
+                  );
+                  if (!result) {
+                    setFieldErrors((prev) => ({ ...prev, confirmPassword: undefined }));
+                  }
+                }}
               />
               <button
                 type="button"
@@ -242,6 +298,12 @@ export default function AdminSettings() {
                 )}
               </button>
             </div>
+            <span
+              data-show={Boolean(fieldErrors.confirmPassword)}
+              className="field-error text-xs normal-case text-red-600"
+            >
+              {fieldErrors.confirmPassword ?? ""}
+            </span>
           </label>
           <button type="submit" className="btn-primary btn-sweep text-sm" disabled={status === "saving"}>
             <span className="btn-sweep-label">

@@ -42,6 +42,16 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
   const [manualUrl, setManualUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{
+    name?: string;
+    price?: string;
+    material?: string;
+    stock?: string;
+    categoryId?: string;
+    description?: string;
+    images?: string;
+    imageUrl?: string;
+  }>({});
 
   const maxFiles = 6;
   const maxSizeMb = 4;
@@ -51,47 +61,48 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
     setLoading(true);
     setToast(null);
     setError(null);
+    setFieldErrors({});
 
     const nameError = validateRequired(form.name, "Product name");
     if (nameError) {
-      setToast({ type: "error", message: nameError.message });
+      setFieldErrors({ name: nameError.message });
       setLoading(false);
       return;
     }
     const priceValue = Number(form.price);
     const priceError = validateNumberMin(priceValue, 1, "Price");
     if (priceError) {
-      setToast({ type: "error", message: priceError.message });
+      setFieldErrors({ price: priceError.message });
       setLoading(false);
       return;
     }
     const materialError = validateRequired(form.material, "Material");
     if (materialError) {
-      setToast({ type: "error", message: materialError.message });
+      setFieldErrors({ material: materialError.message });
       setLoading(false);
       return;
     }
     const stockValue = Number(form.stock || 0);
     const stockError = validateNumberMin(stockValue, 0, "Stock");
     if (stockError) {
-      setToast({ type: "error", message: stockError.message });
+      setFieldErrors({ stock: stockError.message });
       setLoading(false);
       return;
     }
     const categoryError = validateRequired(form.categoryId, "Category");
     if (categoryError) {
-      setToast({ type: "error", message: "Please select a category." });
+      setFieldErrors({ categoryId: "Please select a category." });
       setLoading(false);
       return;
     }
     const descriptionError = validateMinLength(form.description, 10, "Description");
     if (descriptionError) {
-      setToast({ type: "error", message: descriptionError.message });
+      setFieldErrors({ description: descriptionError.message });
       setLoading(false);
       return;
     }
     if (!form.images.length) {
-      setToast({ type: "error", message: "Please add at least one product image." });
+      setFieldErrors({ images: "Please add at least one product image." });
       setLoading(false);
       return;
     }
@@ -116,6 +127,7 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
       body: JSON.stringify(payload),
     });
     if (!response.ok) {
+      setError("Unable to save product. Please try again.");
       setToast({ type: "error", message: "Unable to save product. Please try again." });
       setLoading(false);
       return;
@@ -214,7 +226,7 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
   const handleAddManualUrl = () => {
     const urlError = validateUrlOptional(manualUrl, "Image URL");
     if (urlError) {
-      setToast({ type: "error", message: urlError.message });
+      setFieldErrors({ imageUrl: urlError.message });
       return;
     }
     if (!manualUrl.trim()) return;
@@ -244,44 +256,131 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
           {form.id ? "Edit product" : "Add new product"}
         </h3>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <input
-            className="rounded-2xl border border-[var(--pp-border)] px-4 py-3 text-sm"
-            placeholder="Product name"
-            value={form.name}
-            onChange={(event) => setForm({ ...form, name: event.target.value })}
-          />
-          <input
-            className="rounded-2xl border border-[var(--pp-border)] px-4 py-3 text-sm"
-            placeholder="Price"
-            type="number"
-            value={form.price}
-            onChange={(event) => setForm({ ...form, price: event.target.value })}
-          />
-          <input
-            className="rounded-2xl border border-[var(--pp-border)] px-4 py-3 text-sm"
-            placeholder="Material"
-            value={form.material}
-            onChange={(event) => setForm({ ...form, material: event.target.value })}
-          />
-          <input
-            className="rounded-2xl border border-[var(--pp-border)] px-4 py-3 text-sm"
-            placeholder="Stock"
-            type="number"
-            value={form.stock}
-            onChange={(event) => setForm({ ...form, stock: event.target.value })}
-          />
-          <select
-            className="rounded-2xl border border-[var(--pp-border)] px-4 py-3 text-sm"
-            value={form.categoryId}
-            onChange={(event) => setForm({ ...form, categoryId: event.target.value })}
-          >
-            <option value="">Select category</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
+          <div className="grid gap-2">
+            <input
+              className={`rounded-2xl border px-4 py-3 text-sm ${
+                fieldErrors.name ? "border-red-300" : "border-[var(--pp-border)]"
+              }`}
+              placeholder="Product name"
+              value={form.name}
+              onChange={(event) => setForm({ ...form, name: event.target.value })}
+              onBlur={(event) => {
+                if (!fieldErrors.name) return;
+                const result = validateRequired(event.target.value, "Product name");
+                if (!result) {
+                  setFieldErrors((prev) => ({ ...prev, name: undefined }));
+                }
+              }}
+            />
+            <span
+              data-show={Boolean(fieldErrors.name)}
+              className="field-error text-xs normal-case text-red-600"
+            >
+              {fieldErrors.name ?? ""}
+            </span>
+          </div>
+          <div className="grid gap-2">
+            <input
+              className={`rounded-2xl border px-4 py-3 text-sm ${
+                fieldErrors.price ? "border-red-300" : "border-[var(--pp-border)]"
+              }`}
+              placeholder="Price"
+              type="number"
+              value={form.price}
+              onChange={(event) => setForm({ ...form, price: event.target.value })}
+              onBlur={(event) => {
+                if (!fieldErrors.price) return;
+                const value = Number(event.target.value);
+                const result = validateNumberMin(value, 1, "Price");
+                if (!result) {
+                  setFieldErrors((prev) => ({ ...prev, price: undefined }));
+                }
+              }}
+            />
+            <span
+              data-show={Boolean(fieldErrors.price)}
+              className="field-error text-xs normal-case text-red-600"
+            >
+              {fieldErrors.price ?? ""}
+            </span>
+          </div>
+          <div className="grid gap-2">
+            <input
+              className={`rounded-2xl border px-4 py-3 text-sm ${
+                fieldErrors.material ? "border-red-300" : "border-[var(--pp-border)]"
+              }`}
+              placeholder="Material"
+              value={form.material}
+              onChange={(event) => setForm({ ...form, material: event.target.value })}
+              onBlur={(event) => {
+                if (!fieldErrors.material) return;
+                const result = validateRequired(event.target.value, "Material");
+                if (!result) {
+                  setFieldErrors((prev) => ({ ...prev, material: undefined }));
+                }
+              }}
+            />
+            <span
+              data-show={Boolean(fieldErrors.material)}
+              className="field-error text-xs normal-case text-red-600"
+            >
+              {fieldErrors.material ?? ""}
+            </span>
+          </div>
+          <div className="grid gap-2">
+            <input
+              className={`rounded-2xl border px-4 py-3 text-sm ${
+                fieldErrors.stock ? "border-red-300" : "border-[var(--pp-border)]"
+              }`}
+              placeholder="Stock"
+              type="number"
+              value={form.stock}
+              onChange={(event) => setForm({ ...form, stock: event.target.value })}
+              onBlur={(event) => {
+                if (!fieldErrors.stock) return;
+                const value = Number(event.target.value || 0);
+                const result = validateNumberMin(value, 0, "Stock");
+                if (!result) {
+                  setFieldErrors((prev) => ({ ...prev, stock: undefined }));
+                }
+              }}
+            />
+            <span
+              data-show={Boolean(fieldErrors.stock)}
+              className="field-error text-xs normal-case text-red-600"
+            >
+              {fieldErrors.stock ?? ""}
+            </span>
+          </div>
+          <div className="grid gap-2">
+            <select
+              className={`rounded-2xl border px-4 py-3 text-sm ${
+                fieldErrors.categoryId ? "border-red-300" : "border-[var(--pp-border)]"
+              }`}
+              value={form.categoryId}
+              onChange={(event) => setForm({ ...form, categoryId: event.target.value })}
+              onBlur={(event) => {
+                if (!fieldErrors.categoryId) return;
+                const result = validateRequired(event.target.value, "Category");
+                if (!result) {
+                  setFieldErrors((prev) => ({ ...prev, categoryId: undefined }));
+                }
+              }}
+            >
+              <option value="">Select category</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+            <span
+              data-show={Boolean(fieldErrors.categoryId)}
+              className="field-error text-xs normal-case text-red-600"
+            >
+              {fieldErrors.categoryId ?? ""}
+            </span>
+          </div>
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -293,13 +392,30 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
             Featured
           </label>
         </div>
-        <textarea
-          className="mt-4 w-full rounded-2xl border border-[var(--pp-border)] px-4 py-3 text-sm"
-          placeholder="Description"
-          rows={3}
-          value={form.description}
-          onChange={(event) => setForm({ ...form, description: event.target.value })}
-        />
+        <div className="mt-4 grid gap-2">
+          <textarea
+            className={`w-full rounded-2xl border px-4 py-3 text-sm ${
+              fieldErrors.description ? "border-red-300" : "border-[var(--pp-border)]"
+            }`}
+            placeholder="Description"
+            rows={3}
+            value={form.description}
+            onChange={(event) => setForm({ ...form, description: event.target.value })}
+            onBlur={(event) => {
+              if (!fieldErrors.description) return;
+              const result = validateMinLength(event.target.value, 10, "Description");
+              if (!result) {
+                setFieldErrors((prev) => ({ ...prev, description: undefined }));
+              }
+            }}
+          />
+          <span
+            data-show={Boolean(fieldErrors.description)}
+            className="field-error text-xs normal-case text-red-600"
+          >
+            {fieldErrors.description ?? ""}
+          </span>
+        </div>
         <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
           <label className="rounded-full border border-[var(--pp-border)] px-4 py-2 cursor-pointer">
             <input
@@ -324,13 +440,36 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
             Max {maxFiles} images, {maxSizeMb}MB each.
           </span>
         </div>
+        <p
+          data-show={Boolean(fieldErrors.images)}
+          className="field-error mt-2 text-sm text-red-600"
+        >
+          {fieldErrors.images ?? ""}
+        </p>
         <div className="mt-3 flex flex-wrap gap-2">
-          <input
-            className="flex-1 rounded-2xl border border-[var(--pp-border)] px-4 py-3 text-sm"
-            placeholder="Paste image URL"
-            value={manualUrl}
-            onChange={(event) => setManualUrl(event.target.value)}
-          />
+          <div className="grid flex-1 gap-2">
+            <input
+              className={`w-full rounded-2xl border px-4 py-3 text-sm ${
+                fieldErrors.imageUrl ? "border-red-300" : "border-[var(--pp-border)]"
+              }`}
+              placeholder="Paste image URL"
+              value={manualUrl}
+              onChange={(event) => setManualUrl(event.target.value)}
+              onBlur={(event) => {
+                if (!fieldErrors.imageUrl) return;
+                const result = validateUrlOptional(event.target.value, "Image URL");
+                if (!result) {
+                  setFieldErrors((prev) => ({ ...prev, imageUrl: undefined }));
+                }
+              }}
+            />
+            <span
+              data-show={Boolean(fieldErrors.imageUrl)}
+              className="field-error text-xs normal-case text-red-600"
+            >
+              {fieldErrors.imageUrl ?? ""}
+            </span>
+          </div>
           <button
             type="button"
             onClick={handleAddManualUrl}

@@ -3,7 +3,7 @@ import { formatCurrency } from "@/lib/utils";
 
 export const revalidate = 0;
 export const metadata = {
-  title: "Dashboard",
+  title: { absolute: "Admin | Dashboard" },
 };
 
 export default async function AdminDashboard() {

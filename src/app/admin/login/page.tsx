@@ -10,6 +10,7 @@ import { validateEmail, validateMinLength } from "@/lib/validation";
 export default function AdminLoginPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
@@ -20,6 +21,7 @@ export default function AdminLoginPage() {
     setLoading(true);
     setError(null);
     setToast(null);
+    setFieldErrors({});
 
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get("email"));
@@ -27,15 +29,13 @@ export default function AdminLoginPage() {
 
     const emailError = validateEmail(email);
     if (emailError) {
-      setError(emailError.message);
-      setToast({ type: "error", message: emailError.message });
+      setFieldErrors({ email: emailError.message });
       setLoading(false);
       return;
     }
     const passwordError = validateMinLength(password, 8, "Password");
     if (passwordError) {
-      setError(passwordError.message);
-      setToast({ type: "error", message: passwordError.message });
+      setFieldErrors({ password: passwordError.message });
       setLoading(false);
       return;
     }
@@ -55,6 +55,11 @@ export default function AdminLoginPage() {
           ? "That password is incorrect."
           : "We couldn’t sign you in. Check your email and password.";
       setError(friendly);
+      if (response.error === "EMAIL_NOT_FOUND") {
+        setFieldErrors({ email: friendly });
+      } else if (response.error === "INVALID_PASSWORD") {
+        setFieldErrors({ password: friendly });
+      }
       setToast({ type: "error", message: friendly });
       setLoading(false);
       return;
@@ -95,16 +100,39 @@ export default function AdminLoginPage() {
           <form onSubmit={handleSubmit} className="mt-6 grid gap-4" noValidate>
             <label className="grid gap-2 text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">
               Email
-              <input
-                name="email"
-                type="email"
-                placeholder="Enter Email"
-                className="border border-[var(--pp-border)] bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--pp-gold)]/40"
-              />
+                <input
+                  name="email"
+                  type="email"
+                  placeholder="Enter Email"
+                  className={`border bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--pp-gold)]/40 ${
+                    fieldErrors.email
+                      ? "border-red-300 focus:ring-red-300/40"
+                      : "border-[var(--pp-border)]"
+                  }`}
+                  onBlur={(event) => {
+                    if (!fieldErrors.email) return;
+                    const result = validateEmail(event.target.value);
+                    if (!result) {
+                      setFieldErrors((prev) => ({ ...prev, email: undefined }));
+                    }
+                  }}
+                />
+              <span
+                data-show={Boolean(fieldErrors.email)}
+                className="field-error text-xs normal-case text-red-600"
+              >
+                {fieldErrors.email ?? ""}
+              </span>
             </label>
             <label className="grid gap-2 text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">
               Password
-              <div className="flex items-center border border-[var(--pp-border)] bg-white px-4 py-2">
+              <div
+                className={`flex items-center border bg-white px-4 py-2 ${
+                  fieldErrors.password
+                    ? "border-red-300"
+                    : "border-[var(--pp-border)]"
+                }`}
+              >
                 <input
                   name="password"
                   type={showPassword ? "text" : "password"}
@@ -112,6 +140,13 @@ export default function AdminLoginPage() {
                   className="w-full bg-transparent py-1 pr-2 text-sm focus:outline-none"
                   value={passwordValue}
                   onChange={(event) => setPasswordValue(event.target.value)}
+                  onBlur={(event) => {
+                    if (!fieldErrors.password) return;
+                    const result = validateMinLength(event.target.value, 6, "Password");
+                    if (!result) {
+                      setFieldErrors((prev) => ({ ...prev, password: undefined }));
+                    }
+                  }}
                 />
                 {passwordValue && (
                   <button
@@ -152,6 +187,12 @@ export default function AdminLoginPage() {
                   </button>
                 )}
               </div>
+              <span
+                data-show={Boolean(fieldErrors.password)}
+                className="field-error text-xs normal-case text-red-600"
+              >
+                {fieldErrors.password ?? ""}
+              </span>
             </label>
               <button
                 type="submit"
