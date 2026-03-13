@@ -6,6 +6,7 @@ const adminLinks = [
   { href: "/admin/categories", label: "Categories" },
   { href: "/admin/orders", label: "Orders" },
   { href: "/admin/contacts", label: "Contacts" },
+  { href: "/admin/settings", label: "Settings" },
 ];
 
 export default function AdminSidebar() {

@@ -17,6 +17,8 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const query = typeof resolvedParams.q === "string" ? resolvedParams.q : "";
   const category = typeof resolvedParams.category === "string" ? resolvedParams.category : "";
   const priceCap = typeof resolvedParams.price === "string" ? Number(resolvedParams.price) : undefined;
+  const featuredOnly =
+    resolvedParams.featured === "true" || resolvedParams.featured === "1";
 
   let products: ProductSummary[] = [];
   let categories: CategorySummary[] = [];
@@ -62,6 +64,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           initialQuery={query}
           initialCategory={category}
           initialPriceCap={priceCap}
+          initialFeaturedOnly={featuredOnly}
         />
       </div>
     </div>

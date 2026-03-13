@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ProductSummary } from "@/types/catalog";
 import { formatDate } from "@/lib/utils";
+import Toast from "@/components/ui/toast";
+import { validatePhone, validateRequired } from "@/lib/validation";
 
 interface OrderRow {
   id: string;
@@ -30,19 +32,46 @@ export default function AdminOrders({ orders, products }: AdminOrdersProps) {
   const router = useRouter();
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
+    setToast(null);
 
-    await fetch("/api/orders", {
+    const productError = validateRequired(form.productId, "Product");
+    if (productError) {
+      setToast({ type: "error", message: "Please select a product." });
+      setLoading(false);
+      return;
+    }
+    const nameError = validateRequired(form.customerName, "Customer name");
+    if (nameError) {
+      setToast({ type: "error", message: nameError.message });
+      setLoading(false);
+      return;
+    }
+    const phoneError = validatePhone(form.phone);
+    if (phoneError) {
+      setToast({ type: "error", message: phoneError.message });
+      setLoading(false);
+      return;
+    }
+
+    const response = await fetch("/api/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
+    if (!response.ok) {
+      setToast({ type: "error", message: "Unable to create order. Please try again." });
+      setLoading(false);
+      return;
+    }
 
     setForm(emptyForm);
     setLoading(false);
+    setToast({ type: "success", message: "Order created." });
     router.refresh();
   };
 
@@ -54,14 +83,13 @@ export default function AdminOrders({ orders, products }: AdminOrdersProps) {
 
   return (
     <div className="grid gap-8">
-      <form onSubmit={handleSubmit} className="soft-card rounded-3xl p-6">
+      <form onSubmit={handleSubmit} className="soft-card rounded-3xl p-6" noValidate>
         <h3 className="text-lg font-[var(--font-heading)]">Add manual order</h3>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <select
             className="rounded-2xl border border-[var(--pp-border)] px-4 py-3 text-sm"
             value={form.productId}
             onChange={(event) => setForm({ ...form, productId: event.target.value })}
-            required
           >
             <option value="">Select product</option>
             {products.map((product) => (
@@ -75,14 +103,12 @@ export default function AdminOrders({ orders, products }: AdminOrdersProps) {
             placeholder="Customer name"
             value={form.customerName}
             onChange={(event) => setForm({ ...form, customerName: event.target.value })}
-            required
           />
           <input
             className="rounded-2xl border border-[var(--pp-border)] px-4 py-3 text-sm"
             placeholder="Phone number"
             value={form.phone}
             onChange={(event) => setForm({ ...form, phone: event.target.value })}
-            required
           />
           <select
             className="rounded-2xl border border-[var(--pp-border)] px-4 py-3 text-sm"
@@ -100,7 +126,7 @@ export default function AdminOrders({ orders, products }: AdminOrdersProps) {
           className="mt-4 rounded-full bg-[var(--pp-gold)] px-6 py-3 text-sm font-semibold text-white"
           disabled={loading}
         >
-          {loading ? "Saving..." : "Create order"}
+          {loading ? "Saving…" : "Create order"}
         </button>
       </form>
 
@@ -131,6 +157,7 @@ export default function AdminOrders({ orders, products }: AdminOrdersProps) {
           ))}
         </div>
       </div>
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
 }

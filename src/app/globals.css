@@ -54,7 +54,52 @@ a {
   text-decoration: none;
 }
 
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+.toast-progress {
+  animation-name: toast-progress;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes toast-progress {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
 @layer utilities {
+  .pp-scrollbar {
+    scrollbar-width: none;
+    scrollbar-color: transparent transparent;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .pp-scrollbar::-webkit-scrollbar {
+    height: 0;
+  }
+
+  .pp-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .pp-scrollbar::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 999px;
+  }
+
+  .pp-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: transparent;
+  }
   .page-shell {
     max-width: 1760px;
     margin-left: auto;
@@ -98,7 +143,6 @@ a {
   }
 
   .btn-primary {
-    border-radius: 999px;
     background: linear-gradient(135deg, #c6a26a 0%, #e2c48f 100%);
     color: #1f1b18;
     padding: 0.85rem 1.7rem;
@@ -111,8 +155,81 @@ a {
     box-shadow: 0 18px 32px rgba(198, 162, 106, 0.3);
   }
 
+  .btn-sweep {
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    background: #ffffff;
+    border: 1px solid var(--pp-gold);
+    color: var(--pp-ink);
+  }
+
+  .btn-sweep::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--pp-gold);
+    transform: translateX(0);
+    z-index: 0;
+  }
+
+  .btn-sweep:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .btn-sweep:hover::before {
+    animation: btn-sweep-out 0.5s ease forwards;
+  }
+
+  .btn-sweep:not(:hover)::before {
+    animation: btn-sweep-in 0.5s ease forwards;
+  }
+
+  .btn-sweep-label {
+    position: relative;
+    z-index: 1;
+  }
+
+  .btn-secondary {
+    border: 1px solid var(--pp-gold);
+    color: var(--pp-ink);
+    background: transparent;
+    padding: 0.85rem 1.7rem;
+    font-weight: 600;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--pp-gold);
+    background-color: #fbf7f0;
+    box-shadow: inset 0 -3px 0 0 var(--pp-gold);
+  }
+
+  @keyframes btn-sweep-out {
+    from {
+      transform: translateX(0);
+    }
+
+    to {
+      transform: translateX(100%);
+    }
+  }
+
+  @keyframes btn-sweep-in {
+    from {
+      transform: translateX(-100%);
+    }
+
+    to {
+      transform: translateX(0);
+    }
+  }
+
   .btn-outline {
-    border-radius: 999px;
     border: 1px solid var(--pp-border);
     background: rgba(255, 255, 255, 0.7);
     padding: 0.85rem 1.7rem;
@@ -122,6 +239,12 @@ a {
 
   .btn-outline:hover {
     background: var(--pp-beige);
+  }
+
+  button,
+  .btn-primary,
+  .btn-outline {
+    border-radius: 0 !important;
   }
 
   .soft-card {

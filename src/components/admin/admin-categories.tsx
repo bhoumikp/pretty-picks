@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { CategorySummary } from "@/types/catalog";
+import Toast from "@/components/ui/toast";
+import { validateRequired, validateUrlOptional } from "@/lib/validation";
 
 interface AdminCategoriesProps {
   categories: CategorySummary[];
@@ -14,23 +16,47 @@ export default function AdminCategories({ categories }: AdminCategoriesProps) {
   const router = useRouter();
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
+    setToast(null);
+
+    const nameError = validateRequired(form.name, "Category name");
+    if (nameError) {
+      setToast({ type: "error", message: nameError.message });
+      setLoading(false);
+      return;
+    }
+    const urlError = validateUrlOptional(form.image, "Image URL");
+    if (urlError) {
+      setToast({ type: "error", message: urlError.message });
+      setLoading(false);
+      return;
+    }
 
     const payload = { name: form.name, image: form.image };
     const method = form.id ? "PATCH" : "POST";
     const url = form.id ? `/api/categories/${form.id}` : "/api/categories";
 
-    await fetch(url, {
+    const response = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
+    if (!response.ok) {
+      setToast({ type: "error", message: "Unable to save category. Please try again." });
+      setLoading(false);
+      return;
+    }
 
     setForm(emptyForm);
     setLoading(false);
+    setToast({
+      type: "success",
+      message: form.id ? "Category updated." : "Category created.",
+    });
     router.refresh();
   };
 
@@ -50,7 +76,7 @@ export default function AdminCategories({ categories }: AdminCategoriesProps) {
 
   return (
     <div className="grid gap-8">
-      <form onSubmit={handleSubmit} className="soft-card rounded-3xl p-6">
+      <form onSubmit={handleSubmit} className="soft-card rounded-3xl p-6" noValidate>
         <h3 className="text-lg font-[var(--font-heading)]">
           {form.id ? "Edit category" : "Add new category"}
         </h3>
@@ -60,7 +86,6 @@ export default function AdminCategories({ categories }: AdminCategoriesProps) {
             placeholder="Category name"
             value={form.name}
             onChange={(event) => setForm({ ...form, name: event.target.value })}
-            required
           />
           <input
             className="rounded-2xl border border-[var(--pp-border)] px-4 py-3 text-sm"
@@ -75,7 +100,7 @@ export default function AdminCategories({ categories }: AdminCategoriesProps) {
             className="rounded-full bg-[var(--pp-gold)] px-6 py-3 text-sm font-semibold text-white"
             disabled={loading}
           >
-            {loading ? "Saving..." : "Save category"}
+            {loading ? "Saving…" : "Save category"}
           </button>
           {form.id && (
             <button
@@ -120,5 +145,8 @@ export default function AdminCategories({ categories }: AdminCategoriesProps) {
         </div>
       </div>
     </div>
+    {toast && (
+      <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+    )}
   );
 }

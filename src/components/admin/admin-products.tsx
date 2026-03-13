@@ -4,6 +4,8 @@ import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type { CategorySummary, ProductImage, ProductSummary } from "@/types/catalog";
+import Toast from "@/components/ui/toast";
+import { validateMinLength, validateNumberMin, validateRequired, validateUrlOptional } from "@/lib/validation";
 
 interface AdminProductsProps {
   products: Array<
@@ -39,6 +41,7 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
   const [uploadProgress, setUploadProgress] = useState(0);
   const [manualUrl, setManualUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   const maxFiles = 6;
   const maxSizeMb = 4;
@@ -46,6 +49,52 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
+    setToast(null);
+    setError(null);
+
+    const nameError = validateRequired(form.name, "Product name");
+    if (nameError) {
+      setToast({ type: "error", message: nameError.message });
+      setLoading(false);
+      return;
+    }
+    const priceValue = Number(form.price);
+    const priceError = validateNumberMin(priceValue, 1, "Price");
+    if (priceError) {
+      setToast({ type: "error", message: priceError.message });
+      setLoading(false);
+      return;
+    }
+    const materialError = validateRequired(form.material, "Material");
+    if (materialError) {
+      setToast({ type: "error", message: materialError.message });
+      setLoading(false);
+      return;
+    }
+    const stockValue = Number(form.stock || 0);
+    const stockError = validateNumberMin(stockValue, 0, "Stock");
+    if (stockError) {
+      setToast({ type: "error", message: stockError.message });
+      setLoading(false);
+      return;
+    }
+    const categoryError = validateRequired(form.categoryId, "Category");
+    if (categoryError) {
+      setToast({ type: "error", message: "Please select a category." });
+      setLoading(false);
+      return;
+    }
+    const descriptionError = validateMinLength(form.description, 10, "Description");
+    if (descriptionError) {
+      setToast({ type: "error", message: descriptionError.message });
+      setLoading(false);
+      return;
+    }
+    if (!form.images.length) {
+      setToast({ type: "error", message: "Please add at least one product image." });
+      setLoading(false);
+      return;
+    }
 
     const payload = {
       name: form.name,
@@ -61,14 +110,20 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
     const method = form.id ? "PATCH" : "POST";
     const url = form.id ? `/api/products/${form.id}` : "/api/products";
 
-    await fetch(url, {
+    const response = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
+    if (!response.ok) {
+      setToast({ type: "error", message: "Unable to save product. Please try again." });
+      setLoading(false);
+      return;
+    }
 
     setForm(emptyForm);
     setLoading(false);
+    setToast({ type: "success", message: form.id ? "Product updated." : "Product created." });
     router.refresh();
   };
 
@@ -98,6 +153,7 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
     if (!files.length) return;
     if (form.images.length + files.length > maxFiles) {
       setError(`Maximum ${maxFiles} images allowed.`);
+      setToast({ type: "error", message: `Maximum ${maxFiles} images allowed.` });
       event.target.value = "";
       return;
     }
@@ -105,6 +161,7 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
     const invalidType = files.find((file) => !file.type.startsWith("image/"));
     if (invalidType) {
       setError("Only image files are allowed.");
+      setToast({ type: "error", message: "Only image files are allowed." });
       event.target.value = "";
       return;
     }
@@ -112,6 +169,7 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
     const tooLarge = files.find((file) => file.size > maxSizeMb * 1024 * 1024);
     if (tooLarge) {
       setError(`Each file must be under ${maxSizeMb}MB.`);
+      setToast({ type: "error", message: `Each file must be under ${maxSizeMb}MB.` });
       event.target.value = "";
       return;
     }
@@ -145,6 +203,7 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
       setForm({ ...form, images: [...form.images, ...uploads] });
     } catch (uploadError) {
       setError("Upload failed. Please try again.");
+      setToast({ type: "error", message: "Upload failed. Please try again." });
       console.error(uploadError);
     } finally {
       setUploading(false);
@@ -153,6 +212,11 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
   };
 
   const handleAddManualUrl = () => {
+    const urlError = validateUrlOptional(manualUrl, "Image URL");
+    if (urlError) {
+      setToast({ type: "error", message: urlError.message });
+      return;
+    }
     if (!manualUrl.trim()) return;
     setForm({
       ...form,
@@ -175,7 +239,7 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
 
   return (
     <div className="grid gap-8">
-      <form onSubmit={handleSubmit} className="soft-card rounded-3xl p-6">
+      <form onSubmit={handleSubmit} className="soft-card rounded-3xl p-6" noValidate>
         <h3 className="text-lg font-[var(--font-heading)]">
           {form.id ? "Edit product" : "Add new product"}
         </h3>
@@ -185,7 +249,6 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
             placeholder="Product name"
             value={form.name}
             onChange={(event) => setForm({ ...form, name: event.target.value })}
-            required
           />
           <input
             className="rounded-2xl border border-[var(--pp-border)] px-4 py-3 text-sm"
@@ -193,14 +256,12 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
             type="number"
             value={form.price}
             onChange={(event) => setForm({ ...form, price: event.target.value })}
-            required
           />
           <input
             className="rounded-2xl border border-[var(--pp-border)] px-4 py-3 text-sm"
             placeholder="Material"
             value={form.material}
             onChange={(event) => setForm({ ...form, material: event.target.value })}
-            required
           />
           <input
             className="rounded-2xl border border-[var(--pp-border)] px-4 py-3 text-sm"
@@ -208,13 +269,11 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
             type="number"
             value={form.stock}
             onChange={(event) => setForm({ ...form, stock: event.target.value })}
-            required
           />
           <select
             className="rounded-2xl border border-[var(--pp-border)] px-4 py-3 text-sm"
             value={form.categoryId}
             onChange={(event) => setForm({ ...form, categoryId: event.target.value })}
-            required
           >
             <option value="">Select category</option>
             {categories.map((category) => (
@@ -240,10 +299,9 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
           rows={3}
           value={form.description}
           onChange={(event) => setForm({ ...form, description: event.target.value })}
-          required
         />
         <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
-          <label className="rounded-full border border-[var(--pp-border)] px-4 py-2">
+          <label className="rounded-full border border-[var(--pp-border)] px-4 py-2 cursor-pointer">
             <input
               type="file"
               multiple
@@ -315,7 +373,7 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
             className="rounded-full bg-[var(--pp-gold)] px-6 py-3 text-sm font-semibold text-white"
             disabled={loading || uploading}
           >
-            {loading ? "Saving..." : "Save product"}
+            {loading ? "Saving…" : "Save product"}
           </button>
           {form.id && (
             <button
@@ -361,6 +419,7 @@ export default function AdminProducts({ products, categories }: AdminProductsPro
           ))}
         </div>
       </div>
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
 }

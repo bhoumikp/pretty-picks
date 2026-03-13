@@ -26,3 +26,36 @@ export const trustBadges = [
   "Instagram-friendly styles",
   "Secure direct ordering",
 ];
+
+export const instagramPosts = [
+  {
+    imageUrl: "/images/product-1.svg",
+    postUrl: "https://www.instagram.com/p/XXXXXXXXXXX/",
+    alt: "Pretty Picks Instagram post 1",
+  },
+  {
+    imageUrl: "/images/product-2.svg",
+    postUrl: "https://www.instagram.com/p/XXXXXXXXXX/",
+    alt: "Pretty Picks Instagram post 2",
+  },
+  {
+    imageUrl: "/images/product-3.svg",
+    postUrl: "https://www.instagram.com/p/XXXXXXXXX/",
+    alt: "Pretty Picks Instagram post 3",
+  },
+  {
+    imageUrl: "/images/product-4.svg",
+    postUrl: "https://www.instagram.com/p/XXXXXXXX/",
+    alt: "Pretty Picks Instagram post 4",
+  },
+  {
+    imageUrl: "/images/product-5.svg",
+    postUrl: "https://www.instagram.com/p/XXXXXXX/",
+    alt: "Pretty Picks Instagram post 5",
+  },
+  {
+    imageUrl: "/images/product-6.svg",
+    postUrl: "https://www.instagram.com/p/XXXXX/",
+    alt: "Pretty Picks Instagram post 6",
+  },
+];

@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { siteConfig, trustBadges } from "@/data/site";
-import FeaturedCarousel from "@/components/featured-carousel";
+import { instagramPosts, siteConfig, trustBadges } from "@/data/site";
+import ProductCard from "@/components/product-card";
 import CategoryCard from "@/components/category-card";
 import { primaryImage } from "@/lib/images";
 import type { CategorySummary, ProductSummary } from "@/types/catalog";
@@ -17,18 +17,20 @@ export default async function HomePage() {
   let featuredProducts: ProductSummary[] = [];
   let categories: CategorySummary[] = [];
   let under199: ProductSummary[] = [];
+  let dbUnavailable = false;
 
   try {
-    [featuredProducts, categories, under199] = await Promise.all([
+    const [featuredResult, categoriesResult, underResult] = await Promise.allSettled([
       prisma.product.findMany({
         where: { featured: true },
-        take: 6,
+        take: 4,
         orderBy: { createdAt: "desc" },
         select: {
           id: true,
           name: true,
           slug: true,
           price: true,
+          createdAt: true,
           material: true,
           featured: true,
           stock: true,
@@ -55,7 +57,23 @@ export default async function HomePage() {
         },
       }),
     ]);
+    if (featuredResult.status === "fulfilled") {
+      featuredProducts = featuredResult.value;
+    } else {
+      dbUnavailable = true;
+    }
+    if (categoriesResult.status === "fulfilled") {
+      categories = categoriesResult.value;
+    } else {
+      dbUnavailable = true;
+    }
+    if (underResult.status === "fulfilled") {
+      under199 = underResult.value;
+    } else {
+      dbUnavailable = true;
+    }
   } catch (error) {
+    dbUnavailable = true;
     console.error("HomePage: Prisma unavailable, rendering empty lists.", error);
   }
 
@@ -74,10 +92,10 @@ export default async function HomePage() {
                 lightweight, and designed to shine on every reel.
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
-                <Link href="/products" className="btn-primary text-sm">
-                  Shop Collection
+                <Link href="/products" className="btn-primary btn-sweep text-sm">
+                  <span className="btn-sweep-label">Shop Collection</span>
                 </Link>
-                <Link href="/products" className="btn-outline text-sm">
+                <Link href="/products" className="btn-secondary text-sm">
                   View Best Sellers
                 </Link>
               </div>
@@ -116,16 +134,22 @@ export default async function HomePage() {
 
       <section className="section-pad">
         <div className="page-shell">
-          <div className="mb-6 flex items-end justify-between">
+          <div className="mb-6">
             <div>
               <p className="eyebrow">Featured</p>
               <h2 className="section-title">Most loved</h2>
             </div>
-            <Link href="/products" className="text-sm text-[var(--pp-gold)]">
-              View all
-            </Link>
           </div>
-          <FeaturedCarousel products={featuredProducts} />
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {featuredProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+          <div className="mt-6 flex justify-center">
+              <Link href="/products?featured=true" className="btn-primary btn-sweep text-sm">
+                <span className="btn-sweep-label">View All</span>
+              </Link>
+          </div>
         </div>
       </section>
 
@@ -157,8 +181,8 @@ export default async function HomePage() {
                   or styling every day.
                 </p>
                 <div className="mt-5">
-                  <Link href="/products?price=199" className="btn-primary text-sm">
-                    Explore Collection
+                  <Link href="/products?price=199" className="btn-primary btn-sweep text-sm">
+                    <span className="btn-sweep-label">Explore Collection</span>
                   </Link>
                 </div>
               </div>
@@ -200,24 +224,27 @@ export default async function HomePage() {
               href={siteConfig.instagramUrl}
               target="_blank"
               rel="noreferrer"
-              className="btn-outline text-sm"
+              className="btn-secondary text-sm"
             >
               View Instagram
             </a>
           </div>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-            {[1, 2, 3, 4, 5, 6].map((index) => (
-              <div
-                key={index}
-                className="relative aspect-square overflow-hidden rounded-xl bg-[var(--pp-beige)]"
+          <div className="mt-2 grid grid-cols-2 gap-3 sm:pp-scrollbar sm:flex sm:gap-4 sm:overflow-x-auto sm:pb-3 sm:pt-1 sm:-mx-1 sm:px-1 sm:snap-x sm:snap-mandatory">
+            {instagramPosts.map((post) => (
+              <a
+                key={post.postUrl}
+                href={post.postUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="group relative block aspect-square w-full overflow-hidden bg-[var(--pp-beige)] sm:w-[160px] sm:shrink-0 sm:snap-start md:w-[180px] lg:w-[200px]"
               >
                 <Image
-                  src={`/images/product-${index}.svg`}
-                  alt="Instagram gallery"
+                  src={post.imageUrl}
+                  alt={post.alt}
                   fill
-                  className="object-cover transition-all duration-300 hover:scale-105"
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
                 />
-              </div>
+              </a>
             ))}
           </div>
         </div>

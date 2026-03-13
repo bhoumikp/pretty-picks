@@ -33,7 +33,7 @@ export default function MobileBottomNav() {
   }, []);
 
   const linkBase =
-    "flex h-10 w-10 items-center justify-center rounded-full transition";
+    "flex h-12 w-12 min-h-[48px] min-w-[48px] items-center justify-center rounded-full transition-colors duration-200 active:opacity-80 touch-manipulation";
   const activeClasses =
     "bg-[var(--pp-beige)] text-[var(--pp-gold)] ring-1 ring-[var(--pp-border)]";
   const idleClasses = "text-[var(--pp-ink)]";
@@ -46,7 +46,7 @@ export default function MobileBottomNav() {
   if (pathname.startsWith("/products/")) return null;
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--pp-border)] bg-white/95 backdrop-blur md:hidden">
-      <div className="flex items-center justify-around py-3">
+      <div className="flex items-center justify-around py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
         <Link
           href="/"
           aria-label="Home"

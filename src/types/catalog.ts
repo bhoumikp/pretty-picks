@@ -20,5 +20,6 @@ export interface ProductSummary {
   stock?: number;
   material?: string;
   description?: string;
+  createdAt?: string | Date;
   category?: CategorySummary | null;
 }

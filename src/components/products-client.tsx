@@ -12,6 +12,7 @@ interface ProductsClientProps {
   initialQuery: string;
   initialCategory: string;
   initialPriceCap?: number;
+  initialFeaturedOnly?: boolean;
 }
 
 const MATERIALS = ["Alloy", "Enamel", "Faux Pearl", "Anti-tarnish"];
@@ -22,6 +23,7 @@ export default function ProductsClient({
   initialQuery,
   initialCategory,
   initialPriceCap,
+  initialFeaturedOnly = false,
 }: ProductsClientProps) {
   const [query, setQuery] = useState(initialQuery);
   const [category, setCategory] = useState(initialCategory);
@@ -31,7 +33,7 @@ export default function ProductsClient({
       : [0, 999]
   );
   const [material, setMaterial] = useState("");
-  const [featuredOnly, setFeaturedOnly] = useState(false);
+  const [featuredOnly, setFeaturedOnly] = useState(initialFeaturedOnly);
   const [sort, setSort] = useState("newest");
   const [visible, setVisible] = useState(8);
   const [filtersOpen, setFiltersOpen] = useState(false);
