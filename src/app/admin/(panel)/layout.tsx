@@ -3,6 +3,13 @@ import { redirect } from "next/navigation";
 import AdminSidebar from "@/components/admin/admin-sidebar";
 import { authOptions } from "@/lib/auth";
 
+export const metadata = {
+  title: {
+    template: "Admin | %s",
+    default: "Admin",
+  },
+};
+
 export default async function AdminLayout({
   children,
 }: {

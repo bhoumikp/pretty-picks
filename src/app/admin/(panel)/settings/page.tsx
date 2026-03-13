@@ -1,7 +1,7 @@
 import AdminSettings from "@/components/admin/admin-settings";
 
 export const metadata = {
-  title: "Admin Settings",
+  title: "Settings",
 };
 
 export default function AdminSettingsPage() {

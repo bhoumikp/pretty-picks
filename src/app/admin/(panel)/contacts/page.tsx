@@ -2,6 +2,9 @@ import { prisma } from "@/lib/prisma";
 import AdminContacts from "@/components/admin/admin-contacts";
 
 export const revalidate = 0;
+export const metadata = {
+  title: "Contacts",
+};
 
 export default async function AdminContactsPage() {
   const contacts = await prisma.contact.findMany({

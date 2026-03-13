@@ -3,6 +3,9 @@ import AdminProducts from "@/components/admin/admin-products";
 import { normalizeImages } from "@/lib/images";
 
 export const revalidate = 0;
+export const metadata = {
+  title: "Products",
+};
 
 export default async function AdminProductsPage() {
   const [products, categories] = await Promise.all([

@@ -2,6 +2,9 @@ import { prisma } from "@/lib/prisma";
 import { formatCurrency } from "@/lib/utils";
 
 export const revalidate = 0;
+export const metadata = {
+  title: "Dashboard",
+};
 
 export default async function AdminDashboard() {
   const [productCount, orderCount, orders] = await Promise.all([
