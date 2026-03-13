@@ -1,4 +1,5 @@
 import { getServerSession } from "next-auth";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import AdminShell from "@/components/admin/admin-shell";
 import { authOptions } from "@/lib/auth";
@@ -20,5 +21,9 @@ export default async function AdminLayout({
     redirect("/admin/login");
   }
 
-  return <AdminShell>{children}</AdminShell>;
+  const cookieStore = await cookies();
+  const collapsedCookie = cookieStore.get("pp-admin-sidebar-collapsed");
+  const initialCollapsed = collapsedCookie?.value === "1";
+
+  return <AdminShell initialCollapsed={initialCollapsed}>{children}</AdminShell>;
 }

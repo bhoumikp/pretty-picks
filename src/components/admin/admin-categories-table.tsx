@@ -9,6 +9,7 @@ interface CategoryRow {
   name: string;
   slug: string;
   image?: string | null;
+  parentName?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -26,6 +27,7 @@ interface AdminCategoriesTableProps {
   onDelete: (id: string) => void;
   isLoading?: boolean;
   footerSlot?: React.ReactNode;
+  showParentColumn?: boolean;
 }
 
 export default function AdminCategoriesTable({
@@ -41,6 +43,7 @@ export default function AdminCategoriesTable({
   onDelete,
   isLoading = false,
   footerSlot,
+  showParentColumn = false,
 }: AdminCategoriesTableProps) {
   const getDirFor = (key: string) => {
     const index = sort.indexOf(key);
@@ -50,6 +53,7 @@ export default function AdminCategoriesTable({
     const index = sort.indexOf(key);
     return index >= 0 ? index + 1 : null;
   };
+  const columnCount = showParentColumn ? 6 : 5;
 
   return (
     <AdminTableShell
@@ -93,6 +97,23 @@ export default function AdminCategoriesTable({
                 )}
               </button>
             </th>
+            {showParentColumn && (
+              <th className="px-5 py-4">
+                <button
+                  type="button"
+                  onClick={() => onSort("parent")}
+                  className="inline-flex items-center gap-2 cursor-pointer"
+                >
+                  Parent
+                  {getDirFor("parent") && (
+                    <span className="text-[10px]">
+                      {getDirFor("parent") === "asc" ? "↑" : "↓"}
+                      {getSortRank("parent")}
+                    </span>
+                  )}
+                </button>
+              </th>
+            )}
             <th className="px-5 py-4">Image</th>
             <th className="px-5 py-4">
               <button
@@ -113,14 +134,14 @@ export default function AdminCategoriesTable({
           </tr>
         </thead>
         <tbody>
-          {categories.length === 0 ? (
-            <tr>
-              <td className="px-5 py-8 text-sm text-[var(--pp-muted)]" colSpan={5}>
-                No categories found.
-              </td>
-            </tr>
-          ) : (
-            categories.map((category) => (
+            {categories.length === 0 ? (
+              <tr>
+                <td className="px-5 py-8 text-sm text-[var(--pp-muted)]" colSpan={columnCount}>
+                  No categories found.
+                </td>
+              </tr>
+            ) : (
+              categories.map((category) => (
               <tr key={category.id} className="border-b border-[var(--pp-border)] last:border-b-0">
                 <td className="px-5 py-4">
                   <div className="flex items-center gap-3">
@@ -134,6 +155,11 @@ export default function AdminCategoriesTable({
                   </div>
                 </td>
                 <td className="px-5 py-4 text-[var(--pp-muted)]">/{category.slug}</td>
+                {showParentColumn && (
+                  <td className="px-5 py-4 text-[var(--pp-muted)]">
+                    {category.parentName ?? "—"}
+                  </td>
+                )}
                 <td className="px-5 py-4">
                   {category.image ? (
                     <div className="relative h-10 w-14 overflow-hidden rounded-lg bg-[var(--pp-beige)]">

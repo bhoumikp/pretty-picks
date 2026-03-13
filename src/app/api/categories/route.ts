@@ -18,6 +18,7 @@ export async function POST(request: Request) {
       name: body.name,
       slug: slugify(body.name),
       image: body.image ?? null,
+      parentId: body.parentId ?? null,
     },
   });
 

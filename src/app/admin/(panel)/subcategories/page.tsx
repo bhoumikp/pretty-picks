@@ -1,15 +1,15 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import AdminCategories from "@/components/admin/admin-categories";
+import AdminSubcategories from "@/components/admin/admin-subcategories";
 import OfflineBanner from "@/components/admin/offline-banner";
 
 export const revalidate = 0;
 export const dynamic = "force-dynamic";
 export const metadata = {
-  title: { absolute: "Admin | Categories" },
+  title: { absolute: "Admin | Sub Categories" },
 };
 
-export default async function AdminCategoriesPage({
+export default async function AdminSubcategoriesPage({
   searchParams,
 }: {
   searchParams?: Promise<{ page?: string; q?: string; sort?: string; dir?: string }>;
@@ -18,23 +18,25 @@ export default async function AdminCategoriesPage({
   const pageSize = 15;
   const page = Math.max(1, Number(params.page ?? "1") || 1);
   const query = (params.q ?? "").trim();
-  const sort = (params.sort ?? "name").trim();
-  const dir = (params.dir ?? "asc").trim();
-  const allowedSorts = new Set(["name", "slug", "createdAt", "updatedAt"]);
-  const sortKey = (allowedSorts.has(sort) ? sort : "name") as
+  const sort = (params.sort ?? "updatedAt").trim();
+  const dir = (params.dir ?? "desc").trim();
+  const allowedSorts = new Set(["name", "slug", "parent", "createdAt", "updatedAt"]);
+  const sortKey = (allowedSorts.has(sort) ? sort : "updatedAt") as
     | "name"
     | "slug"
+    | "parent"
     | "createdAt"
     | "updatedAt";
   const dirKey: Prisma.SortOrder = dir === "asc" ? "asc" : "desc";
 
   const where = {
-    parentId: null,
+    parentId: { not: null },
     ...(query
       ? {
           OR: [
             { name: { contains: query, mode: "insensitive" as const } },
             { slug: { contains: query, mode: "insensitive" as const } },
+            { parent: { name: { contains: query, mode: "insensitive" as const } } },
           ],
         }
       : {}),
@@ -45,51 +47,67 @@ export default async function AdminCategoriesPage({
       ? { name: dirKey }
       : sortKey === "slug"
       ? { slug: dirKey }
+      : sortKey === "parent"
+      ? { parent: { name: dirKey } }
       : sortKey === "createdAt"
       ? { createdAt: dirKey }
       : { updatedAt: dirKey };
 
-  let categories: Awaited<ReturnType<typeof prisma.category.findMany>> = [];
+  let subcategories: Array<
+    Prisma.CategoryGetPayload<{ include: { parent: true } }>
+  > = [];
   let total = 0;
   let dbUnavailable = false;
 
+  let parentOptions: Array<{ id: string; name: string }> = [];
+
   try {
-    const [categoriesResult, totalResult] = await Promise.all([
+    const [subcategoriesResult, totalResult, parentsResult] = await Promise.all([
       prisma.category.findMany({
-        orderBy,
         where,
+        orderBy,
+        include: { parent: true },
         take: pageSize,
         skip: (page - 1) * pageSize,
       }),
       prisma.category.count({ where }),
+      prisma.category.findMany({
+        where: { parentId: null },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      }),
     ]);
-    categories = categoriesResult;
+    subcategories = subcategoriesResult;
     total = totalResult;
+    parentOptions = parentsResult;
   } catch (error) {
-    console.error("Admin categories DB error:", error);
+    console.error("Admin sub categories DB error:", error);
     dbUnavailable = true;
   }
 
-  const mapped = categories.map((category) => ({
-    id: category.id,
-    name: category.name,
-    slug: category.slug,
-    image: category.image ?? null,
-    createdAt: category.createdAt.toISOString(),
-    updatedAt: category.updatedAt.toISOString(),
+  const mapped = subcategories.map((subcategory) => ({
+    id: subcategory.id,
+    name: subcategory.name,
+    slug: subcategory.slug,
+    image: subcategory.image ?? null,
+    parentId: subcategory.parentId ?? null,
+    parentName: subcategory.parent?.name ?? null,
+    createdAt: subcategory.createdAt.toISOString(),
+    updatedAt: subcategory.updatedAt.toISOString(),
   }));
 
   return (
     <div className="grid gap-4">
       {dbUnavailable && <OfflineBanner />}
-      <AdminCategories
-        initialCategories={mapped}
+      <AdminSubcategories
+        initialSubcategories={mapped}
         initialTotal={total}
         initialPage={page}
         pageSize={pageSize}
         initialQuery={query}
         initialSort={[sortKey]}
         initialDir={[dirKey]}
+        parentOptions={parentOptions}
       />
     </div>
   );

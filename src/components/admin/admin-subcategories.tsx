@@ -11,21 +11,29 @@ interface CategoryRow {
   name: string;
   slug: string;
   image?: string | null;
+  parentId?: string | null;
+  parentName?: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
-interface AdminCategoriesProps {
-  initialCategories: CategoryRow[];
+interface ParentOption {
+  id: string;
+  name: string;
+}
+
+interface AdminSubcategoriesProps {
+  initialSubcategories: CategoryRow[];
   initialTotal: number;
   initialPage: number;
   pageSize: number;
   initialQuery: string;
   initialSort: string[];
   initialDir: Array<"asc" | "desc">;
+  parentOptions: ParentOption[];
 }
 
-const emptyForm = { id: "", name: "", image: "" };
+const emptyForm = { id: "", name: "", image: "", parentId: "" };
 
 const buildQueryString = (
   query: string,
@@ -44,17 +52,18 @@ const buildQueryString = (
   return params.toString();
 };
 
-export default function AdminCategories({
-  initialCategories,
+export default function AdminSubcategories({
+  initialSubcategories,
   initialTotal,
   initialPage,
   pageSize,
   initialQuery,
   initialSort,
   initialDir,
-}: AdminCategoriesProps) {
-  const categoryType = "parent";
-  const [categories, setCategories] = useState(initialCategories);
+  parentOptions,
+}: AdminSubcategoriesProps) {
+  const categoryType = "sub";
+  const [subcategories, setSubcategories] = useState(initialSubcategories);
   const [total, setTotal] = useState(initialTotal);
   const [page, setPage] = useState(initialPage);
   const [query, setQuery] = useState(initialQuery);
@@ -65,8 +74,8 @@ export default function AdminCategories({
   const userTypedRef = useRef(false);
   const defaults = useMemo(
     () => ({
-      sort: initialSort[0] ?? "name",
-      dir: (initialDir[0] ?? "asc") as "asc" | "desc",
+      sort: initialSort[0] ?? "updatedAt",
+      dir: (initialDir[0] ?? "desc") as "asc" | "desc",
       pageSize,
     }),
     [initialSort, initialDir, pageSize]
@@ -76,7 +85,9 @@ export default function AdminCategories({
   const [modalOpen, setModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<{ name?: string; image?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; image?: string; parentId?: string }>(
+    {}
+  );
   const [toasts, setToasts] = useState<
     Array<{ id: string; message: string; type?: "success" | "error" | "warning" | "primary" }>
   >([]);
@@ -91,13 +102,13 @@ export default function AdminCategories({
     ) => {
       if (typeof window === "undefined") return;
       const params = buildQueryString(nextQuery, nextPage, nextSort, nextDir, nextPageSize, defaults);
-      const url = params ? `/admin/categories?${params}` : "/admin/categories";
+      const url = params ? `/admin/subcategories?${params}` : "/admin/subcategories";
       window.history.replaceState(null, "", url);
     },
     [defaults]
   );
 
-  const fetchCategories = useCallback(
+  const fetchSubcategories = useCallback(
     async (
       nextQuery: string,
       nextPage: number,
@@ -106,36 +117,36 @@ export default function AdminCategories({
     ) => {
       setLoading(true);
       const params = buildQueryString(nextQuery, nextPage, nextSort, nextDir, rowsPerPage, defaults);
-    const response = await fetch(
-      `/api/admin/categories?type=${categoryType}${params ? `&${params}` : ""}`,
-      { cache: "no-store" }
-    );
+      const response = await fetch(
+        `/api/admin/categories?type=${categoryType}${params ? `&${params}` : ""}`,
+        { cache: "no-store" }
+      );
       if (response.ok) {
         const data = (await response.json()) as { items: CategoryRow[]; total: number };
-        setCategories(data.items);
+        setSubcategories(data.items);
         setTotal(data.total);
       } else {
-        setCategories([]);
+        setSubcategories([]);
         setTotal(0);
       }
       setLoading(false);
     },
-    [defaults, rowsPerPage]
+    [categoryType, defaults, rowsPerPage]
   );
 
   useEffect(() => {
     if (!userTypedRef.current) return;
     const handle = window.setTimeout(() => {
       const nextPage = 1;
-      fetchCategories(query, nextPage, sort, dir);
+      fetchSubcategories(query, nextPage, sort, dir);
       setPage(nextPage);
       syncUrl(query, nextPage, sort, dir, rowsPerPage);
     }, 300);
     return () => window.clearTimeout(handle);
-  }, [query, rowsPerPage, sort, dir, fetchCategories, syncUrl]);
+  }, [query, rowsPerPage, sort, dir, fetchSubcategories, syncUrl]);
 
   const handlePageChange = (nextPage: number) => {
-    fetchCategories(query, nextPage, sort, dir);
+    fetchSubcategories(query, nextPage, sort, dir);
     setPage(nextPage);
     syncUrl(query, nextPage, sort, dir, rowsPerPage);
   };
@@ -151,7 +162,7 @@ export default function AdminCategories({
     setSort(nextSort);
     setDir(nextDir);
     setPage(nextPage);
-    fetchCategories(query, nextPage, nextSort, nextDir);
+    fetchSubcategories(query, nextPage, nextSort, nextDir);
     syncUrl(query, nextPage, nextSort, nextDir, rowsPerPage);
   };
 
@@ -159,7 +170,7 @@ export default function AdminCategories({
     const nextPage = 1;
     setRowsPerPage(nextRows);
     setPage(nextPage);
-    fetchCategories(query, nextPage, sort, dir);
+    fetchSubcategories(query, nextPage, sort, dir);
     syncUrl(query, nextPage, sort, dir, nextRows);
   };
 
@@ -170,11 +181,12 @@ export default function AdminCategories({
     setModalOpen(true);
   };
 
-  const openEditModal = (category: CategoryRow) => {
+  const openEditModal = (subcategory: CategoryRow) => {
     setForm({
-      id: category.id,
-      name: category.name,
-      image: category.image ?? "",
+      id: subcategory.id,
+      name: subcategory.name,
+      image: subcategory.image ?? "",
+      parentId: subcategory.parentId ?? "",
     });
     setFieldErrors({});
     setError(null);
@@ -194,20 +206,26 @@ export default function AdminCategories({
     setError(null);
     setFieldErrors({});
 
-    const nameError = validateRequired(form.name, "Category name");
+    const nameError = validateRequired(form.name, "Sub Category name");
     if (nameError) {
       setFieldErrors({ name: nameError.message });
       setSaving(false);
       return;
     }
+    const parentError = validateRequired(form.parentId, "Parent category");
+    if (parentError) {
+      setFieldErrors((prev) => ({ ...prev, parentId: parentError.message }));
+      setSaving(false);
+      return;
+    }
     const urlError = validateUrlOptional(form.image, "Image URL");
     if (urlError) {
-      setFieldErrors({ image: urlError.message });
+      setFieldErrors((prev) => ({ ...prev, image: urlError.message }));
       setSaving(false);
       return;
     }
 
-    const payload = { name: form.name, image: form.image };
+    const payload = { name: form.name, image: form.image, parentId: form.parentId };
     const method = form.id ? "PATCH" : "POST";
     const url = form.id ? `/api/categories/${form.id}` : "/api/categories";
 
@@ -218,11 +236,11 @@ export default function AdminCategories({
     });
 
     if (!response.ok) {
-      setError("Unable to save category. Please try again.");
+      setError("Unable to save sub category. Please try again.");
       const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
       setToasts((prev) => [
         ...prev,
-        { id, type: "error", message: "Unable to save category. Please try again." },
+        { id, type: "error", message: "Unable to save sub category. Please try again." },
       ]);
       setSaving(false);
       return;
@@ -231,34 +249,37 @@ export default function AdminCategories({
     const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
     setToasts((prev) => [
       ...prev,
-      { id, type: "success", message: form.id ? "Category updated." : "Category created." },
+      { id, type: "success", message: form.id ? "Sub Category updated." : "Sub Category created." },
     ]);
 
     const nextPage = form.id ? page : 1;
     setPage(nextPage);
     setModalOpen(false);
     setForm(emptyForm);
-    await fetchCategories(query, nextPage, sort, dir);
+    await fetchSubcategories(query, nextPage, sort, dir);
     syncUrl(query, nextPage, sort, dir, rowsPerPage);
     setSaving(false);
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this category?")) return;
+    if (!confirm("Delete this sub category?")) return;
     const response = await fetch(`/api/categories/${id}`, { method: "DELETE" });
     const toastId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
     if (!response.ok) {
       setToasts((prev) => [
         ...prev,
-        { id: toastId, type: "error", message: "Unable to delete category." },
+        { id: toastId, type: "error", message: "Unable to delete sub category." },
       ]);
       return;
     }
-    setToasts((prev) => [...prev, { id: toastId, type: "success", message: "Category deleted." }]);
-    const shouldGoBack = categories.length <= 1 && page > 1;
+    setToasts((prev) => [
+      ...prev,
+      { id: toastId, type: "success", message: "Sub Category deleted." },
+    ]);
+    const shouldGoBack = subcategories.length <= 1 && page > 1;
     const nextPage = shouldGoBack ? page - 1 : page;
     setPage(nextPage);
-    await fetchCategories(query, nextPage, sort, dir);
+    await fetchSubcategories(query, nextPage, sort, dir);
     syncUrl(query, nextPage, sort, dir, rowsPerPage);
   };
 
@@ -268,7 +289,7 @@ export default function AdminCategories({
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">Catalog</p>
-            <h2 className="text-2xl font-[var(--font-heading)]">Categories</h2>
+            <h2 className="text-2xl font-[var(--font-heading)]">Sub Categories</h2>
           </div>
           <div className="flex flex-1 items-center justify-end gap-3">
             <div className="flex w-full max-w-xs items-center gap-2">
@@ -278,18 +299,18 @@ export default function AdminCategories({
                   userTypedRef.current = true;
                   setQuery(event.target.value);
                 }}
-                placeholder="Search categories"
+                placeholder="Search sub categories"
                 className="h-10 w-full border border-[var(--pp-border)] bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--pp-gold)]/30"
               />
             </div>
             <button type="button" onClick={openAddModal} className="btn-primary admin-btn admin-btn-size">
-              <span className="admin-btn-label">Add category</span>
+              <span className="admin-btn-label">Add Sub Category</span>
             </button>
           </div>
         </div>
 
         <AdminCategoriesTable
-          categories={categories}
+          categories={subcategories}
           page={page}
           pageSize={rowsPerPage}
           total={total}
@@ -300,6 +321,7 @@ export default function AdminCategories({
           onEdit={openEditModal}
           onDelete={handleDelete}
           isLoading={loading}
+          showParentColumn
           footerSlot={
             <div className="flex items-center gap-2 text-xs text-[var(--pp-muted)]">
               <span className="h-5 w-[2px] bg-[var(--pp-ink)]/20" />
@@ -322,10 +344,10 @@ export default function AdminCategories({
 
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-        <div className="w-full max-w-lg bg-white p-6 shadow-lg">
+          <div className="w-full max-w-lg bg-white p-6 shadow-lg">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-[var(--font-heading)]">
-                {form.id ? "Edit category" : "Add category"}
+                {form.id ? "Edit Sub Category" : "Add Sub Category"}
               </h3>
               <button
                 type="button"
@@ -338,25 +360,48 @@ export default function AdminCategories({
             </div>
             <form onSubmit={handleSubmit} className="mt-4 grid gap-4" noValidate>
               <div className="grid gap-2">
+                <select
+                  className={`admin-select border px-4 py-3 text-sm ${
+                    fieldErrors.parentId ? "border-red-300" : "border-[var(--pp-border)]"
+                  }`}
+                  value={form.parentId}
+                  onChange={(event) => setForm({ ...form, parentId: event.target.value })}
+                  onBlur={(event) => {
+                    if (!fieldErrors.parentId) return;
+                    const result = validateRequired(event.target.value, "Parent category");
+                    if (!result) {
+                      setFieldErrors((prev) => ({ ...prev, parentId: undefined }));
+                    }
+                  }}
+                >
+                  <option value="">Select parent category</option>
+                  {parentOptions.map((parent) => (
+                    <option key={parent.id} value={parent.id}>
+                      {parent.name}
+                    </option>
+                  ))}
+                </select>
+                <span data-show={Boolean(fieldErrors.parentId)} className="field-error text-xs normal-case text-red-600">
+                  {fieldErrors.parentId ?? ""}
+                </span>
+              </div>
+              <div className="grid gap-2">
                 <input
                   className={`border px-4 py-3 text-sm ${
                     fieldErrors.name ? "border-red-300" : "border-[var(--pp-border)]"
                   }`}
-                  placeholder="Category name"
+                  placeholder="Sub Category name"
                   value={form.name}
                   onChange={(event) => setForm({ ...form, name: event.target.value })}
                   onBlur={(event) => {
                     if (!fieldErrors.name) return;
-                    const result = validateRequired(event.target.value, "Category name");
+                    const result = validateRequired(event.target.value, "Sub Category name");
                     if (!result) {
                       setFieldErrors((prev) => ({ ...prev, name: undefined }));
                     }
                   }}
                 />
-                <span
-                  data-show={Boolean(fieldErrors.name)}
-                  className="field-error text-xs normal-case text-red-600"
-                >
+                <span data-show={Boolean(fieldErrors.name)} className="field-error text-xs normal-case text-red-600">
                   {fieldErrors.name ?? ""}
                 </span>
               </div>
@@ -376,10 +421,7 @@ export default function AdminCategories({
                     }
                   }}
                 />
-                <span
-                  data-show={Boolean(fieldErrors.image)}
-                  className="field-error text-xs normal-case text-red-600"
-                >
+                <span data-show={Boolean(fieldErrors.image)} className="field-error text-xs normal-case text-red-600">
                   {fieldErrors.image ?? ""}
                 </span>
               </div>

@@ -7,9 +7,11 @@ import {
   Layers,
   LayoutGrid,
   Settings as SettingsIcon,
+  ChevronDown,
   ShoppingBag,
   Users,
 } from "lucide-react";
+import { useMemo, useState } from "react";
 
 const navIcons: Record<string, React.ReactElement> = {
   Dashboard: <LayoutGrid className="h-4 w-4" />,
@@ -20,10 +22,23 @@ const navIcons: Record<string, React.ReactElement> = {
   Settings: <SettingsIcon className="h-4 w-4" />,
 };
 
-const adminLinks = [
+type AdminNavLink = {
+  href: string;
+  label: string;
+  children?: Array<{ href: string; label: string }>;
+};
+
+const adminLinks: AdminNavLink[] = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/products", label: "Products" },
-  { href: "/admin/categories", label: "Categories" },
+  {
+    href: "/admin/categories",
+    label: "Categories",
+    children: [
+      { href: "/admin/categories", label: "Categories" },
+      { href: "/admin/subcategories", label: "Sub Categories" },
+    ],
+  },
   { href: "/admin/orders", label: "Orders" },
   { href: "/admin/contacts", label: "Contacts" },
   { href: "/admin/settings", label: "Settings" },
@@ -41,6 +56,19 @@ export default function AdminSidebar({
   collapsed = false,
 }: AdminSidebarProps) {
   const pathname = usePathname();
+  const [openSection, setOpenSection] = useState<string | null>(null);
+
+  const activeSection = useMemo(() => {
+    return (
+      adminLinks.find(
+        (link) =>
+          link.children?.some((child) => pathname === child.href || pathname.startsWith(child.href))
+      )?.href ?? null
+    );
+  }, [pathname]);
+
+  const effectiveOpenSection = openSection ?? activeSection;
+  const activeParent = activeSection;
 
   const renderLinks = () => (
     <nav className="mt-4 flex flex-col gap-1 text-sm">
@@ -48,38 +76,174 @@ export default function AdminSidebar({
         const isActive =
           pathname === link.href ||
           (link.href !== "/admin" && pathname.startsWith(link.href));
+        const hasChildren = Boolean(link.children?.length);
+        const isChildActive = link.children?.some(
+          (child) => pathname === child.href || pathname.startsWith(child.href)
+        );
 
         return (
-          <Link
-            key={link.href}
-            href={link.href}
-            prefetch
-            aria-current={isActive ? "page" : undefined}
-            onClick={() => onClose?.()}
-            title={link.label}
-            className={`group flex items-center border-l-2 px-3 py-2 transition ${
-              isActive
-                ? "border-[var(--pp-gold)] bg-[var(--pp-beige)] text-[var(--pp-ink)]"
-                : "border-transparent text-[var(--pp-muted)] hover:border-[var(--pp-gold)]/40 hover:bg-[var(--pp-beige)]/70 hover:text-[var(--pp-ink)]"
-            }`}
-          >
-            <span className={`relative flex items-center ${collapsed ? "justify-center" : "gap-3"} w-full`}>
-              <span
-                className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                  isActive ? "bg-[var(--pp-gold)]/15 text-[var(--pp-ink)]" : "bg-[var(--pp-border)]/40"
+          <div key={link.href} className="flex flex-col">
+            {hasChildren ? (
+              <button
+                type="button"
+                onClick={() =>
+                  setOpenSection((prev) =>
+                    prev === link.href ? null : activeParent && activeParent !== link.href ? null : link.href
+                  )
+                }
+                title={link.label}
+                aria-expanded={effectiveOpenSection === link.href}
+                className={`group flex items-center border-l-2 px-3 py-2 text-left transition ${
+                  isActive || isChildActive
+                    ? "border-[var(--pp-gold)] bg-[var(--pp-beige)] text-[var(--pp-ink)] font-semibold"
+                    : "border-transparent text-[var(--pp-muted)] hover:border-[var(--pp-gold)]/40 hover:bg-[var(--pp-beige)]/70 hover:text-[var(--pp-ink)]"
                 }`}
               >
-                {navIcons[link.label]}
-              </span>
-              <span className={`${collapsed ? "lg:hidden" : ""}`}>{link.label}</span>
-              {collapsed && (
-                <span className="pointer-events-none absolute left-12 top-1/2 hidden -translate-y-1/2 whitespace-nowrap border border-[var(--pp-border)] bg-white px-2.5 py-1 text-xs text-[var(--pp-ink)] opacity-0 shadow-sm transition group-hover:opacity-100 lg:block">
-                  {link.label}
+                <span
+                  className={`relative flex items-center ${collapsed ? "justify-center" : "gap-3"} w-full`}
+                >
+                  <span
+                    className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                      isActive || isChildActive
+                        ? "bg-[var(--pp-gold)]/20 text-[var(--pp-ink)]"
+                        : "bg-[var(--pp-border)]/40"
+                    }`}
+                  >
+                    {navIcons[link.label]}
+                  </span>
+                  <span
+                    className={`${collapsed ? "lg:hidden" : ""} ${
+                      isChildActive ? "text-[var(--pp-ink)]" : ""
+                    }`}
+                  >
+                    {link.label}
+                  </span>
+                  {collapsed && (
+                    <span className="pointer-events-none absolute left-12 top-1/2 hidden -translate-y-1/2 whitespace-nowrap border border-[var(--pp-border)] bg-white px-2.5 py-1 text-xs text-[var(--pp-ink)] opacity-0 shadow-sm transition group-hover:opacity-100 lg:block">
+                      {link.label}
+                    </span>
+                  )}
                 </span>
-              )}
-            </span>
-            {!collapsed && isActive && <span className="text-xs text-[var(--pp-gold)]">●</span>}
-          </Link>
+                {!collapsed && (
+                  <span className="ml-auto flex items-center gap-2">
+                    {(isActive || isChildActive) && <span className="text-xs text-[var(--pp-gold)]">●</span>}
+                    <ChevronDown
+                      className={`h-4 w-4 transition ${effectiveOpenSection === link.href ? "rotate-180" : ""}`}
+                    />
+                  </span>
+                )}
+              </button>
+            ) : (
+              <Link
+                href={link.href}
+                prefetch
+                aria-current={isActive ? "page" : undefined}
+                onClick={() => onClose?.()}
+                title={link.label}
+                className={`group flex items-center border-l-2 px-3 py-2 transition ${
+                  isActive
+                    ? "border-[var(--pp-gold)] bg-[var(--pp-beige)] text-[var(--pp-ink)]"
+                    : "border-transparent text-[var(--pp-muted)] hover:border-[var(--pp-gold)]/40 hover:bg-[var(--pp-beige)]/70 hover:text-[var(--pp-ink)]"
+                }`}
+              >
+                <span
+                  className={`relative flex items-center ${collapsed ? "justify-center" : "gap-3"} w-full`}
+                >
+                  <span
+                    className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                      isActive ? "bg-[var(--pp-gold)]/15 text-[var(--pp-ink)]" : "bg-[var(--pp-border)]/40"
+                    }`}
+                  >
+                    {navIcons[link.label]}
+                  </span>
+                  <span className={`${collapsed ? "lg:hidden" : ""}`}>{link.label}</span>
+                  {collapsed && (
+                    <span className="pointer-events-none absolute left-12 top-1/2 hidden -translate-y-1/2 whitespace-nowrap border border-[var(--pp-border)] bg-white px-2.5 py-1 text-xs text-[var(--pp-ink)] opacity-0 shadow-sm transition group-hover:opacity-100 lg:block">
+                      {link.label}
+                    </span>
+                  )}
+                </span>
+                {!collapsed && isActive && <span className="text-xs text-[var(--pp-gold)]">●</span>}
+              </Link>
+            )}
+            {collapsed && hasChildren && (
+              <div className="relative ml-3 mt-2 flex flex-col gap-2 border-l border-[var(--pp-border)]/60 pl-3">
+                {link.children?.map((child) => {
+                  const childActive = pathname === child.href || pathname.startsWith(child.href);
+                  return (
+                    <Link
+                      key={child.href}
+                      href={child.href}
+                      prefetch
+                      onClick={() => {
+                        setOpenSection(null);
+                        onClose?.();
+                      }}
+                      className={`group relative flex items-center gap-2 px-2 py-1 text-[10px] uppercase tracking-[0.2em] transition ${
+                        childActive
+                          ? "text-[var(--pp-ink)]"
+                          : "text-[var(--pp-muted)] hover:text-[var(--pp-ink)]"
+                      }`}
+                    >
+                      <span
+                        className={`h-[6px] w-[6px] ${
+                          childActive ? "bg-[var(--pp-gold)]" : "bg-[var(--pp-ink)]/30"
+                        }`}
+                      />
+                      <span
+                        className={`ml-1 flex h-7 min-w-[36px] items-center justify-center rounded-full border px-3 text-[12px] font-semibold ${
+                          childActive
+                            ? "border-[var(--pp-gold)]/70 bg-[var(--pp-gold)]/15 text-[var(--pp-ink)]"
+                            : "border-[var(--pp-border)] bg-white text-[var(--pp-ink)]"
+                        }`}
+                      >
+                        {child.label
+                          .split(" ")
+                          .map((part) => part[0])
+                          .join("")
+                          .slice(0, 2)
+                          .toUpperCase()}
+                      </span>
+                      <span className="lg:sr-only">{child.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+            {!collapsed && hasChildren && (
+              <div
+                className={`ml-10 overflow-hidden transition-all duration-500 ${
+                  effectiveOpenSection === link.href ? "mt-2 max-h-40 opacity-100" : "max-h-0 opacity-0"
+                }`}
+                aria-hidden={effectiveOpenSection !== link.href}
+              >
+                <div className="flex flex-col gap-2">
+                  {link.children?.map((child) => {
+                    const childActive = pathname === child.href || pathname.startsWith(child.href);
+                    return (
+                      <Link
+                        key={child.href}
+                        href={child.href}
+                        prefetch
+                        onClick={() => {
+                          setOpenSection(null);
+                          onClose?.();
+                        }}
+                        className={`flex items-center gap-2 border-l-2 px-3 py-2 text-xs uppercase tracking-[0.22em] transition ${
+                          childActive
+                            ? "border-[var(--pp-gold)] text-[var(--pp-ink)]"
+                            : "border-transparent text-[var(--pp-muted)] hover:border-[var(--pp-gold)]/40 hover:text-[var(--pp-ink)]"
+                        }`}
+                      >
+                        <span className="text-[10px] text-[var(--pp-muted)]">•</span>
+                        {child.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
         );
       })}
     </nav>
@@ -88,7 +252,7 @@ export default function AdminSidebar({
   return (
     <>
       <aside
-        className={`hidden h-screen flex-col border-r border-[var(--pp-border)] bg-white py-8 lg:fixed lg:left-0 lg:top-0 lg:z-20 lg:flex lg:overflow-y-auto ${
+        className={`hidden h-screen flex-col border-r border-[var(--pp-border)] bg-white py-8 transition-[width,padding] duration-300 ease-out lg:fixed lg:left-0 lg:top-0 lg:z-20 lg:flex lg:overflow-y-auto ${
           collapsed ? "lg:w-20 lg:px-3" : "lg:w-72 lg:px-6"
         }`}
       >

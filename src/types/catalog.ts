@@ -3,6 +3,8 @@ export interface CategorySummary {
   name: string;
   slug: string;
   image?: string | null;
+  parentId?: string | null;
+  parentName?: string | null;
 }
 
 export interface ProductImage {

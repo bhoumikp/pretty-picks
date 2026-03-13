@@ -17,6 +17,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     ...body,
   };
   if (body.name) data.slug = slugify(body.name);
+  if (body.parentId === "") data.parentId = null;
 
   const category = await prisma.category.update({
     where: { id },

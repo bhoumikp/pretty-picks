@@ -155,44 +155,42 @@ export default function AdminLoginPage() {
                     }
                   }}
                 />
-                {passwordValue && (
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((prev) => !prev)}
-                    className="flex h-8 w-8 items-center justify-center text-[var(--pp-muted)] transition-colors hover:text-[var(--pp-gold)]"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                  >
-                    {showPassword ? (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path d="M3 3l18 18" strokeWidth="1.6" strokeLinecap="round" />
-                        <path
-                          d="M10.6 10.6a2.5 2.5 0 0 0 3.5 3.5"
-                          strokeWidth="1.6"
-                          strokeLinecap="round"
-                        />
-                        <path
-                          d="M9 5.2A9.6 9.6 0 0 1 12 5c5.2 0 9.5 4.2 10.5 7-0.4 1-1.4 2.8-3.2 4.4"
-                          strokeWidth="1.6"
-                          strokeLinecap="round"
-                        />
-                        <path
-                          d="M6.2 7.1C4.2 8.6 2.8 10.6 1.5 12c1 2.8 5.3 7 10.5 7 1.1 0 2.1-0.2 3.1-0.6"
-                          strokeWidth="1.6"
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                    ) : (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path
-                          d="M1.5 12c1-2.8 5.3-7 10.5-7s9.5 4.2 10.5 7c-1 2.8-5.3 7-10.5 7s-9.5-4.2-10.5-7z"
-                          strokeWidth="1.6"
-                          strokeLinecap="round"
-                        />
-                        <circle cx="12" cy="12" r="3.2" strokeWidth="1.6" />
-                      </svg>
-                    )}
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="flex h-8 w-8 items-center justify-center text-[var(--pp-muted)] transition-colors hover:text-[var(--pp-gold)]"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path d="M3 3l18 18" strokeWidth="1.6" strokeLinecap="round" />
+                      <path
+                        d="M10.6 10.6a2.5 2.5 0 0 0 3.5 3.5"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                      />
+                      <path
+                        d="M9 5.2A9.6 9.6 0 0 1 12 5c5.2 0 9.5 4.2 10.5 7-0.4 1-1.4 2.8-3.2 4.4"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                      />
+                      <path
+                        d="M6.2 7.1C4.2 8.6 2.8 10.6 1.5 12c1 2.8 5.3 7 10.5 7 1.1 0 2.1-0.2 3.1-0.6"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path
+                        d="M1.5 12c1-2.8 5.3-7 10.5-7s9.5 4.2 10.5 7c-1 2.8-5.3 7-10.5 7s-9.5-4.2-10.5-7z"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                      />
+                      <circle cx="12" cy="12" r="3.2" strokeWidth="1.6" />
+                    </svg>
+                  )}
+                </button>
               </div>
               <span
                 data-show={Boolean(fieldErrors.password)}

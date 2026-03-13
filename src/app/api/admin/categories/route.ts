@@ -16,29 +16,43 @@ export async function GET(request: Request) {
   const query = (searchParams.get("q") ?? "").trim();
   const sort = (searchParams.get("sort") ?? "name").trim();
   const dir = (searchParams.get("dir") ?? "asc").trim();
+  const type = (searchParams.get("type") ?? "parent").trim();
 
-  const allowedSorts = new Set(["name", "slug", "createdAt", "updatedAt"]);
+  const allowedSorts = new Set(["name", "slug", "parent", "createdAt", "updatedAt"]);
   const sortKey = (allowedSorts.has(sort) ? sort : "name") as
     | "name"
     | "slug"
+    | "parent"
     | "createdAt"
     | "updatedAt";
   const dirKey: Prisma.SortOrder = dir === "asc" ? "asc" : "desc";
 
-  const where = query
-    ? {
-        OR: [
-          { name: { contains: query, mode: "insensitive" as const } },
-          { slug: { contains: query, mode: "insensitive" as const } },
-        ],
-      }
-    : undefined;
+  const scopeFilter =
+    type === "sub"
+      ? { parentId: { not: null } }
+      : type === "all"
+      ? {}
+      : { parentId: null };
+
+  const where = {
+    ...scopeFilter,
+    ...(query
+      ? {
+          OR: [
+            { name: { contains: query, mode: "insensitive" as const } },
+            { slug: { contains: query, mode: "insensitive" as const } },
+          ],
+        }
+      : {}),
+  };
 
   const orderBy: Prisma.CategoryOrderByWithRelationInput =
     sortKey === "name"
       ? { name: dirKey }
       : sortKey === "slug"
       ? { slug: dirKey }
+      : sortKey === "parent"
+      ? { parent: { name: dirKey } }
       : sortKey === "createdAt"
       ? { createdAt: dirKey }
       : { updatedAt: dirKey };
@@ -49,6 +63,7 @@ export async function GET(request: Request) {
       where,
       take: pageSize,
       skip: (page - 1) * pageSize,
+      include: { parent: true },
     }),
     prisma.category.count({ where }),
   ]);
@@ -58,6 +73,8 @@ export async function GET(request: Request) {
     name: category.name,
     slug: category.slug,
     image: category.image ?? null,
+    parentId: category.parentId ?? null,
+    parentName: category.parent?.name ?? null,
     createdAt: category.createdAt.toISOString(),
     updatedAt: category.updatedAt.toISOString(),
   }));

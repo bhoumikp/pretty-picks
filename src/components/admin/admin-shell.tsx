@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import AdminSidebar from "@/components/admin/admin-sidebar";
 import ToastStack from "@/components/ui/toast-stack";
@@ -9,15 +9,40 @@ const pageTitles = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/products", label: "Products" },
   { href: "/admin/categories", label: "Categories" },
+  { href: "/admin/subcategories", label: "Sub Categories" },
   { href: "/admin/orders", label: "Orders" },
   { href: "/admin/contacts", label: "Contacts" },
   { href: "/admin/settings", label: "Settings" },
 ];
 
-export default function AdminShell({ children }: { children: React.ReactNode }) {
+export default function AdminShell({
+  children,
+  initialCollapsed = false,
+}: {
+  children: React.ReactNode;
+  initialCollapsed?: boolean;
+}) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const sidebarCollapsed = useSyncExternalStore(
+    (callback) => {
+      if (typeof window === "undefined") return () => undefined;
+      const handler = () => callback();
+      window.addEventListener("storage", handler);
+      window.addEventListener("pp-admin-sidebar", handler);
+      return () => {
+        window.removeEventListener("storage", handler);
+        window.removeEventListener("pp-admin-sidebar", handler);
+      };
+    },
+    () => {
+      if (typeof window === "undefined") return initialCollapsed;
+      const cookieMatch = document.cookie.match(/(?:^|; )pp-admin-sidebar-collapsed=([^;]+)/);
+      if (cookieMatch) return cookieMatch[1] === "1";
+      return initialCollapsed;
+    },
+    () => initialCollapsed
+  );
   const [toasts, setToasts] = useState<
     Array<{ id: string; message: string; type?: "success" | "error" | "warning" | "primary"; durationMs?: number }>
   >([]);
@@ -45,9 +70,17 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     pushToast("Primary toast", "primary");
   };
 
+  const toggleSidebarCollapsed = () => {
+    if (typeof window === "undefined") return;
+    const next = !sidebarCollapsed;
+    window.localStorage.setItem("pp-admin-sidebar-collapsed", next ? "1" : "0");
+    document.cookie = `pp-admin-sidebar-collapsed=${next ? "1" : "0"}; path=/; max-age=31536000`;
+    window.dispatchEvent(new Event("pp-admin-sidebar"));
+  };
+
   return (
     <div
-      className={`min-h-screen bg-[var(--pp-beige)] ${
+      className={`min-h-screen bg-[var(--pp-beige)] transition-[padding] duration-300 ease-out ${
         sidebarCollapsed ? "lg:pl-20" : "lg:pl-72"
       }`}
     >
@@ -57,7 +90,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         collapsed={sidebarCollapsed}
       />
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 border-b border-[var(--pp-border)] bg-white/80 px-6 py-4 backdrop-blur">
+        <header className="sticky top-0 z-30 border-b border-[var(--pp-border)] bg-white/80 px-6 py-4 backdrop-blur transition-[padding] duration-300 ease-out">
           <div className="flex w-full items-center justify-between">
             <div className="flex items-center gap-3">
               <button
@@ -74,7 +107,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               </button>
               <button
                 type="button"
-                onClick={() => setSidebarCollapsed((prev) => !prev)}
+                onClick={toggleSidebarCollapsed}
                 className="hidden h-9 w-9 items-center justify-center text-[var(--pp-muted)] transition hover:text-[var(--pp-ink)] lg:flex"
                 aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               >
@@ -106,7 +139,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             </div>
           </div>
         </header>
-        <main className="flex-1 px-6 py-8">{children}</main>
+        <main className="flex-1 px-6 py-8 transition-[padding] duration-300 ease-out">
+          {children}
+        </main>
       </div>
       <ToastStack toasts={toasts} onClose={(id) => setToasts((prev) => prev.filter((t) => t.id !== id))} />
     </div>
