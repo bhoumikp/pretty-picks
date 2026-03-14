@@ -97,6 +97,51 @@
   background: rgba(198, 162, 106, 0.12);
 }
 
+.admin-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--pp-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+.admin-input {
+  width: 100%;
+  border: 1px solid var(--pp-border);
+  background: white;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+}
+
+.admin-textarea {
+  width: 100%;
+  border: 1px solid var(--pp-border);
+  background: white;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  resize: vertical;
+}
+
+.admin-highlight {
+  background: rgba(198, 162, 106, 0.2);
+  color: inherit;
+  padding: 0 2px;
+}
+
+.admin-fade-in {
+  animation: admin-fade-in 0.35s ease both;
+}
+
+@keyframes admin-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
 @media (max-width: 1024px) {
   .admin-table thead {
     display: none;

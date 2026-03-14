@@ -14,6 +14,7 @@ const pageTitles = [
   { href: "/admin/subcategories", label: "Sub Categories" },
   { href: "/admin/orders", label: "Orders" },
   { href: "/admin/contacts", label: "Contacts" },
+  { href: "/admin/audit-logs", label: "Audit Logs" },
   { href: "/admin/settings", label: "Settings" },
 ];
 
@@ -75,6 +76,11 @@ function AdminShellBody({
       className={`min-h-screen bg-[var(--pp-beige)] transition-[padding] duration-300 ease-out ${
         sidebarCollapsed ? "lg:pl-20" : "lg:pl-72"
       }`}
+      style={
+        {
+          "--admin-sidebar-offset": sidebarCollapsed ? "5rem" : "18rem",
+        } as React.CSSProperties
+      }
     >
       <AdminSidebar
         mobileOpen={sidebarOpen}
@@ -131,8 +137,8 @@ function AdminShellBody({
             </div>
           </div>
         </header>
-        <main className="flex-1 px-6 py-8 transition-[padding] duration-300 ease-out">
-          {children}
+        <main className="relative flex-1 transition-[padding] duration-300 ease-out admin-fade-in">
+          <div className="px-6 py-8">{children}</div>
         </main>
       </div>
     </div>

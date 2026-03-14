@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin";
 import { slugify } from "@/lib/utils";
+import { logAudit } from "@/lib/audit";
 
 export async function PATCH(
   request: Request,
@@ -20,6 +21,7 @@ export async function PATCH(
     image?: string | null;
     parentId?: string | null;
     active?: boolean;
+    archivedAt?: Date | null;
   } = {};
 
   if (typeof body.name === "string" && body.name.trim()) {
@@ -38,11 +40,22 @@ export async function PATCH(
   if (typeof body.active === "boolean") {
     data.active = body.active;
   }
+  if ("archivedAt" in body) {
+    data.archivedAt = body.archivedAt ? new Date(body.archivedAt) : null;
+  }
 
   try {
     const category = await prisma.category.update({
       where: { id: categoryId },
       data,
+    });
+    await logAudit({
+      actorId: session.user.id,
+      action: "UPDATE",
+      entity: "CATEGORY",
+      entityId: category.id,
+      metadata: { updatedFields: Object.keys(data) },
+      request,
     });
     return NextResponse.json(category);
   } catch (error) {
@@ -52,7 +65,7 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: { id: string } | Promise<{ id: string }> }
 ) {
   const resolvedParams = await Promise.resolve(params);
@@ -60,6 +73,17 @@ export async function DELETE(
   const session = await requireAdmin();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  await prisma.category.delete({ where: { id: categoryId } });
+  await prisma.category.update({
+    where: { id: categoryId },
+    data: { archivedAt: new Date() },
+  });
+
+  await logAudit({
+    actorId: session.user.id,
+    action: "DELETE",
+    entity: "CATEGORY",
+    entityId: categoryId,
+    request,
+  });
   return NextResponse.json({ ok: true });
 }

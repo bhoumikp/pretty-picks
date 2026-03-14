@@ -2,9 +2,13 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin";
 import { slugify } from "@/lib/utils";
+import { logAudit } from "@/lib/audit";
 
 export async function GET() {
-  const products = await prisma.product.findMany({ include: { category: true } });
+  const products = await prisma.product.findMany({
+    where: { archivedAt: null },
+    include: { category: true },
+  });
   return NextResponse.json(products);
 }
 
@@ -25,6 +29,15 @@ export async function POST(request: Request) {
       stock: Number(body.stock ?? 0),
       categoryId: body.categoryId,
     },
+  });
+
+  await logAudit({
+    actorId: session.user.id,
+    action: "CREATE",
+    entity: "PRODUCT",
+    entityId: product.id,
+    metadata: { name: product.name, price: product.price, stock: product.stock },
+    request,
   });
 
   return NextResponse.json(product, { status: 201 });

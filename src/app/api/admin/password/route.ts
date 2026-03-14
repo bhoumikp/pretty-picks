@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { compare, hash } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
+import { logAudit } from "@/lib/audit";
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -32,6 +33,14 @@ export async function POST(request: Request) {
   await prisma.user.update({
     where: { id: user.id },
     data: { password: nextHash },
+  });
+
+  await logAudit({
+    actorId: user.id,
+    action: "UPDATE",
+    entity: "PASSWORD",
+    entityId: user.id,
+    request,
   });
 
   return NextResponse.json({ ok: true });

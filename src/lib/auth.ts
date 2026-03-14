@@ -2,6 +2,7 @@ import type { NextAuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { logAudit } from "@/lib/audit";
 
 export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
@@ -36,5 +37,23 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: "/admin/login",
+  },
+  events: {
+    async signIn({ user }) {
+      if (!user?.id) return;
+      await logAudit({
+        actorId: String(user.id),
+        action: "LOGIN",
+        entity: "AUTH",
+      });
+    },
+    async signOut({ token }) {
+      if (!token?.id) return;
+      await logAudit({
+        actorId: String(token.id),
+        action: "LOGOUT",
+        entity: "AUTH",
+      });
+    },
   },
 };

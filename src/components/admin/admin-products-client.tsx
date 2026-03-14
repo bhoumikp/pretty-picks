@@ -27,6 +27,7 @@ interface AdminProductsClientProps {
   initialQuery: string;
   initialSort: string[];
   initialDir: Array<"asc" | "desc">;
+  initialStatus: "all" | "active" | "inactive";
 }
 
 const buildQueryString = (
@@ -34,13 +35,15 @@ const buildQueryString = (
   page: number,
   sort: string[],
   dir: Array<"asc" | "desc">,
+  status: "all" | "active" | "inactive",
   pageSize: number,
-  defaults: { sort: string; dir: "asc" | "desc"; pageSize: number }
+  defaults: { sort: string; dir: "asc" | "desc"; pageSize: number; status: "all" | "active" | "inactive" }
 ) => {
   const params = new URLSearchParams();
   if (query.trim()) params.set("q", query.trim());
   if (sort[0] && sort[0] !== defaults.sort) params.set("sort", sort[0]);
   if (dir[0] && dir[0] !== defaults.dir) params.set("dir", dir[0]);
+  if (status !== defaults.status) params.set("status", status);
   if (page > 1) params.set("page", String(page));
   if (pageSize !== defaults.pageSize) params.set("pageSize", String(pageSize));
   return params.toString();
@@ -54,24 +57,32 @@ export default function AdminProductsClient({
   initialQuery,
   initialSort,
   initialDir,
+  initialStatus,
 }: AdminProductsClientProps) {
+  const storageKey = "admin-products-state";
+  const shouldPrefetch = process.env.NODE_ENV === "production";
   const onToastRef = useRef<((toast: Omit<ToastItem, "id">) => void) | null>(null);
   const [products, setProducts] = useState(initialProducts);
   const [total, setTotal] = useState(initialTotal);
   const [page, setPage] = useState(initialPage);
   const [query, setQuery] = useState(initialQuery);
+  const [status, setStatus] = useState<"all" | "active" | "inactive">(initialStatus);
   const [sort, setSort] = useState(initialSort);
   const [dir, setDir] = useState<Array<"asc" | "desc">>(initialDir);
   const [rowsPerPage, setRowsPerPage] = useState(pageSize);
   const [loading, setLoading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const userTypedRef = useRef(false);
+  const restoredRef = useRef(false);
+  const cacheRef = useRef(new Map<string, { items: ProductRow[]; total: number }>());
   const defaults = useMemo(
     () => ({
       sort: initialSort[0] ?? "updatedAt",
       dir: (initialDir[0] ?? "desc") as "asc" | "desc",
       pageSize,
+      status: initialStatus,
     }),
-    [initialSort, initialDir, pageSize]
+    [initialSort, initialDir, pageSize, initialStatus]
   );
 
   const syncUrl = useCallback(
@@ -80,14 +91,43 @@ export default function AdminProductsClient({
       nextPage: number,
       nextSort: string[],
       nextDir: Array<"asc" | "desc">,
+      nextStatus: "all" | "active" | "inactive",
       nextPageSize: number
     ) => {
       if (typeof window === "undefined") return;
-      const params = buildQueryString(nextQuery, nextPage, nextSort, nextDir, nextPageSize, defaults);
+      const params = buildQueryString(
+        nextQuery,
+        nextPage,
+        nextSort,
+        nextDir,
+        nextStatus,
+        nextPageSize,
+        defaults
+      );
       const url = params ? `/admin/products?${params}` : "/admin/products";
       window.history.replaceState(null, "", url);
     },
     [defaults]
+  );
+
+  const getCacheKey = useCallback(
+    (
+      nextQuery: string,
+      nextPage: number,
+      nextSort: string[],
+      nextDir: Array<"asc" | "desc">,
+      nextStatus: "all" | "active" | "inactive",
+      nextPageSize: number
+    ) =>
+      [
+        nextQuery.trim(),
+        nextPage,
+        nextSort[0] ?? "",
+        nextDir[0] ?? "",
+        nextStatus,
+        nextPageSize,
+      ].join("|"),
+    []
   );
 
   const fetchProducts = useCallback(
@@ -95,39 +135,132 @@ export default function AdminProductsClient({
       nextQuery: string,
       nextPage: number,
       nextSort: string[],
-      nextDir: Array<"asc" | "desc">
+      nextDir: Array<"asc" | "desc">,
+      nextStatus: "all" | "active" | "inactive",
+      options?: { prefetch?: boolean }
     ) => {
-      setLoading(true);
-      const params = buildQueryString(nextQuery, nextPage, nextSort, nextDir, rowsPerPage, defaults);
+      const key = getCacheKey(nextQuery, nextPage, nextSort, nextDir, nextStatus, rowsPerPage);
+      if (!options?.prefetch) {
+        const cached = cacheRef.current.get(key);
+        if (cached) {
+          setProducts(cached.items);
+          setTotal(cached.total);
+          return;
+        }
+        setLoading(true);
+      }
+      const params = buildQueryString(
+        nextQuery,
+        nextPage,
+        nextSort,
+        nextDir,
+        nextStatus,
+        rowsPerPage,
+        defaults
+      );
       const response = await fetch(`/api/admin/products?${params}`, { cache: "no-store" });
       if (response.ok) {
         const data = (await response.json()) as { items: ProductRow[]; total: number };
-        setProducts(data.items);
-        setTotal(data.total);
-      } else {
+        cacheRef.current.set(key, data);
+        if (!options?.prefetch) {
+          setProducts(data.items);
+          setTotal(data.total);
+        }
+      } else if (!options?.prefetch) {
         setProducts([]);
         setTotal(0);
       }
-      setLoading(false);
+      if (!options?.prefetch) setLoading(false);
     },
-    [defaults, rowsPerPage]
+    [defaults, getCacheKey, rowsPerPage]
   );
 
   useEffect(() => {
     if (!userTypedRef.current) return;
     const handle = window.setTimeout(() => {
       const nextPage = 1;
-      fetchProducts(query, nextPage, sort, dir);
+      fetchProducts(query, nextPage, sort, dir, status);
       setPage(nextPage);
-      syncUrl(query, nextPage, sort, dir, rowsPerPage);
+      syncUrl(query, nextPage, sort, dir, status, rowsPerPage);
     }, 300);
     return () => window.clearTimeout(handle);
-  }, [query, rowsPerPage, sort, dir, fetchProducts, syncUrl]);
+  }, [query, rowsPerPage, sort, dir, status, fetchProducts, syncUrl]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (restoredRef.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const hasParams =
+      params.has("q") ||
+      params.has("sort") ||
+      params.has("dir") ||
+      params.has("status") ||
+      params.has("page") ||
+      params.has("pageSize");
+    if (hasParams) return;
+    const stored = window.sessionStorage.getItem(storageKey);
+    if (!stored) return;
+    try {
+      restoredRef.current = true;
+      const parsed = JSON.parse(stored) as {
+        query?: string;
+        page?: number;
+        sort?: string[];
+        dir?: Array<"asc" | "desc">;
+        status?: "all" | "active" | "inactive";
+        rowsPerPage?: number;
+      };
+      const nextQuery = parsed.query ?? query;
+      const nextPage = parsed.page ?? page;
+      const nextSort = parsed.sort ?? sort;
+      const nextDir = parsed.dir ?? dir;
+      const nextStatus = parsed.status ?? status;
+      const nextRows = parsed.rowsPerPage ?? rowsPerPage;
+      window.setTimeout(() => {
+        setQuery(nextQuery);
+        setPage(nextPage);
+        setSort(nextSort);
+        setDir(nextDir);
+        setStatus(nextStatus);
+        setRowsPerPage(nextRows);
+        fetchProducts(nextQuery, nextPage, nextSort, nextDir, nextStatus);
+        syncUrl(nextQuery, nextPage, nextSort, nextDir, nextStatus, nextRows);
+      }, 0);
+    } catch {
+      restoredRef.current = false;
+      window.sessionStorage.removeItem(storageKey);
+    }
+  }, [dir, fetchProducts, page, query, rowsPerPage, sort, status, syncUrl]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const payload = {
+      query,
+      page,
+      sort,
+      dir,
+      status,
+      rowsPerPage,
+    };
+    window.sessionStorage.setItem(storageKey, JSON.stringify(payload));
+  }, [query, page, sort, dir, status, rowsPerPage]);
+
+  useEffect(() => {
+    if (!shouldPrefetch) return;
+    if (loading) return;
+    const totalPages = Math.max(1, Math.ceil(total / rowsPerPage));
+    if (page < totalPages) {
+      fetchProducts(query, page + 1, sort, dir, status, { prefetch: true });
+    }
+    if (page > 1) {
+      fetchProducts(query, page - 1, sort, dir, status, { prefetch: true });
+    }
+  }, [page, total, rowsPerPage, query, sort, dir, status, fetchProducts, loading, shouldPrefetch]);
 
   const handlePageChange = (nextPage: number) => {
-    fetchProducts(query, nextPage, sort, dir);
+    fetchProducts(query, nextPage, sort, dir, status);
     setPage(nextPage);
-    syncUrl(query, nextPage, sort, dir, rowsPerPage);
+    syncUrl(query, nextPage, sort, dir, status, rowsPerPage);
   };
 
   const handleSort = (key: string) => {
@@ -141,16 +274,16 @@ export default function AdminProductsClient({
     setSort(nextSort);
     setDir(nextDir);
     setPage(nextPage);
-    fetchProducts(query, nextPage, nextSort, nextDir);
-    syncUrl(query, nextPage, nextSort, nextDir, rowsPerPage);
+    fetchProducts(query, nextPage, nextSort, nextDir, status);
+    syncUrl(query, nextPage, nextSort, nextDir, status, rowsPerPage);
   };
 
   const handleRowsChange = (nextRows: number) => {
     const nextPage = 1;
     setRowsPerPage(nextRows);
     setPage(nextPage);
-    fetchProducts(query, nextPage, sort, dir);
-    syncUrl(query, nextPage, sort, dir, nextRows);
+    fetchProducts(query, nextPage, sort, dir, status);
+    syncUrl(query, nextPage, sort, dir, status, nextRows);
   };
 
   const handleToggleActive = async (product: ProductRow) => {
@@ -183,6 +316,51 @@ export default function AdminProductsClient({
     }
   };
 
+  const handleSelect = (id: string, checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (!checked) {
+      setSelectedIds(new Set());
+      return;
+    }
+    setSelectedIds(new Set(products.map((product) => product.id)));
+  };
+
+  const bulkUpdateStock = async (nextStock: number) => {
+    const ids = Array.from(selectedIds);
+    if (!ids.length) return;
+    const updatedAt = new Date().toISOString();
+    setProducts((prev) =>
+      prev.map((item) => (selectedIds.has(item.id) ? { ...item, stock: nextStock, updatedAt } : item))
+    );
+    setSelectedIds(new Set());
+    await Promise.all(
+      ids.map((id) =>
+        fetch(`/api/products/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ stock: nextStock }),
+        })
+      )
+    );
+  };
+
+  const bulkArchive = async () => {
+    const ids = Array.from(selectedIds);
+    if (!ids.length) return;
+    setProducts((prev) => prev.filter((item) => !selectedIds.has(item.id)));
+    setTotal((prev) => Math.max(0, prev - ids.length));
+    setSelectedIds(new Set());
+    await Promise.all(ids.map((id) => fetch(`/api/products/${id}`, { method: "DELETE" })));
+  };
+
   return (
     <div className="grid gap-6">
       <AdminProductsToastBridge onToastReady={(handler) => (onToastRef.current = handler)} />
@@ -192,48 +370,90 @@ export default function AdminProductsClient({
           <h2 className="text-2xl font-[var(--font-heading)]">Products</h2>
         </div>
         <div className="flex w-full flex-col gap-3 sm:flex-1 sm:flex-row sm:items-center sm:justify-end">
-          <div className="flex w-full items-center gap-2 sm:max-w-xs">
-            <label htmlFor="admin-products-search" className="sr-only">
-              Search products
-            </label>
-            <input
-              id="admin-products-search"
-              value={query}
-              onChange={(event) => {
-                userTypedRef.current = true;
-                setQuery(event.target.value);
-              }}
-              placeholder="Search products"
-              className="h-10 w-full border border-[var(--pp-border)] bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--pp-gold)]/30"
-            />
+          <div className="flex w-full flex-wrap items-end gap-3 sm:max-w-[28rem]">
+            <div className="flex w-full items-center gap-2 sm:flex-1">
+              <label htmlFor="admin-products-search" className="sr-only">
+                Search products
+              </label>
+              <input
+                id="admin-products-search"
+                value={query}
+                onChange={(event) => {
+                  userTypedRef.current = true;
+                  setQuery(event.target.value);
+                }}
+                placeholder="Search products"
+                className="h-10 w-full border border-[var(--pp-border)] bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--pp-gold)]/30"
+              />
+            </div>
+            <div className="w-full sm:min-w-[160px] sm:w-auto">
+              <AdminSelect
+                value={status}
+                onChange={(nextValue) => {
+                  const nextStatus = nextValue as "all" | "active" | "inactive";
+                  setStatus(nextStatus);
+                  const nextPage = 1;
+                  setPage(nextPage);
+                  fetchProducts(query, nextPage, sort, dir, nextStatus);
+                  syncUrl(query, nextPage, sort, dir, nextStatus, rowsPerPage);
+                }}
+                options={[
+                  { value: "all", label: "All statuses" },
+                  { value: "active", label: "Active" },
+                  { value: "inactive", label: "Inactive" },
+                ]}
+                header="Status"
+                buttonClassName="h-10 w-full border border-[var(--pp-border)] bg-white px-3 py-2 text-xs"
+              />
+            </div>
           </div>
           <Link href="/admin/products/new" className="btn-primary admin-btn admin-btn-size w-full sm:w-auto">
             <span className="admin-btn-label">Add product</span>
           </Link>
         </div>
       </div>
+      {selectedIds.size > 0 && (
+        <div className="flex flex-wrap items-center gap-2 rounded border border-[var(--pp-border)] bg-white px-4 py-3 text-sm">
+          <span className="text-[var(--pp-muted)]">{selectedIds.size} selected</span>
+          <div className="ml-auto flex flex-wrap gap-2">
+            <button className="btn-outline admin-btn admin-btn-size" onClick={() => bulkUpdateStock(1)}>
+              Activate
+            </button>
+            <button className="btn-outline admin-btn admin-btn-size" onClick={() => bulkUpdateStock(0)}>
+              Deactivate
+            </button>
+            <button className="btn-outline admin-btn admin-btn-size" onClick={bulkArchive}>
+              Delete
+            </button>
+          </div>
+        </div>
+      )}
       <AdminProductsTable
         products={products}
         page={page}
         pageSize={rowsPerPage}
         total={total}
+        query={query}
         sort={sort}
         dir={dir}
         onSort={handleSort}
         onPageChange={handlePageChange}
         onToggleActive={handleToggleActive}
+        selectedIds={selectedIds}
+        onToggleSelect={handleSelect}
+        onToggleSelectAll={handleSelectAll}
         isLoading={loading}
         footerSlot={
           <div className="flex items-center gap-2 text-xs text-[var(--pp-muted)]">
             <span className="h-5 w-[2px] bg-[var(--pp-ink)]/20" />
             Rows
-          <AdminSelect
-            value={rowsPerPage}
-            onChange={(nextValue) => handleRowsChange(Number(nextValue))}
-            options={[10, 15, 25, 50].map((value) => ({ value, label: String(value) }))}
-            header="Rows"
-            buttonClassName="border border-[var(--pp-border)] bg-white px-3 py-1 text-xs"
-          />
+              <AdminSelect
+                value={rowsPerPage}
+                onChange={(nextValue) => handleRowsChange(Number(nextValue))}
+                options={[10, 15, 25, 50].map((value) => ({ value, label: String(value) }))}
+                header="Rows"
+                buttonClassName="h-8 min-w-[44px] border border-[var(--pp-border)] bg-white px-2 py-0.5 text-[11px]"
+              />
           </div>
         }
       />

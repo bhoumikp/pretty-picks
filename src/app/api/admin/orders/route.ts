@@ -16,6 +16,7 @@ export async function GET(request: Request) {
   const query = (searchParams.get("q") ?? "").trim();
   const sort = (searchParams.get("sort") ?? "createdAt").trim();
   const dir = (searchParams.get("dir") ?? "desc").trim();
+  const rawStatus = (searchParams.get("status") ?? "all").trim();
 
   const allowedSorts = new Set(["createdAt", "customerName", "status", "product"]);
   const sortKey = (allowedSorts.has(sort) ? sort : "createdAt") as
@@ -24,17 +25,22 @@ export async function GET(request: Request) {
     | "status"
     | "product";
   const dirKey: Prisma.SortOrder = dir === "asc" ? "asc" : "desc";
+  const allowedStatuses = new Set(["Pending", "Confirmed", "Shipped", "Delivered"]);
+  const status = allowedStatuses.has(rawStatus) ? rawStatus : "all";
 
-  const where = query
-    ? {
-        OR: [
-          { customerName: { contains: query, mode: "insensitive" as const } },
-          { phone: { contains: query, mode: "insensitive" as const } },
-          { status: { contains: query, mode: "insensitive" as const } },
-          { product: { name: { contains: query, mode: "insensitive" as const } } },
-        ],
-      }
-    : undefined;
+  const where = {
+    ...(status !== "all" ? { status } : {}),
+    ...(query
+      ? {
+          OR: [
+            { customerName: { contains: query, mode: "insensitive" as const } },
+            { phone: { contains: query, mode: "insensitive" as const } },
+            { status: { contains: query, mode: "insensitive" as const } },
+            { product: { name: { contains: query, mode: "insensitive" as const } } },
+          ],
+        }
+      : {}),
+  };
 
   const orderBy: Prisma.OrderOrderByWithRelationInput =
     sortKey === "customerName"

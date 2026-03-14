@@ -12,7 +12,7 @@ export const metadata = {
 export default async function AdminSubcategoriesPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ page?: string; q?: string; sort?: string; dir?: string }>;
+  searchParams?: Promise<{ page?: string; q?: string; sort?: string; dir?: string; status?: string }>;
 }) {
   const params = (await searchParams) ?? {};
   const pageSize = 15;
@@ -20,6 +20,7 @@ export default async function AdminSubcategoriesPage({
   const query = (params.q ?? "").trim();
   const sort = (params.sort ?? "updatedAt").trim();
   const dir = (params.dir ?? "desc").trim();
+  const rawStatus = (params.status ?? "all").trim();
   const allowedSorts = new Set(["name", "slug", "parent", "status", "createdAt", "updatedAt"]);
   const sortKey = (allowedSorts.has(sort) ? sort : "updatedAt") as
     | "name"
@@ -29,9 +30,12 @@ export default async function AdminSubcategoriesPage({
     | "createdAt"
     | "updatedAt";
   const dirKey: Prisma.SortOrder = dir === "asc" ? "asc" : "desc";
+  const allowedStatuses = new Set(["all", "active", "inactive"]);
+  const status = allowedStatuses.has(rawStatus) ? rawStatus : "all";
 
   const where = {
     parentId: { not: null },
+    ...(status === "active" ? { active: true } : status === "inactive" ? { active: false } : {}),
     ...(query
       ? {
           OR: [
@@ -133,6 +137,7 @@ export default async function AdminSubcategoriesPage({
         initialQuery={query}
         initialSort={[sortKey]}
         initialDir={[dirKey]}
+        initialStatus={status as "all" | "active" | "inactive"}
         parentOptions={parentOptions}
       />
     </div>

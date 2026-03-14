@@ -13,7 +13,7 @@ export const metadata = {
 export default async function AdminProductsPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ page?: string; q?: string; sort?: string; dir?: string }>;
+  searchParams?: Promise<{ page?: string; q?: string; sort?: string; dir?: string; status?: string }>;
 }) {
   const params = (await searchParams) ?? {};
   const pageSize = 15;
@@ -21,6 +21,7 @@ export default async function AdminProductsPage({
   const query = (params.q ?? "").trim();
   const sort = (params.sort ?? "updatedAt").trim();
   const dir = (params.dir ?? "desc").trim();
+  const status = (params.status ?? "all").trim();
   const allowedSorts = new Set(["name", "category", "price", "stock", "status", "updatedAt"]);
   const sortKey = (allowedSorts.has(sort) ? sort : "updatedAt") as
     | "name"
@@ -31,14 +32,25 @@ export default async function AdminProductsPage({
     | "updatedAt";
   const dirKey: Prisma.SortOrder = dir === "asc" ? "asc" : "desc";
 
-  const where = query
-    ? {
-        OR: [
-          { name: { contains: query, mode: "insensitive" as const } },
-          { category: { name: { contains: query, mode: "insensitive" as const } } },
-        ],
-      }
-    : undefined;
+  const statusFilter =
+    status === "active"
+      ? { stock: { gt: 0 } }
+      : status === "inactive"
+      ? { stock: { lte: 0 } }
+      : {};
+
+  const where = {
+    archivedAt: null,
+    ...statusFilter,
+    ...(query
+      ? {
+          OR: [
+            { name: { contains: query, mode: "insensitive" as const } },
+            { category: { name: { contains: query, mode: "insensitive" as const } } },
+          ],
+        }
+      : {}),
+  };
 
   type ProductWithCategory = Prisma.ProductGetPayload<{ include: { category: true } }>;
   let products: ProductWithCategory[] = [];
@@ -97,6 +109,9 @@ export default async function AdminProductsPage({
         initialQuery={query}
         initialSort={[sortKey]}
         initialDir={[dirKey]}
+        initialStatus={
+          status === "active" || status === "inactive" ? (status as "active" | "inactive") : "all"
+        }
       />
     </div>
   );

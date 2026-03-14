@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin";
 import cloudinary from "@/lib/cloudinary";
+import { logAudit } from "@/lib/audit";
 
 export const runtime = "nodejs";
 
@@ -34,6 +35,14 @@ export async function POST(request: Request) {
     })
   );
 
+  await logAudit({
+    actorId: session.user.id,
+    action: "UPLOAD",
+    entity: "MEDIA",
+    metadata: { count: uploads.length, publicIds: uploads.map((item) => item.publicId) },
+    request,
+  });
+
   return NextResponse.json({ uploads });
 }
 
@@ -48,6 +57,14 @@ export async function DELETE(request: Request) {
 
   await cloudinary.uploader.destroy(body.publicId, {
     resource_type: "image",
+  });
+
+  await logAudit({
+    actorId: session.user.id,
+    action: "DELETE",
+    entity: "MEDIA",
+    entityId: body.publicId,
+    request,
   });
 
   return NextResponse.json({ ok: true });

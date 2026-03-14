@@ -284,12 +284,12 @@ export default function AdminProductForm({
         </h3>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <div className="grid gap-2">
-            <label htmlFor="admin-product-name" className="text-xs font-semibold text-[var(--pp-muted)]">
+            <label htmlFor="admin-product-name" className="admin-label">
               Product name
             </label>
             <input
               id="admin-product-name"
-              className={`border px-4 py-3 text-sm ${
+              className={`admin-input ${
                 fieldErrors.name ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
               placeholder="Product name"
@@ -311,12 +311,12 @@ export default function AdminProductForm({
             </span>
           </div>
           <div className="grid gap-2">
-            <label htmlFor="admin-product-price" className="text-xs font-semibold text-[var(--pp-muted)]">
+            <label htmlFor="admin-product-price" className="admin-label">
               Price
             </label>
             <input
               id="admin-product-price"
-              className={`border px-4 py-3 text-sm ${
+              className={`admin-input ${
                 fieldErrors.price ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
               placeholder="Price"
@@ -340,12 +340,12 @@ export default function AdminProductForm({
             </span>
           </div>
           <div className="grid gap-2">
-            <label htmlFor="admin-product-material" className="text-xs font-semibold text-[var(--pp-muted)]">
+            <label htmlFor="admin-product-material" className="admin-label">
               Material
             </label>
             <input
               id="admin-product-material"
-              className={`border px-4 py-3 text-sm ${
+              className={`admin-input ${
                 fieldErrors.material ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
               placeholder="Material"
@@ -367,12 +367,12 @@ export default function AdminProductForm({
             </span>
           </div>
           <div className="grid gap-2">
-            <label htmlFor="admin-product-stock" className="text-xs font-semibold text-[var(--pp-muted)]">
+            <label htmlFor="admin-product-stock" className="admin-label">
               Stock
             </label>
             <input
               id="admin-product-stock"
-              className={`border px-4 py-3 text-sm ${
+              className={`admin-input ${
                 fieldErrors.stock ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
               placeholder="Stock"
@@ -396,7 +396,7 @@ export default function AdminProductForm({
             </span>
           </div>
           <div className="grid gap-2">
-            <label className="text-xs font-semibold text-[var(--pp-muted)]">Category</label>
+            <label className="admin-label">Category</label>
             <AdminSelect
               value={form.categoryId}
               onChange={(nextValue) => {
@@ -411,7 +411,7 @@ export default function AdminProductForm({
                 ...categories.map((category) => ({ value: category.id, label: category.name })),
               ]}
               fullWidth
-              buttonClassName={`w-full border px-4 py-3 text-sm ${
+              buttonClassName={`w-full admin-input ${
                 fieldErrors.categoryId ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
               header="Category"
@@ -436,12 +436,12 @@ export default function AdminProductForm({
           </label>
         </div>
         <div className="mt-4 grid gap-2">
-          <label htmlFor="admin-product-description" className="text-xs font-semibold text-[var(--pp-muted)]">
+          <label htmlFor="admin-product-description" className="admin-label">
             Description
           </label>
           <textarea
             id="admin-product-description"
-            className={`w-full border px-4 py-3 text-sm ${
+            className={`admin-textarea ${
               fieldErrors.description ? "border-red-300" : "border-[var(--pp-border)]"
             }`}
             placeholder="Description"
@@ -464,7 +464,7 @@ export default function AdminProductForm({
           </span>
         </div>
         <div className="mt-4 grid gap-2 text-sm">
-          <span className="text-xs font-semibold text-[var(--pp-muted)]">Images</span>
+          <span className="admin-label">Images</span>
           <div className="flex flex-wrap items-center gap-3">
             <label className="border border-[var(--pp-border)] px-4 py-2 cursor-pointer">
               <input
@@ -498,12 +498,12 @@ export default function AdminProductForm({
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           <div className="grid flex-1 gap-2">
-            <label htmlFor="admin-product-image-url" className="text-xs font-semibold text-[var(--pp-muted)]">
+            <label htmlFor="admin-product-image-url" className="admin-label">
               Add image URL
             </label>
             <input
               id="admin-product-image-url"
-              className={`w-full border px-4 py-3 text-sm ${
+              className={`admin-input ${
                 fieldErrors.imageUrl ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
               placeholder="Paste image URL"

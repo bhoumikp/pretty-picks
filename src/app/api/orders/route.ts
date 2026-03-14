@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin";
+import { logAudit } from "@/lib/audit";
 
 export async function GET() {
   const session = await requireAdmin();
@@ -25,6 +26,15 @@ export async function POST(request: Request) {
       phone: body.phone,
       status: body.status ?? "Pending",
     },
+  });
+
+  await logAudit({
+    actorId: session.user.id,
+    action: "CREATE",
+    entity: "ORDER",
+    entityId: order.id,
+    metadata: { status: order.status, productId: order.productId },
+    request,
   });
 
   return NextResponse.json(order, { status: 201 });

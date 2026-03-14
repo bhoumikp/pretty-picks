@@ -17,6 +17,7 @@ export async function GET(request: Request) {
   const sort = (searchParams.get("sort") ?? "name").trim();
   const dir = (searchParams.get("dir") ?? "asc").trim();
   const type = (searchParams.get("type") ?? "parent").trim();
+  const status = (searchParams.get("status") ?? "all").trim();
 
   const allowedSorts = new Set(["name", "slug", "parent", "status", "createdAt", "updatedAt"]);
   const sortKey = (allowedSorts.has(sort) ? sort : "name") as
@@ -36,7 +37,9 @@ export async function GET(request: Request) {
       : { parentId: null };
 
   const where = {
+    archivedAt: null,
     ...scopeFilter,
+    ...(status === "active" ? { active: true } : status === "inactive" ? { active: false } : {}),
     ...(query
       ? {
           OR: [

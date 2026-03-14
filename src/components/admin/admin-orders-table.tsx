@@ -1,7 +1,10 @@
 "use client";
 
+import { memo } from "react";
 import { Trash2 } from "lucide-react";
 import AdminTableShell from "@/components/admin/admin-table-shell";
+import AdminEmptyState from "@/components/admin/admin-empty-state";
+import { highlightText } from "@/lib/highlight";
 
 interface OrderRow {
   id: string;
@@ -17,6 +20,7 @@ interface AdminOrdersTableProps {
   page: number;
   pageSize: number;
   total: number;
+  query: string;
   sort: string[];
   dir: Array<"asc" | "desc">;
   onSort: (key: string) => void;
@@ -26,11 +30,12 @@ interface AdminOrdersTableProps {
   footerSlot?: React.ReactNode;
 }
 
-export default function AdminOrdersTable({
+function AdminOrdersTable({
   orders,
   page,
   pageSize,
   total,
+  query,
   sort,
   dir,
   onSort,
@@ -47,6 +52,8 @@ export default function AdminOrdersTable({
     const index = sort.indexOf(key);
     return index >= 0 ? index + 1 : null;
   };
+  const showSkeleton = isLoading && orders.length === 0;
+  const skeletonRows = Array.from({ length: Math.min(6, pageSize) }, (_, index) => index);
 
   return (
     <AdminTableShell
@@ -125,30 +132,58 @@ export default function AdminOrdersTable({
           </tr>
         </thead>
         <tbody>
-          {orders.length === 0 ? (
-            <tr>
-              <td className="admin-table-empty px-5 py-8 text-sm text-[var(--pp-muted)]" colSpan={6}>
-                No orders found.
-              </td>
-            </tr>
+          {showSkeleton ? (
+            skeletonRows.map((row) => (
+              <tr key={`skeleton-${row}`} className="border-b border-[var(--pp-border)] last:border-b-0">
+                <td className="px-5 py-4">
+                  <div className="space-y-2">
+                    <div className="h-3 w-28 rounded bg-[var(--pp-beige)]/70 animate-pulse" />
+                    <div className="h-2 w-16 rounded bg-[var(--pp-beige)]/50 animate-pulse" />
+                  </div>
+                </td>
+                <td className="px-5 py-4">
+                  <div className="h-3 w-24 rounded bg-[var(--pp-beige)]/70 animate-pulse" />
+                </td>
+                <td className="px-5 py-4">
+                  <div className="h-3 w-20 rounded bg-[var(--pp-beige)]/70 animate-pulse" />
+                </td>
+                <td className="px-5 py-4">
+                  <div className="h-5 w-20 rounded-full bg-[var(--pp-beige)]/70 animate-pulse" />
+                </td>
+                <td className="px-5 py-4">
+                  <div className="h-3 w-20 rounded bg-[var(--pp-beige)]/70 animate-pulse" />
+                </td>
+                <td className="px-5 py-4">
+                  <div className="flex justify-end">
+                    <div className="h-9 w-9 rounded-full bg-[var(--pp-beige)]/70 animate-pulse" />
+                  </div>
+                </td>
+              </tr>
+            ))
+          ) : orders.length === 0 ? (
+            <AdminEmptyState colSpan={6} message="No orders found." />
           ) : (
             orders.map((order) => (
               <tr key={order.id} className="border-b border-[var(--pp-border)] last:border-b-0">
                 <td className="admin-table-main px-5 py-4" data-label="Product">
                   <div>
-                    <p className="font-semibold text-[var(--pp-ink)]">{order.productName ?? "—"}</p>
+                    <p className="font-semibold text-[var(--pp-ink)]">
+                      {order.productName ? highlightText(order.productName, query) : "—"}
+                    </p>
                     <p className="text-xs text-[var(--pp-muted)]">ID {order.id.slice(0, 6)}</p>
                   </div>
                 </td>
                 <td className="px-5 py-4" data-label="Customer">
-                  <p className="font-semibold text-[var(--pp-ink)]">{order.customerName}</p>
+                  <p className="font-semibold text-[var(--pp-ink)]">
+                    {highlightText(order.customerName, query)}
+                  </p>
                 </td>
                 <td className="px-5 py-4 text-[var(--pp-muted)]" data-label="Phone">
-                  {order.phone}
+                  {highlightText(order.phone, query)}
                 </td>
                 <td className="px-5 py-4" data-label="Status">
                   <span className="inline-flex items-center px-3 py-1 text-xs font-semibold bg-[var(--pp-beige)] text-[var(--pp-ink)]">
-                    {order.status}
+                    {highlightText(order.status, query)}
                   </span>
                 </td>
                 <td className="px-5 py-4 text-[var(--pp-muted)]" data-label="Date">
@@ -176,3 +211,5 @@ export default function AdminOrdersTable({
     </AdminTableShell>
   );
 }
+
+export default memo(AdminOrdersTable);

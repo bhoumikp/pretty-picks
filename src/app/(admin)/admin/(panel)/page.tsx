@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency } from "@/lib/utils";
 import OfflineBanner from "@/components/admin/offline-banner";
@@ -7,7 +8,7 @@ export const metadata = {
   title: { absolute: "Admin | Dashboard" },
 };
 
-export default async function AdminDashboard() {
+async function AdminDashboardContent() {
   let productCount = 0;
   let orderCount = 0;
   let orders: Array<{ product?: { price?: number | null } | null }> = [];
@@ -70,5 +71,32 @@ export default async function AdminDashboard() {
         </div>
       </div>
     </div>
+  );
+}
+
+function AdminDashboardSkeleton() {
+  return (
+    <div className="grid gap-6">
+      <div>
+        <p className="text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">Overview</p>
+        <h2 className="mt-2 text-2xl font-[var(--font-heading)]">Dashboard</h2>
+      </div>
+      <div className="grid gap-4 md:grid-cols-3">
+        {[...Array(3)].map((_, index) => (
+          <div key={index} className="soft-card p-5">
+            <div className="h-3 w-24 animate-pulse rounded bg-[var(--pp-border)] opacity-70" />
+            <div className="mt-4 h-8 w-20 animate-pulse rounded bg-[var(--pp-border)] opacity-70" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function AdminDashboard() {
+  return (
+    <Suspense fallback={<AdminDashboardSkeleton />}>
+      <AdminDashboardContent />
+    </Suspense>
   );
 }

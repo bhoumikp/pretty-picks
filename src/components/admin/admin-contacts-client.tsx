@@ -48,6 +48,8 @@ export default function AdminContactsClient({
   initialSort,
   initialDir,
 }: AdminContactsClientProps) {
+  const storageKey = "admin-contacts-state";
+  const shouldPrefetch = process.env.NODE_ENV === "production";
   const [contacts, setContacts] = useState(initialContacts);
   const [total, setTotal] = useState(initialTotal);
   const [page, setPage] = useState(initialPage);
@@ -57,6 +59,8 @@ export default function AdminContactsClient({
   const [rowsPerPage, setRowsPerPage] = useState(pageSize);
   const [loading, setLoading] = useState(false);
   const userTypedRef = useRef(false);
+  const restoredRef = useRef(false);
+  const cacheRef = useRef(new Map<string, { items: ContactRow[]; total: number }>());
   const defaults = useMemo(
     () => ({
       sort: initialSort[0] ?? "createdAt",
@@ -82,27 +86,52 @@ export default function AdminContactsClient({
     [defaults]
   );
 
+  const getCacheKey = useCallback(
+    (
+      nextQuery: string,
+      nextPage: number,
+      nextSort: string[],
+      nextDir: Array<"asc" | "desc">,
+      nextPageSize: number
+    ) =>
+      [nextQuery.trim(), nextPage, nextSort[0] ?? "", nextDir[0] ?? "", nextPageSize].join("|"),
+    []
+  );
+
   const fetchContacts = useCallback(
     async (
       nextQuery: string,
       nextPage: number,
       nextSort: string[],
-      nextDir: Array<"asc" | "desc">
+      nextDir: Array<"asc" | "desc">,
+      options?: { prefetch?: boolean }
     ) => {
-      setLoading(true);
+      const key = getCacheKey(nextQuery, nextPage, nextSort, nextDir, rowsPerPage);
+      if (!options?.prefetch) {
+        const cached = cacheRef.current.get(key);
+        if (cached) {
+          setContacts(cached.items);
+          setTotal(cached.total);
+          return;
+        }
+        setLoading(true);
+      }
       const params = buildQueryString(nextQuery, nextPage, nextSort, nextDir, rowsPerPage, defaults);
       const response = await fetch(`/api/admin/contacts?${params}`, { cache: "no-store" });
       if (response.ok) {
         const data = (await response.json()) as { items: ContactRow[]; total: number };
-        setContacts(data.items);
-        setTotal(data.total);
-      } else {
+        cacheRef.current.set(key, data);
+        if (!options?.prefetch) {
+          setContacts(data.items);
+          setTotal(data.total);
+        }
+      } else if (!options?.prefetch) {
         setContacts([]);
         setTotal(0);
       }
-      setLoading(false);
+      if (!options?.prefetch) setLoading(false);
     },
-    [defaults, rowsPerPage]
+    [defaults, getCacheKey, rowsPerPage]
   );
 
   useEffect(() => {
@@ -115,6 +144,72 @@ export default function AdminContactsClient({
     }, 300);
     return () => window.clearTimeout(handle);
   }, [query, rowsPerPage, sort, dir, fetchContacts, syncUrl]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (restoredRef.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const hasParams =
+      params.has("q") ||
+      params.has("sort") ||
+      params.has("dir") ||
+      params.has("page") ||
+      params.has("pageSize");
+    if (hasParams) return;
+    const stored = window.sessionStorage.getItem(storageKey);
+    if (!stored) return;
+    try {
+      restoredRef.current = true;
+      const parsed = JSON.parse(stored) as {
+        query?: string;
+        page?: number;
+        sort?: string[];
+        dir?: Array<"asc" | "desc">;
+        rowsPerPage?: number;
+      };
+      const nextQuery = parsed.query ?? query;
+      const nextPage = parsed.page ?? page;
+      const nextSort = parsed.sort ?? sort;
+      const nextDir = parsed.dir ?? dir;
+      const nextRows = parsed.rowsPerPage ?? rowsPerPage;
+      window.setTimeout(() => {
+        setQuery(nextQuery);
+        setPage(nextPage);
+        setSort(nextSort);
+        setDir(nextDir);
+        setRowsPerPage(nextRows);
+        fetchContacts(nextQuery, nextPage, nextSort, nextDir);
+        syncUrl(nextQuery, nextPage, nextSort, nextDir, nextRows);
+      }, 0);
+    } catch {
+      restoredRef.current = false;
+      window.sessionStorage.removeItem(storageKey);
+    }
+  }, [dir, fetchContacts, page, query, rowsPerPage, sort, syncUrl]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const payload = {
+      query,
+      page,
+      sort,
+      dir,
+      rowsPerPage,
+    };
+    window.sessionStorage.setItem(storageKey, JSON.stringify(payload));
+  }, [query, page, sort, dir, rowsPerPage]);
+
+  useEffect(() => {
+    if (!shouldPrefetch) return;
+    if (loading) return;
+    const totalPages = Math.max(1, Math.ceil(total / rowsPerPage));
+    if (page < totalPages) {
+      fetchContacts(query, page + 1, sort, dir, { prefetch: true });
+    }
+    if (page > 1) {
+      fetchContacts(query, page - 1, sort, dir, { prefetch: true });
+    }
+  }, [page, total, rowsPerPage, query, sort, dir, fetchContacts, loading, shouldPrefetch]);
 
   const handlePageChange = (nextPage: number) => {
     fetchContacts(query, nextPage, sort, dir);
@@ -175,6 +270,7 @@ export default function AdminContactsClient({
         page={page}
         pageSize={rowsPerPage}
         total={total}
+        query={query}
         sort={sort}
         dir={dir}
         onSort={handleSort}
@@ -189,7 +285,7 @@ export default function AdminContactsClient({
             onChange={(nextValue) => handleRowsChange(Number(nextValue))}
             options={[10, 15, 25, 50].map((value) => ({ value, label: String(value) }))}
             header="Rows"
-            buttonClassName="border border-[var(--pp-border)] bg-white px-3 py-1 text-xs"
+            buttonClassName="h-8 min-w-[44px] border border-[var(--pp-border)] bg-white px-2 py-0.5 text-[11px]"
           />
           </div>
         }

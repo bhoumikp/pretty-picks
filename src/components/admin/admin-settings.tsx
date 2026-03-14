@@ -103,7 +103,7 @@ export default function AdminSettings() {
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6 grid gap-4" noValidate>
-          <label className="grid gap-2 text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">
+          <label className="grid gap-2 admin-label">
             Current password
             <div
               className={`flex items-center border bg-white px-4 py-2 ${
@@ -166,7 +166,7 @@ export default function AdminSettings() {
               {fieldErrors.currentPassword ?? ""}
             </span>
           </label>
-          <label className="grid gap-2 text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">
+          <label className="grid gap-2 admin-label">
             New password
             <div
               className={`flex items-center border bg-white px-4 py-2 ${
@@ -239,7 +239,7 @@ export default function AdminSettings() {
               </span>
             </div>
           </label>
-          <label className="grid gap-2 text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">
+          <label className="grid gap-2 admin-label">
             Confirm password
             <div
               className={`flex items-center border bg-white px-4 py-2 ${

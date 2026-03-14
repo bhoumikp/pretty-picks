@@ -13,6 +13,8 @@ model User {
   password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  auditLogs AuditLog[]
 }
 
 model Category {
@@ -21,6 +23,7 @@ model Category {
   slug      String    @unique
   image     String?
   active    Boolean   @default(true)
+  archivedAt DateTime?
   parentId  String?
   parent    Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
   children  Category[] @relation("CategoryHierarchy")
@@ -39,6 +42,7 @@ model Product {
   images      Json
   featured    Boolean  @default(false)
   stock       Int      @default(0)
+  archivedAt  DateTime?
   categoryId  String
   category    Category @relation(fields: [categoryId], references: [id])
   orders      Order[]
@@ -62,4 +66,22 @@ model Contact {
   email     String
   message   String
   createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String
+  actor     User     @relation(fields: [actorId], references: [id])
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([actorId, createdAt])
+  @@index([entity, entityId])
+  @@index([action, createdAt])
+  @@index([createdAt])
 }

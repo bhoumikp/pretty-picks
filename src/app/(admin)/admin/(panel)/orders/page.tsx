@@ -11,7 +11,7 @@ export const metadata = {
 export default async function AdminOrdersPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ page?: string; q?: string; sort?: string; dir?: string }>;
+  searchParams?: Promise<{ page?: string; q?: string; sort?: string; dir?: string; status?: string }>;
 }) {
   const params = (await searchParams) ?? {};
   const pageSize = 15;
@@ -19,6 +19,7 @@ export default async function AdminOrdersPage({
   const query = (params.q ?? "").trim();
   const sort = (params.sort ?? "createdAt").trim();
   const dir = (params.dir ?? "desc").trim();
+  const rawStatus = (params.status ?? "all").trim();
   const allowedSorts = new Set(["createdAt", "customerName", "status", "product"]);
   const sortKey = (allowedSorts.has(sort) ? sort : "createdAt") as
     | "createdAt"
@@ -26,17 +27,22 @@ export default async function AdminOrdersPage({
     | "status"
     | "product";
   const dirKey: Prisma.SortOrder = dir === "asc" ? "asc" : "desc";
+  const allowedStatuses = new Set(["Pending", "Confirmed", "Shipped", "Delivered"]);
+  const status = allowedStatuses.has(rawStatus) ? rawStatus : "all";
 
-  const where = query
-    ? {
-        OR: [
-          { customerName: { contains: query, mode: "insensitive" as const } },
-          { phone: { contains: query, mode: "insensitive" as const } },
-          { status: { contains: query, mode: "insensitive" as const } },
-          { product: { name: { contains: query, mode: "insensitive" as const } } },
-        ],
-      }
-    : undefined;
+  const where = {
+    ...(status !== "all" ? { status } : {}),
+    ...(query
+      ? {
+          OR: [
+            { customerName: { contains: query, mode: "insensitive" as const } },
+            { phone: { contains: query, mode: "insensitive" as const } },
+            { status: { contains: query, mode: "insensitive" as const } },
+            { product: { name: { contains: query, mode: "insensitive" as const } } },
+          ],
+        }
+      : {}),
+  };
 
   const orderBy: Prisma.OrderOrderByWithRelationInput =
     sortKey === "customerName"
@@ -94,6 +100,7 @@ export default async function AdminOrdersPage({
         initialQuery={query}
         initialSort={[sortKey]}
         initialDir={[dirKey]}
+        initialStatus={status as "all" | "Pending" | "Confirmed" | "Shipped" | "Delivered"}
         products={products}
       />
     </div>

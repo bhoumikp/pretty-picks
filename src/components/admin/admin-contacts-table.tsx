@@ -1,6 +1,9 @@
 "use client";
 
+import { memo } from "react";
 import AdminTableShell from "@/components/admin/admin-table-shell";
+import AdminEmptyState from "@/components/admin/admin-empty-state";
+import { highlightText } from "@/lib/highlight";
 
 interface ContactRow {
   id: string;
@@ -15,6 +18,7 @@ interface AdminContactsTableProps {
   page: number;
   pageSize: number;
   total: number;
+  query: string;
   sort: string[];
   dir: Array<"asc" | "desc">;
   onSort: (key: string) => void;
@@ -23,11 +27,12 @@ interface AdminContactsTableProps {
   footerSlot?: React.ReactNode;
 }
 
-export default function AdminContactsTable({
+function AdminContactsTable({
   contacts,
   page,
   pageSize,
   total,
+  query,
   sort,
   dir,
   onSort,
@@ -43,6 +48,8 @@ export default function AdminContactsTable({
     const index = sort.indexOf(key);
     return index >= 0 ? index + 1 : null;
   };
+  const showSkeleton = isLoading && contacts.length === 0;
+  const skeletonRows = Array.from({ length: Math.min(6, pageSize) }, (_, index) => index);
 
   return (
     <AdminTableShell
@@ -105,25 +112,43 @@ export default function AdminContactsTable({
           </tr>
         </thead>
         <tbody>
-          {contacts.length === 0 ? (
-            <tr>
-              <td className="admin-table-empty px-5 py-8 text-sm text-[var(--pp-muted)]" colSpan={4}>
-                No contacts found.
-              </td>
-            </tr>
+          {showSkeleton ? (
+            skeletonRows.map((row) => (
+              <tr key={`skeleton-${row}`} className="border-b border-[var(--pp-border)] last:border-b-0">
+                <td className="px-5 py-4">
+                  <div className="space-y-2">
+                    <div className="h-3 w-28 rounded bg-[var(--pp-beige)]/70 animate-pulse" />
+                    <div className="h-2 w-16 rounded bg-[var(--pp-beige)]/50 animate-pulse" />
+                  </div>
+                </td>
+                <td className="px-5 py-4">
+                  <div className="h-3 w-32 rounded bg-[var(--pp-beige)]/70 animate-pulse" />
+                </td>
+                <td className="px-5 py-4">
+                  <div className="h-3 w-48 rounded bg-[var(--pp-beige)]/70 animate-pulse" />
+                </td>
+                <td className="px-5 py-4">
+                  <div className="h-3 w-20 rounded bg-[var(--pp-beige)]/70 animate-pulse" />
+                </td>
+              </tr>
+            ))
+          ) : contacts.length === 0 ? (
+            <AdminEmptyState colSpan={4} message="No contacts found." />
           ) : (
             contacts.map((contact) => (
               <tr key={contact.id} className="border-b border-[var(--pp-border)] last:border-b-0">
                 <td className="admin-table-main px-5 py-4" data-label="Name">
-                  <p className="font-semibold text-[var(--pp-ink)]">{contact.name}</p>
+                  <p className="font-semibold text-[var(--pp-ink)]">
+                    {highlightText(contact.name, query)}
+                  </p>
                   <p className="text-xs text-[var(--pp-muted)]">ID {contact.id.slice(0, 6)}</p>
                 </td>
                 <td className="px-5 py-4 text-[var(--pp-muted)]" data-label="Email">
-                  {contact.email}
+                  {highlightText(contact.email, query)}
                 </td>
                 <td className="px-5 py-4" data-label="Message">
                   <p className="max-w-[320px] truncate text-[var(--pp-ink)]" title={contact.message}>
-                    {contact.message}
+                    {highlightText(contact.message, query)}
                   </p>
                 </td>
                 <td className="px-5 py-4 text-[var(--pp-muted)]" data-label="Date">
@@ -137,3 +162,5 @@ export default function AdminContactsTable({
     </AdminTableShell>
   );
 }
+
+export default memo(AdminContactsTable);

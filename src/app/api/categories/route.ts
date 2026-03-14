@@ -2,9 +2,13 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin";
 import { slugify } from "@/lib/utils";
+import { logAudit } from "@/lib/audit";
 
 export async function GET() {
-  const categories = await prisma.category.findMany({ orderBy: { name: "asc" } });
+  const categories = await prisma.category.findMany({
+    where: { archivedAt: null },
+    orderBy: { name: "asc" },
+  });
   return NextResponse.json(categories);
 }
 
@@ -20,6 +24,15 @@ export async function POST(request: Request) {
       image: body.image ?? null,
       parentId: body.parentId ?? null,
     },
+  });
+
+  await logAudit({
+    actorId: session.user.id,
+    action: "CREATE",
+    entity: "CATEGORY",
+    entityId: category.id,
+    metadata: { name: category.name, parentId: category.parentId },
+    request,
   });
 
   return NextResponse.json(category, { status: 201 });

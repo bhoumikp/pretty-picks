@@ -12,7 +12,7 @@ export const metadata = {
 export default async function AdminCategoriesPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ page?: string; q?: string; sort?: string; dir?: string }>;
+  searchParams?: Promise<{ page?: string; q?: string; sort?: string; dir?: string; status?: string }>;
 }) {
   const params = (await searchParams) ?? {};
   const pageSize = 15;
@@ -20,6 +20,7 @@ export default async function AdminCategoriesPage({
   const query = (params.q ?? "").trim();
   const sort = (params.sort ?? "name").trim();
   const dir = (params.dir ?? "asc").trim();
+  const rawStatus = (params.status ?? "all").trim();
   const allowedSorts = new Set(["name", "slug", "status", "createdAt", "updatedAt"]);
   const sortKey = (allowedSorts.has(sort) ? sort : "name") as
     | "name"
@@ -28,9 +29,12 @@ export default async function AdminCategoriesPage({
     | "createdAt"
     | "updatedAt";
   const dirKey: Prisma.SortOrder = dir === "asc" ? "asc" : "desc";
+  const allowedStatuses = new Set(["all", "active", "inactive"]);
+  const status = allowedStatuses.has(rawStatus) ? rawStatus : "all";
 
   const where = {
     parentId: null,
+    ...(status === "active" ? { active: true } : status === "inactive" ? { active: false } : {}),
     ...(query
       ? {
           OR: [
@@ -114,6 +118,7 @@ export default async function AdminCategoriesPage({
         initialQuery={query}
         initialSort={[sortKey]}
         initialDir={[dirKey]}
+        initialStatus={status as "all" | "active" | "inactive"}
       />
     </div>
   );

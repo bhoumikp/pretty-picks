@@ -17,6 +17,7 @@ export async function GET(request: Request) {
   const query = (searchParams.get("q") ?? "").trim();
   const sort = (searchParams.get("sort") ?? "updatedAt").trim();
   const dir = (searchParams.get("dir") ?? "desc").trim();
+  const status = (searchParams.get("status") ?? "all").trim();
 
   const allowedSorts = new Set(["name", "category", "price", "stock", "status", "updatedAt"]);
   const sortKey = (allowedSorts.has(sort) ? sort : "updatedAt") as
@@ -28,14 +29,25 @@ export async function GET(request: Request) {
     | "updatedAt";
   const dirKey: Prisma.SortOrder = dir === "asc" ? "asc" : "desc";
 
-  const where = query
-    ? {
-        OR: [
-          { name: { contains: query, mode: "insensitive" as const } },
-          { category: { name: { contains: query, mode: "insensitive" as const } } },
-        ],
-      }
-    : undefined;
+  const statusFilter =
+    status === "active"
+      ? { stock: { gt: 0 } }
+      : status === "inactive"
+      ? { stock: { lte: 0 } }
+      : {};
+
+  const where = {
+    archivedAt: null,
+    ...statusFilter,
+    ...(query
+      ? {
+          OR: [
+            { name: { contains: query, mode: "insensitive" as const } },
+            { category: { name: { contains: query, mode: "insensitive" as const } } },
+          ],
+        }
+      : {}),
+  };
 
   const orderBy: Prisma.ProductOrderByWithRelationInput = (() => {
     if (sortKey === "name") return { name: dirKey };

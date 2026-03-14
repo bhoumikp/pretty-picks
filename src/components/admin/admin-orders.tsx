@@ -9,6 +9,7 @@ import AdminSelect from "@/components/admin/admin-select";
 interface AdminOrdersProps {
   products: ProductSummary[];
   onCreated?: () => void;
+  onError?: (message: string) => void;
   onCancel?: () => void;
   hideTitle?: boolean;
   variant?: "card" | "bare";
@@ -24,6 +25,7 @@ const emptyForm = {
 export default function AdminOrders({
   products,
   onCreated,
+  onError,
   onCancel,
   hideTitle = false,
   variant = "card",
@@ -72,12 +74,14 @@ export default function AdminOrders({
       body: JSON.stringify(form),
     });
     if (!response.ok) {
-      setError("Unable to create order. Please try again.");
+      const message = "Unable to create order. Please try again.";
+      setError(message);
       const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
       setToasts((prev) => [
         ...prev,
-        { id, type: "error", message: "Unable to create order. Please try again." },
+        { id, type: "error", message },
       ]);
+      onError?.(message);
       setLoading(false);
       return;
     }
@@ -96,7 +100,7 @@ export default function AdminOrders({
         )}
         <div className="mt-4 grid gap-4">
           <div className="grid gap-2">
-            <label className="text-xs font-semibold text-[var(--pp-muted)]">Product</label>
+            <label className="admin-label">Product</label>
             <AdminSelect
               value={form.productId}
               onChange={(nextValue) => {
@@ -111,7 +115,7 @@ export default function AdminOrders({
                 ...products.map((product) => ({ value: product.id, label: product.name })),
               ]}
               fullWidth
-              buttonClassName={`w-full border px-4 py-3 text-sm ${
+              buttonClassName={`w-full admin-input ${
                 fieldErrors.productId ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
               header="Product"
@@ -125,12 +129,12 @@ export default function AdminOrders({
             </span>
           </div>
           <div className="grid gap-2">
-            <label htmlFor="admin-order-customer" className="text-xs font-semibold text-[var(--pp-muted)]">
+            <label htmlFor="admin-order-customer" className="admin-label">
               Customer name
             </label>
             <input
               id="admin-order-customer"
-              className={`border px-4 py-3 text-sm ${
+              className={`admin-input ${
                 fieldErrors.customerName ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
               placeholder="Customer name"
@@ -152,12 +156,12 @@ export default function AdminOrders({
             </span>
           </div>
           <div className="grid gap-2">
-            <label htmlFor="admin-order-phone" className="text-xs font-semibold text-[var(--pp-muted)]">
+            <label htmlFor="admin-order-phone" className="admin-label">
               Phone number
             </label>
             <input
               id="admin-order-phone"
-              className={`border px-4 py-3 text-sm ${
+              className={`admin-input ${
                 fieldErrors.phone ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
               placeholder="Phone number"
@@ -179,7 +183,7 @@ export default function AdminOrders({
             </span>
           </div>
           <div className="grid gap-2">
-            <label className="text-xs font-semibold text-[var(--pp-muted)]">Status</label>
+            <label className="admin-label">Status</label>
             <AdminSelect
               value={form.status}
               onChange={(nextValue) => setForm({ ...form, status: String(nextValue) })}
@@ -190,7 +194,7 @@ export default function AdminOrders({
                 { value: "Delivered", label: "Delivered" },
               ]}
               fullWidth
-              buttonClassName="w-full border border-[var(--pp-border)] px-4 py-3 text-sm"
+              buttonClassName="w-full admin-input"
               header="Status"
               ariaLabel="Status"
             />

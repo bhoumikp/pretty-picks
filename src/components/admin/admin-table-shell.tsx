@@ -31,14 +31,20 @@ export default function AdminTableShell({
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
-    <div className="soft-card relative p-0">
+    <div className="soft-card relative p-0" aria-busy={isLoading}>
       {isLoading && (
-        <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden">
-          <div className="absolute inset-0 bg-white/50" />
+        <div className="absolute inset-0 z-10 overflow-hidden">
+          <div className="absolute inset-0 bg-white/55" />
           <div className="absolute inset-0 bg-[linear-gradient(110deg,transparent,rgba(255,255,255,0.6),transparent)] animate-[shimmer_1.2s_infinite]" />
         </div>
       )}
-      <div className="overflow-x-auto">{children}</div>
+      <div
+        className={`overflow-x-auto transition-opacity duration-200 ${
+          isLoading ? "pointer-events-none opacity-70" : ""
+        }`}
+      >
+        {children}
+      </div>
       <div className="sticky bottom-0 flex flex-wrap items-center gap-3 border-t border-[var(--pp-border)] bg-white px-5 py-4 text-sm">
         <span className="text-[var(--pp-muted)]">
           Page {page} of {totalPages} · {total} items
