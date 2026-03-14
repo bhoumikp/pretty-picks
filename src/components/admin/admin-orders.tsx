@@ -96,6 +96,7 @@ export default function AdminOrders({
         )}
         <div className="mt-4 grid gap-4">
           <div className="grid gap-2">
+            <label className="text-xs font-semibold text-[var(--pp-muted)]">Product</label>
             <AdminSelect
               value={form.productId}
               onChange={(nextValue) => {
@@ -124,7 +125,11 @@ export default function AdminOrders({
             </span>
           </div>
           <div className="grid gap-2">
+            <label htmlFor="admin-order-customer" className="text-xs font-semibold text-[var(--pp-muted)]">
+              Customer name
+            </label>
             <input
+              id="admin-order-customer"
               className={`border px-4 py-3 text-sm ${
                 fieldErrors.customerName ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
@@ -147,7 +152,11 @@ export default function AdminOrders({
             </span>
           </div>
           <div className="grid gap-2">
+            <label htmlFor="admin-order-phone" className="text-xs font-semibold text-[var(--pp-muted)]">
+              Phone number
+            </label>
             <input
+              id="admin-order-phone"
               className={`border px-4 py-3 text-sm ${
                 fieldErrors.phone ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
@@ -169,20 +178,23 @@ export default function AdminOrders({
               {fieldErrors.phone ?? ""}
             </span>
           </div>
-          <AdminSelect
-            value={form.status}
-            onChange={(nextValue) => setForm({ ...form, status: String(nextValue) })}
-            options={[
-              { value: "Pending", label: "Pending" },
-              { value: "Confirmed", label: "Confirmed" },
-              { value: "Shipped", label: "Shipped" },
-              { value: "Delivered", label: "Delivered" },
-            ]}
-            fullWidth
-            buttonClassName="w-full border border-[var(--pp-border)] px-4 py-3 text-sm"
-            header="Status"
-            ariaLabel="Status"
-          />
+          <div className="grid gap-2">
+            <label className="text-xs font-semibold text-[var(--pp-muted)]">Status</label>
+            <AdminSelect
+              value={form.status}
+              onChange={(nextValue) => setForm({ ...form, status: String(nextValue) })}
+              options={[
+                { value: "Pending", label: "Pending" },
+                { value: "Confirmed", label: "Confirmed" },
+                { value: "Shipped", label: "Shipped" },
+                { value: "Delivered", label: "Delivered" },
+              ]}
+              fullWidth
+              buttonClassName="w-full border border-[var(--pp-border)] px-4 py-3 text-sm"
+              header="Status"
+              ariaLabel="Status"
+            />
+          </div>
         </div>
         <div className="mt-4 flex items-center justify-end gap-3">
           {onCancel && (

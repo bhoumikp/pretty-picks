@@ -1,5 +1,5 @@
 import { getServerSession } from "next-auth";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import AdminShell from "@/components/admin/admin-shell";
 import { authOptions } from "@/lib/auth";
@@ -20,6 +20,11 @@ export default async function AdminLayout({
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     redirect("/admin/login");
+  }
+
+  const host = (await headers()).get("host")?.split(":")[0] ?? "";
+  if (process.env.NODE_ENV === "production" && host !== "admin.shopprettypicks.in") {
+    redirect("https://shopprettypicks.in");
   }
 
   const cookieStore = await cookies();

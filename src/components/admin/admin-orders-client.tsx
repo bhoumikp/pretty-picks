@@ -176,7 +176,11 @@ export default function AdminOrdersClient({
         </div>
         <div className="flex w-full flex-col gap-3 sm:flex-1 sm:flex-row sm:items-center sm:justify-end">
           <div className="flex w-full items-center gap-2 sm:max-w-xs">
+            <label htmlFor="admin-orders-search" className="sr-only">
+              Search orders
+            </label>
             <input
+              id="admin-orders-search"
               value={query}
               onChange={(event) => {
                 userTypedRef.current = true;

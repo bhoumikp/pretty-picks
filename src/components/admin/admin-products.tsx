@@ -284,7 +284,11 @@ export default function AdminProductForm({
         </h3>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <div className="grid gap-2">
+            <label htmlFor="admin-product-name" className="text-xs font-semibold text-[var(--pp-muted)]">
+              Product name
+            </label>
             <input
+              id="admin-product-name"
               className={`border px-4 py-3 text-sm ${
                 fieldErrors.name ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
@@ -307,7 +311,11 @@ export default function AdminProductForm({
             </span>
           </div>
           <div className="grid gap-2">
+            <label htmlFor="admin-product-price" className="text-xs font-semibold text-[var(--pp-muted)]">
+              Price
+            </label>
             <input
+              id="admin-product-price"
               className={`border px-4 py-3 text-sm ${
                 fieldErrors.price ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
@@ -332,7 +340,11 @@ export default function AdminProductForm({
             </span>
           </div>
           <div className="grid gap-2">
+            <label htmlFor="admin-product-material" className="text-xs font-semibold text-[var(--pp-muted)]">
+              Material
+            </label>
             <input
+              id="admin-product-material"
               className={`border px-4 py-3 text-sm ${
                 fieldErrors.material ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
@@ -355,7 +367,11 @@ export default function AdminProductForm({
             </span>
           </div>
           <div className="grid gap-2">
+            <label htmlFor="admin-product-stock" className="text-xs font-semibold text-[var(--pp-muted)]">
+              Stock
+            </label>
             <input
+              id="admin-product-stock"
               className={`border px-4 py-3 text-sm ${
                 fieldErrors.stock ? "border-red-300" : "border-[var(--pp-border)]"
               }`}
@@ -380,6 +396,7 @@ export default function AdminProductForm({
             </span>
           </div>
           <div className="grid gap-2">
+            <label className="text-xs font-semibold text-[var(--pp-muted)]">Category</label>
             <AdminSelect
               value={form.categoryId}
               onChange={(nextValue) => {
@@ -419,7 +436,11 @@ export default function AdminProductForm({
           </label>
         </div>
         <div className="mt-4 grid gap-2">
+          <label htmlFor="admin-product-description" className="text-xs font-semibold text-[var(--pp-muted)]">
+            Description
+          </label>
           <textarea
+            id="admin-product-description"
             className={`w-full border px-4 py-3 text-sm ${
               fieldErrors.description ? "border-red-300" : "border-[var(--pp-border)]"
             }`}
@@ -442,29 +463,32 @@ export default function AdminProductForm({
             {fieldErrors.description ?? ""}
           </span>
         </div>
-        <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
-          <label className="border border-[var(--pp-border)] px-4 py-2 cursor-pointer">
-            <input
-              type="file"
-              multiple
-              accept="image/*"
+        <div className="mt-4 grid gap-2 text-sm">
+          <span className="text-xs font-semibold text-[var(--pp-muted)]">Images</span>
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="border border-[var(--pp-border)] px-4 py-2 cursor-pointer">
+              <input
+                type="file"
+                multiple
+                accept="image/*"
               className="hidden"
               onChange={handleUpload}
               disabled={uploading}
             />
             {uploading ? "Uploading..." : "Upload images"}
           </label>
-          {uploading && (
-            <div className="h-2 w-40 overflow-hidden bg-[var(--pp-beige)]">
-              <div
-                className="h-full bg-[var(--pp-gold)]"
-                style={{ width: `${uploadProgress}%` }}
-              />
-            </div>
-          )}
-          <span className="text-xs text-[var(--pp-muted)]">
-            Max {maxFiles} images, {maxSizeMb}MB each.
-          </span>
+            {uploading && (
+              <div className="h-2 w-40 overflow-hidden bg-[var(--pp-beige)]">
+                <div
+                  className="h-full bg-[var(--pp-gold)]"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+            )}
+            <span className="text-xs text-[var(--pp-muted)]">
+              Max {maxFiles} images, {maxSizeMb}MB each.
+            </span>
+          </div>
         </div>
         <p
           data-show={Boolean(fieldErrors.images)}
@@ -474,7 +498,11 @@ export default function AdminProductForm({
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           <div className="grid flex-1 gap-2">
+            <label htmlFor="admin-product-image-url" className="text-xs font-semibold text-[var(--pp-muted)]">
+              Add image URL
+            </label>
             <input
+              id="admin-product-image-url"
               className={`w-full border px-4 py-3 text-sm ${
                 fieldErrors.imageUrl ? "border-red-300" : "border-[var(--pp-border)]"
               }`}

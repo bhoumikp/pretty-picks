@@ -154,7 +154,11 @@ export default function AdminContactsClient({
         </div>
         <div className="flex w-full flex-col gap-3 sm:flex-1 sm:flex-row sm:items-center sm:justify-end">
           <div className="flex w-full items-center gap-2 sm:max-w-xs">
+            <label htmlFor="admin-contacts-search" className="sr-only">
+              Search contacts
+            </label>
             <input
+              id="admin-contacts-search"
               value={query}
               onChange={(event) => {
                 userTypedRef.current = true;

@@ -333,7 +333,11 @@ export default function AdminSubcategories({
           </div>
           <div className="flex w-full flex-col gap-3 sm:flex-1 sm:flex-row sm:items-center sm:justify-end">
             <div className="flex w-full items-center gap-2 sm:max-w-xs">
+              <label htmlFor="admin-subcategories-search" className="sr-only">
+                Search sub categories
+              </label>
               <input
+                id="admin-subcategories-search"
                 value={query}
                 onChange={(event) => {
                   userTypedRef.current = true;
@@ -401,6 +405,7 @@ export default function AdminSubcategories({
             </div>
             <form onSubmit={handleSubmit} className="mt-4 grid gap-4" noValidate>
               <div className="grid gap-2">
+                <label className="text-xs font-semibold text-[var(--pp-muted)]">Parent category</label>
                 <AdminSelect
                   value={form.parentId ?? ""}
                   onChange={(nextValue) => setForm({ ...form, parentId: String(nextValue) })}
@@ -420,7 +425,11 @@ export default function AdminSubcategories({
                 </span>
               </div>
               <div className="grid gap-2">
+                <label htmlFor="admin-subcategory-name" className="text-xs font-semibold text-[var(--pp-muted)]">
+                  Sub Category name
+                </label>
                 <input
+                  id="admin-subcategory-name"
                   className={`border px-4 py-3 text-sm ${
                     fieldErrors.name ? "border-red-300" : "border-[var(--pp-border)]"
                   }`}
@@ -440,7 +449,11 @@ export default function AdminSubcategories({
                 </span>
               </div>
               <div className="grid gap-2">
+                <label htmlFor="admin-subcategory-image" className="text-xs font-semibold text-[var(--pp-muted)]">
+                  Image URL
+                </label>
                 <input
+                  id="admin-subcategory-image"
                   className={`border px-4 py-3 text-sm ${
                     fieldErrors.image ? "border-red-300" : "border-[var(--pp-border)]"
                   }`}

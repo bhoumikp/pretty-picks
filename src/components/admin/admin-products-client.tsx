@@ -193,7 +193,11 @@ export default function AdminProductsClient({
         </div>
         <div className="flex w-full flex-col gap-3 sm:flex-1 sm:flex-row sm:items-center sm:justify-end">
           <div className="flex w-full items-center gap-2 sm:max-w-xs">
+            <label htmlFor="admin-products-search" className="sr-only">
+              Search products
+            </label>
             <input
+              id="admin-products-search"
               value={query}
               onChange={(event) => {
                 userTypedRef.current = true;
