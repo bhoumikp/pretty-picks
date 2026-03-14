@@ -45,6 +45,13 @@ npm run dev
   - Email: `admin@prettypicks.in`
   - Password: `PrettyPicks123`
 
+## Route Groups & Subdomain Routing
+- Storefront lives in `src/app/(store)` and admin lives in `src/app/(admin)/admin`.
+- Production host-based routing:
+  - `admin.shopprettypicks.in/*` → `/admin/*`
+  - `/admin/*` on the main domain is blocked.
+- Dev runs without subdomain routing (middleware guard).
+
 ## WhatsApp Settings
 Update the WhatsApp number in `src/data/site.ts`.
 
