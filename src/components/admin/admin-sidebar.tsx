@@ -9,7 +9,6 @@ import {
   Settings as SettingsIcon,
   ChevronDown,
   ShoppingBag,
-  Users,
   FileText,
 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -19,7 +18,6 @@ const navIcons: Record<string, React.ReactElement> = {
   Products: <Boxes className="h-4 w-4" />,
   Categories: <Layers className="h-4 w-4" />,
   Orders: <ShoppingBag className="h-4 w-4" />,
-  Contacts: <Users className="h-4 w-4" />,
   "Audit Logs": <FileText className="h-4 w-4" />,
   Settings: <SettingsIcon className="h-4 w-4" />,
 };
@@ -32,6 +30,7 @@ type AdminNavLink = {
 
 const adminLinks: AdminNavLink[] = [
   { href: "/admin", label: "Dashboard" },
+  { href: "/admin/orders", label: "Orders" },
   { href: "/admin/products", label: "Products" },
   {
     href: "/admin/categories",
@@ -41,8 +40,6 @@ const adminLinks: AdminNavLink[] = [
       { href: "/admin/subcategories", label: "Sub Categories" },
     ],
   },
-  { href: "/admin/orders", label: "Orders" },
-  { href: "/admin/contacts", label: "Contacts" },
   { href: "/admin/audit-logs", label: "Audit Logs" },
   { href: "/admin/settings", label: "Settings" },
 ];

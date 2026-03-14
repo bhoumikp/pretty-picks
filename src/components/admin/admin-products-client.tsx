@@ -7,6 +7,7 @@ import AdminSelect from "@/components/admin/admin-select";
 import type { ProductImage } from "@/types/catalog";
 import type { ToastItem } from "@/components/ui/toast-stack";
 import AdminProductsToastBridge from "@/components/admin/admin-products-toast-bridge";
+import AdminConfirmModal from "@/components/admin/admin-confirm-modal";
 
 interface ProductRow {
   id: string;
@@ -72,6 +73,8 @@ export default function AdminProductsClient({
   const [rowsPerPage, setRowsPerPage] = useState(pageSize);
   const [loading, setLoading] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleteTarget, setDeleteTarget] = useState<ProductRow | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const userTypedRef = useRef(false);
   const restoredRef = useRef(false);
   const cacheRef = useRef(new Map<string, { items: ProductRow[]; total: number }>());
@@ -137,12 +140,12 @@ export default function AdminProductsClient({
       nextSort: string[],
       nextDir: Array<"asc" | "desc">,
       nextStatus: "all" | "active" | "inactive",
-      options?: { prefetch?: boolean }
+      options?: { prefetch?: boolean; force?: boolean }
     ) => {
       const key = getCacheKey(nextQuery, nextPage, nextSort, nextDir, nextStatus, rowsPerPage);
       if (!options?.prefetch) {
         const cached = cacheRef.current.get(key);
-        if (cached) {
+        if (cached && !options?.force) {
           setProducts(cached.items);
           setTotal(cached.total);
           return;
@@ -361,8 +364,36 @@ export default function AdminProductsClient({
     await Promise.all(ids.map((id) => fetch(`/api/products/${id}`, { method: "DELETE" })));
   };
 
+  const handleDelete = (product: ProductRow) => {
+    setDeleteTarget(product);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
+    await fetch(`/api/products/${deleteTarget.id}`, { method: "DELETE" });
+    setDeleteLoading(false);
+    setDeleteTarget(null);
+    const nextPage = products.length <= 1 && page > 1 ? page - 1 : page;
+    setPage(nextPage);
+    fetchProducts(query, nextPage, sort, dir, status, { force: true });
+    syncUrl(query, nextPage, sort, dir, status, rowsPerPage);
+    onToastRef.current?.({ message: "Product deleted.", type: "success" });
+  };
+
   return (
     <div className="grid gap-6">
+      <AdminConfirmModal
+        open={Boolean(deleteTarget)}
+        title="Delete product?"
+        description={deleteTarget ? `This will remove ${deleteTarget.name}.` : undefined}
+        confirmLabel="Delete"
+        status="danger"
+        destructive
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+        loading={deleteLoading}
+      />
       <AdminProductsToastBridge onToastReady={(handler) => (onToastRef.current = handler)} />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -442,6 +473,10 @@ export default function AdminProductsClient({
         selectedIds={selectedIds}
         onToggleSelect={handleSelect}
         onToggleSelectAll={handleSelectAll}
+        onDelete={(id) => {
+          const target = products.find((product) => product.id === id);
+          if (target) handleDelete(target);
+        }}
         isLoading={loading}
         footerSlot={
           <div className="flex items-center gap-2 text-xs text-[var(--pp-muted)]">

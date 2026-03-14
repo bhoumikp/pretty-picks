@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { X } from "lucide-react";
 import ToastStack from "@/components/ui/toast-stack";
 import AdminCategoriesTable from "@/components/admin/admin-categories-table";
+import AdminConfirmModal from "@/components/admin/admin-confirm-modal";
 import AdminSelect from "@/components/admin/admin-select";
 import { validateRequired, validateUrlOptional } from "@/lib/validation";
 
@@ -96,6 +97,26 @@ export default function AdminSubcategories({
 
   const [form, setForm] = useState(emptyForm);
   const [modalOpen, setModalOpen] = useState(false);
+  const modalId = useId();
+  const [deleteTarget, setDeleteTarget] = useState<CategoryRow | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const custom = event as CustomEvent<{ id?: string }>;
+      if (!modalOpen) return;
+      if (custom.detail?.id && custom.detail.id !== modalId) {
+        setModalOpen(false);
+      }
+    };
+    window.addEventListener("pp-admin-modal-open", handler);
+    return () => window.removeEventListener("pp-admin-modal-open", handler);
+  }, [modalId, modalOpen]);
+
+  useEffect(() => {
+    if (!modalOpen) return;
+    window.dispatchEvent(new CustomEvent("pp-admin-modal-open", { detail: { id: modalId } }));
+  }, [modalId, modalOpen]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; image?: string; parentId?: string }>(
@@ -396,21 +417,29 @@ export default function AdminSubcategories({
     setSaving(false);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this sub category?")) return;
-    const response = await fetch(`/api/categories/${id}`, { method: "DELETE" });
+  const handleDelete = (target: CategoryRow) => {
+    setDeleteTarget(target);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
+    const response = await fetch(`/api/categories/${deleteTarget.id}`, { method: "DELETE" });
     const toastId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
     if (!response.ok) {
       setToasts((prev) => [
         ...prev,
         { id: toastId, type: "error", message: "Unable to delete sub category." },
       ]);
+      setDeleteLoading(false);
       return;
     }
     setToasts((prev) => [
       ...prev,
       { id: toastId, type: "success", message: "Sub Category deleted." },
     ]);
+    setDeleteLoading(false);
+    setDeleteTarget(null);
     const shouldGoBack = subcategories.length <= 1 && page > 1;
     const nextPage = shouldGoBack ? page - 1 : page;
     setPage(nextPage);
@@ -504,6 +533,17 @@ export default function AdminSubcategories({
   return (
     <>
       <div className="grid gap-6">
+        <AdminConfirmModal
+          open={Boolean(deleteTarget)}
+          title="Delete sub category?"
+          description={deleteTarget ? `This will remove ${deleteTarget.name}.` : undefined}
+          confirmLabel="Delete"
+          status="danger"
+          destructive
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleteTarget(null)}
+          loading={deleteLoading}
+        />
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">Catalog</p>
@@ -582,7 +622,10 @@ export default function AdminSubcategories({
           onSort={handleSort}
           onPageChange={handlePageChange}
           onEdit={openEditModal}
-          onDelete={handleDelete}
+          onDelete={(id) => {
+            const target = subcategories.find((item) => item.id === id);
+            if (target) handleDelete(target);
+          }}
           onToggleActive={handleToggleActive}
           selectedIds={selectedIds}
           onToggleSelect={handleSelect}

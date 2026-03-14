@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useId, useRef, useState } from "react";
 import type { ProductSummary } from "@/types/catalog";
 import AdminOrdersClient from "@/components/admin/admin-orders-client";
 import AdminOrders from "@/components/admin/admin-orders";
@@ -40,6 +40,7 @@ export default function AdminOrdersPanel({
 }: AdminOrdersPanelProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [closing, setClosing] = useState(false);
+  const modalId = useId();
   const refreshRef = useRef<null | ((options?: { resetPage?: boolean }) => void)>(null);
   const toastContext = useContext(ToastContext);
 
@@ -59,6 +60,23 @@ export default function AdminOrdersPanel({
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [modalOpen]);
+
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const custom = event as CustomEvent<{ id?: string }>;
+      if (!modalOpen) return;
+      if (custom.detail?.id && custom.detail.id !== modalId) {
+        handleClose();
+      }
+    };
+    window.addEventListener("pp-admin-modal-open", handler);
+    return () => window.removeEventListener("pp-admin-modal-open", handler);
+  }, [modalId, modalOpen]);
+
+  useEffect(() => {
+    if (!modalOpen) return;
+    window.dispatchEvent(new CustomEvent("pp-admin-modal-open", { detail: { id: modalId } }));
+  }, [modalId, modalOpen]);
 
   return (
     <>

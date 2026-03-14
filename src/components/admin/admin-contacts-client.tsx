@@ -9,6 +9,7 @@ interface ContactRow {
   name: string;
   email: string;
   message: string;
+  readAt?: string | null;
   createdAt: string;
 }
 
@@ -58,6 +59,8 @@ export default function AdminContactsClient({
   const [dir, setDir] = useState<Array<"asc" | "desc">>(initialDir);
   const [rowsPerPage, setRowsPerPage] = useState(pageSize);
   const [loading, setLoading] = useState(false);
+  const [openContact, setOpenContact] = useState<ContactRow | null>(null);
+  const [closing, setClosing] = useState(false);
   const userTypedRef = useRef(false);
   const restoredRef = useRef(false);
   const cacheRef = useRef(new Map<string, { items: ContactRow[]; total: number }>());
@@ -104,12 +107,12 @@ export default function AdminContactsClient({
       nextPage: number,
       nextSort: string[],
       nextDir: Array<"asc" | "desc">,
-      options?: { prefetch?: boolean }
+      options?: { prefetch?: boolean; force?: boolean }
     ) => {
       const key = getCacheKey(nextQuery, nextPage, nextSort, nextDir, rowsPerPage);
       if (!options?.prefetch) {
         const cached = cacheRef.current.get(key);
-        if (cached) {
+        if (cached && !options?.force) {
           setContacts(cached.items);
           setTotal(cached.total);
           return;
@@ -211,6 +214,24 @@ export default function AdminContactsClient({
     }
   }, [page, total, rowsPerPage, query, sort, dir, fetchContacts, loading, shouldPrefetch]);
 
+  const markContactRead = useCallback(async (contactId: string) => {
+    await fetch("/api/admin/contacts/mark-read", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: [contactId] }),
+    });
+    window.dispatchEvent(new Event("pp-contacts-refresh"));
+  }, []);
+
+  const markContactUnread = useCallback(async (contactId: string) => {
+    await fetch("/api/admin/contacts/mark-unread", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: [contactId] }),
+    });
+    window.dispatchEvent(new Event("pp-contacts-refresh"));
+  }, []);
+
   const handlePageChange = (nextPage: number) => {
     fetchContacts(query, nextPage, sort, dir);
     setPage(nextPage);
@@ -239,6 +260,102 @@ export default function AdminContactsClient({
     fetchContacts(query, nextPage, sort, dir);
     syncUrl(query, nextPage, sort, dir, nextRows);
   };
+
+  const handleOpen = useCallback(
+    (contact: ContactRow) => {
+      setClosing(false);
+      if (!contact.readAt) {
+        const timestamp = new Date().toISOString();
+        setOpenContact({ ...contact, readAt: timestamp });
+        setContacts((prev) =>
+          prev.map((row) => (row.id === contact.id ? { ...row, readAt: timestamp } : row))
+        );
+        window.dispatchEvent(new CustomEvent("pp-contacts-unread-delta", { detail: { delta: -1 } }));
+        markContactRead(contact.id).catch(() => undefined);
+        return;
+      }
+      setOpenContact(contact);
+    },
+    [markContactRead]
+  );
+
+  const handleClose = useCallback(() => {
+    setClosing(true);
+    window.setTimeout(() => {
+      setClosing(false);
+      setOpenContact(null);
+    }, 220);
+  }, []);
+
+  const handleMarkUnread = useCallback(
+    (contactId: string) => {
+      setContacts((prev) =>
+        prev.map((row) => (row.id === contactId ? { ...row, readAt: null } : row))
+      );
+      setOpenContact((prev) => (prev?.id === contactId ? { ...prev, readAt: null } : prev));
+      window.dispatchEvent(new CustomEvent("pp-contacts-unread-delta", { detail: { delta: 1 } }));
+      markContactUnread(contactId).catch(() => undefined);
+    },
+    [markContactUnread]
+  );
+
+  const handleMarkRead = useCallback(
+    (contactId: string) => {
+      const timestamp = new Date().toISOString();
+      setContacts((prev) =>
+        prev.map((row) => (row.id === contactId ? { ...row, readAt: timestamp } : row))
+      );
+      setOpenContact((prev) => (prev?.id === contactId ? { ...prev, readAt: timestamp } : prev));
+      window.dispatchEvent(new CustomEvent("pp-contacts-unread-delta", { detail: { delta: -1 } }));
+      markContactRead(contactId).catch(() => undefined);
+    },
+    [markContactRead]
+  );
+
+  useEffect(() => {
+    if (!openContact) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") handleClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [handleClose, openContact]);
+
+  useEffect(() => {
+    const handler = () => {
+      const nextPage = 1;
+      fetchContacts(query, nextPage, sort, dir, { force: true });
+      setPage(nextPage);
+      syncUrl(query, nextPage, sort, dir, rowsPerPage);
+    };
+    window.addEventListener("pp-contacts-reload", handler);
+    return () => window.removeEventListener("pp-contacts-reload", handler);
+  }, [dir, fetchContacts, query, rowsPerPage, sort, syncUrl]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const shouldForce = window.sessionStorage.getItem("pp-contacts-force-refresh");
+    if (!shouldForce) return;
+    window.sessionStorage.removeItem("pp-contacts-force-refresh");
+    const nextPage = 1;
+    fetchContacts(query, nextPage, sort, dir, { force: true });
+    window.setTimeout(() => {
+      setPage(nextPage);
+      syncUrl(query, nextPage, sort, dir, rowsPerPage);
+    }, 0);
+  }, [dir, fetchContacts, query, rowsPerPage, sort, syncUrl]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handleFocus = () => {
+      const nextPage = 1;
+      fetchContacts(query, nextPage, sort, dir, { force: true });
+      setPage(nextPage);
+      syncUrl(query, nextPage, sort, dir, rowsPerPage);
+    };
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [dir, fetchContacts, query, rowsPerPage, sort, syncUrl]);
 
   return (
     <div className="grid gap-6">
@@ -275,6 +392,7 @@ export default function AdminContactsClient({
         dir={dir}
         onSort={handleSort}
         onPageChange={handlePageChange}
+        onOpen={handleOpen}
         isLoading={loading}
         footerSlot={
           <div className="flex items-center gap-2 text-xs text-[var(--pp-muted)]">
@@ -290,6 +408,81 @@ export default function AdminContactsClient({
           </div>
         }
       />
+      {openContact && (
+        <div
+          className={`fixed inset-0 z-50 bg-black/40 transition-opacity duration-200 ${
+            closing ? "opacity-0" : "opacity-100"
+          }`}
+          onClick={handleClose}
+        >
+          <div className="flex h-full w-full items-center justify-center px-4 lg:pl-[var(--admin-sidebar-offset)] lg:pr-0">
+            <div
+              className={`w-full max-w-xl bg-white shadow-lg transition-all duration-200 ${
+                closing ? "translate-y-2 opacity-0" : "translate-y-0 opacity-100"
+              }`}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="border-b border-[var(--pp-border)] px-6 py-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-[var(--pp-muted)]">
+                      <span
+                        className={`h-2 w-2 rounded-full ${
+                          openContact.readAt ? "bg-emerald-500" : "bg-amber-500"
+                        }`}
+                      />
+                      <span>{openContact.readAt ? "Read" : "Unread"}</span>
+                    </div>
+                    <h3 className="mt-3 text-xl font-[var(--font-heading)] text-[var(--pp-ink)]">
+                      {openContact.name}
+                    </h3>
+                    <p className="mt-1 text-sm text-[var(--pp-muted)]">{openContact.email}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleClose}
+                    className="flex h-9 w-9 items-center justify-center text-[var(--pp-muted)] transition hover:text-[var(--pp-ink)]"
+                    aria-label="Close message"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path d="M6 6l12 12" strokeWidth="1.6" strokeLinecap="round" />
+                      <path d="M18 6l-12 12" strokeWidth="1.6" strokeLinecap="round" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div className="px-6 py-5">
+                <p className="text-sm leading-relaxed text-[var(--pp-ink)]">{openContact.message}</p>
+                <p className="mt-4 text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">
+                  {new Date(openContact.createdAt).toLocaleString("en-IN")}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--pp-border)] bg-[var(--pp-beige)]/40 px-6 py-4">
+                {openContact.readAt ? (
+                  <button
+                    type="button"
+                    className="btn-outline admin-btn admin-btn-size"
+                    onClick={() => handleMarkUnread(openContact.id)}
+                  >
+                    Mark unread
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn-outline admin-btn admin-btn-size"
+                    onClick={() => handleMarkRead(openContact.id)}
+                  >
+                    Mark read
+                  </button>
+                )}
+                <button type="button" className="btn-outline admin-btn admin-btn-size" onClick={handleClose}>
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

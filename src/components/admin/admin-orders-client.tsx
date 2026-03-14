@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AdminOrdersTable from "@/components/admin/admin-orders-table";
+import AdminConfirmModal from "@/components/admin/admin-confirm-modal";
 import AdminSelect from "@/components/admin/admin-select";
 
 interface OrderRow {
@@ -75,6 +76,8 @@ export default function AdminOrdersClient({
   const [dir, setDir] = useState<Array<"asc" | "desc">>(initialDir);
   const [rowsPerPage, setRowsPerPage] = useState(pageSize);
   const [loading, setLoading] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<OrderRow | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const userTypedRef = useRef(false);
   const restoredRef = useRef(false);
   const cacheRef = useRef(new Map<string, { items: OrderRow[]; total: number }>());
@@ -305,17 +308,39 @@ export default function AdminOrdersClient({
     syncUrl(query, nextPage, sort, dir, status, nextRows);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this order?")) return;
-    await fetch(`/api/orders/${id}`, { method: "DELETE" });
+  const handleDelete = (target: OrderRow) => {
+    setDeleteTarget(target);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
+    await fetch(`/api/orders/${deleteTarget.id}`, { method: "DELETE" });
+    setDeleteLoading(false);
+    setDeleteTarget(null);
     const nextPage = orders.length <= 1 && page > 1 ? page - 1 : page;
     setPage(nextPage);
-    fetchOrders(query, nextPage, sort, dir, status);
+    fetchOrders(query, nextPage, sort, dir, status, { force: true });
     syncUrl(query, nextPage, sort, dir, status, rowsPerPage);
   };
 
   return (
     <div className="grid gap-6">
+      <AdminConfirmModal
+        open={Boolean(deleteTarget)}
+        title="Delete order?"
+        description={
+          deleteTarget
+            ? `This will remove the order from ${deleteTarget.customerName}.`
+            : undefined
+        }
+        confirmLabel="Delete"
+        status="danger"
+        destructive
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+        loading={deleteLoading}
+      />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">Orders</p>
@@ -382,7 +407,10 @@ export default function AdminOrdersClient({
         dir={dir}
         onSort={handleSort}
         onPageChange={handlePageChange}
-        onDelete={handleDelete}
+        onDelete={(id) => {
+          const target = orders.find((order) => order.id === id);
+          if (target) handleDelete(target);
+        }}
         isLoading={loading}
         footerSlot={
           <div className="flex items-center gap-2 text-xs text-[var(--pp-muted)]">

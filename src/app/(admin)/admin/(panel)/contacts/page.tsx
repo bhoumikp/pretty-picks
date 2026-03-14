@@ -69,6 +69,7 @@ export default async function AdminContactsPage({
     name: contact.name,
     email: contact.email,
     message: contact.message,
+    readAt: contact.readAt ? contact.readAt.toISOString() : null,
     createdAt: contact.createdAt.toISOString(),
   }));
 

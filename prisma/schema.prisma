@@ -61,11 +61,12 @@ model Order {
 }
 
 model Contact {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   name      String
   email     String
   message   String
-  createdAt DateTime @default(now())
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
 }
 
 model AuditLog {

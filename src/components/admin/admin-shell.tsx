@@ -1,11 +1,14 @@
 "use client";
 
-import { useContext, useMemo, useState, useSyncExternalStore } from "react";
+import { useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import AdminSidebar from "@/components/admin/admin-sidebar";
 import AdminToastProvider from "@/components/admin/admin-toast-provider";
 import { ToastContext } from "@/components/admin/admin-toast-provider";
-import { LogOut } from "lucide-react";
+import { LogOut, Mail } from "lucide-react";
+import AdminConfirmModal from "@/components/admin/admin-confirm-modal";
 
 const pageTitles = [
   { href: "/admin", label: "Dashboard" },
@@ -28,6 +31,10 @@ function AdminShellBody({
   const pathname = usePathname();
   const toastContext = useContext(ToastContext);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [logoutOpen, setLogoutOpen] = useState(false);
+  const [logoutLoading, setLogoutLoading] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [badgePulse, setBadgePulse] = useState(0);
   const sidebarCollapsed = useSyncExternalStore(
     (callback) => {
       if (typeof window === "undefined") return () => undefined;
@@ -71,6 +78,40 @@ function AdminShellBody({
     window.dispatchEvent(new Event("pp-admin-sidebar"));
   };
 
+  useEffect(() => {
+    let mounted = true;
+    const fetchUnread = async () => {
+      try {
+        const response = await fetch("/api/admin/contacts/unread", { cache: "no-store" });
+        if (!response.ok) return;
+        const data = (await response.json()) as { total?: number };
+        if (mounted) setUnreadCount(data.total ?? 0);
+      } catch {
+        // ignore network errors
+      }
+    };
+    fetchUnread();
+    const interval = window.setInterval(fetchUnread, 30000);
+    const handleRefresh = () => {
+      fetchUnread();
+    };
+    const handleOptimistic = (event: Event) => {
+      const custom = event as CustomEvent<{ delta?: number }>;
+      const delta = typeof custom.detail?.delta === "number" ? custom.detail.delta : 0;
+      if (!delta) return;
+      setUnreadCount((prev) => Math.max(0, prev + delta));
+      setBadgePulse((prev) => prev + 1);
+    };
+    window.addEventListener("pp-contacts-refresh", handleRefresh);
+    window.addEventListener("pp-contacts-unread-delta", handleOptimistic);
+    return () => {
+      mounted = false;
+      window.clearInterval(interval);
+      window.removeEventListener("pp-contacts-refresh", handleRefresh);
+      window.removeEventListener("pp-contacts-unread-delta", handleOptimistic);
+    };
+  }, []);
+
   return (
     <div
       className={`min-h-screen bg-[var(--pp-beige)] transition-[padding] duration-300 ease-out ${
@@ -82,6 +123,20 @@ function AdminShellBody({
         } as React.CSSProperties
       }
     >
+      <AdminConfirmModal
+        open={logoutOpen}
+        title="Log out?"
+        description="You’ll need to sign in again to access the admin panel."
+        confirmLabel="Log out"
+        loadingLabel="Logging out…"
+        status="warning"
+        onConfirm={() => {
+          setLogoutLoading(true);
+          signOut({ callbackUrl: "/admin/login" });
+        }}
+        onCancel={() => setLogoutOpen(false)}
+        loading={logoutLoading}
+      />
       <AdminSidebar
         mobileOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -125,15 +180,43 @@ function AdminShellBody({
               </h1>
             </div>
             <div className="flex items-center gap-3">
-              <form action="/api/auth/signout" method="post">
-                <button className="btn-outline admin-btn admin-btn-size hidden md:inline-flex">Sign out</button>
-                <button
-                  className="inline-flex h-9 w-9 items-center justify-center text-red-600 transition hover:text-red-700 md:hidden"
-                  aria-label="Sign out"
-                >
-                  <LogOut className="h-4 w-4" />
-                </button>
-              </form>
+              <Link
+                href="/admin/contacts"
+                className="group relative inline-flex h-11 w-11 items-center justify-center text-[var(--pp-muted)] transition hover:text-[var(--pp-ink)]"
+                aria-label="Inbox"
+                title="Inbox"
+                onClick={() => {
+                  if (typeof window === "undefined") return;
+                  window.sessionStorage.setItem("pp-contacts-force-refresh", "1");
+                  window.dispatchEvent(new Event("pp-contacts-refresh"));
+                  window.dispatchEvent(new Event("pp-contacts-reload"));
+                }}
+              >
+                <Mail className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <span
+                    key={badgePulse}
+                    className="absolute right-1.5 top-1.5 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[var(--pp-gold)] px-1.5 text-[10px] font-semibold text-[var(--pp-ink)] transition duration-200 animate-[badge-pop_200ms_ease-out]"
+                  >
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
+                <span className="pointer-events-none absolute right-0 top-full mt-2 hidden whitespace-nowrap border border-[var(--pp-border)] bg-white px-2.5 py-1 text-xs text-[var(--pp-ink)] opacity-0 shadow-sm transition group-hover:opacity-100 md:block">
+                  Inbox
+                </span>
+              </Link>
+              <button
+                type="button"
+                className="group relative inline-flex h-11 w-11 items-center justify-center text-red-600 transition hover:text-red-700"
+                aria-label="Log out"
+                onClick={() => setLogoutOpen(true)}
+                disabled={logoutLoading}
+              >
+                <LogOut className="h-5 w-5" />
+                <span className="pointer-events-none absolute right-0 top-full mt-2 hidden whitespace-nowrap border border-[var(--pp-border)] bg-white px-2.5 py-1 text-xs text-[var(--pp-ink)] opacity-0 shadow-sm transition group-hover:opacity-100 md:block">
+                  Log out
+                </span>
+              </button>
             </div>
           </div>
         </header>

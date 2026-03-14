@@ -56,6 +56,7 @@ export async function GET(request: Request) {
     name: contact.name,
     email: contact.email,
     message: contact.message,
+    readAt: contact.readAt ? contact.readAt.toISOString() : null,
     createdAt: contact.createdAt.toISOString(),
   }));
 

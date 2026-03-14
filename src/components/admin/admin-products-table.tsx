@@ -35,6 +35,7 @@ interface AdminProductsTableProps {
   selectedIds: Set<string>;
   onToggleSelect: (id: string, checked: boolean) => void;
   onToggleSelectAll: (checked: boolean) => void;
+  onDelete: (id: string) => void;
   isLoading?: boolean;
   footerSlot?: React.ReactNode;
 }
@@ -53,6 +54,7 @@ function AdminProductsTable({
   selectedIds,
   onToggleSelect,
   onToggleSelectAll,
+  onDelete,
   isLoading = false,
   footerSlot,
 }: AdminProductsTableProps) {
@@ -67,11 +69,6 @@ function AdminProductsTable({
   const allSelected = products.length > 0 && products.every((product) => selectedIds.has(product.id));
   const showSkeleton = isLoading && products.length === 0;
   const skeletonRows = Array.from({ length: Math.min(6, pageSize) }, (_, index) => index);
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this product?")) return;
-    await fetch(`/api/products/${id}`, { method: "DELETE" });
-  };
 
   return (
     <AdminTableShell
@@ -296,7 +293,7 @@ function AdminProductsTable({
                           </span>
                       </Link>
                       <button
-                        onClick={() => handleDelete(product.id)}
+                        onClick={() => onDelete(product.id)}
                         className="btn-round group relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--pp-border)] text-[var(--pp-ink)] transition hover:border-red-300 hover:bg-red-50 hover:text-red-600"
                         aria-label="Delete"
                       >

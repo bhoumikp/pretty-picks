@@ -10,6 +10,7 @@ interface ContactRow {
   name: string;
   email: string;
   message: string;
+  readAt?: string | null;
   createdAt: string;
 }
 
@@ -23,6 +24,7 @@ interface AdminContactsTableProps {
   dir: Array<"asc" | "desc">;
   onSort: (key: string) => void;
   onPageChange: (nextPage: number) => void;
+  onOpen: (contact: ContactRow) => void;
   isLoading?: boolean;
   footerSlot?: React.ReactNode;
 }
@@ -37,6 +39,7 @@ function AdminContactsTable({
   dir,
   onSort,
   onPageChange,
+  onOpen,
   isLoading = false,
   footerSlot,
 }: AdminContactsTableProps) {
@@ -109,6 +112,7 @@ function AdminContactsTable({
                 )}
               </button>
             </th>
+            <th className="px-5 py-4 text-right">View</th>
           </tr>
         </thead>
         <tbody>
@@ -130,17 +134,28 @@ function AdminContactsTable({
                 <td className="px-5 py-4">
                   <div className="h-3 w-20 rounded bg-[var(--pp-beige)]/70 animate-pulse" />
                 </td>
+                <td className="px-5 py-4">
+                  <div className="ml-auto h-7 w-16 rounded bg-[var(--pp-beige)]/70 animate-pulse" />
+                </td>
               </tr>
             ))
           ) : contacts.length === 0 ? (
-            <AdminEmptyState colSpan={4} message="No contacts found." />
+            <AdminEmptyState colSpan={5} message="No contacts found." />
           ) : (
             contacts.map((contact) => (
-              <tr key={contact.id} className="border-b border-[var(--pp-border)] last:border-b-0">
+              <tr
+                key={contact.id}
+                className={`border-b border-[var(--pp-border)] last:border-b-0 ${
+                  contact.readAt ? "" : "bg-[var(--pp-beige)]/30"
+                }`}
+              >
                 <td className="admin-table-main px-5 py-4" data-label="Name">
-                  <p className="font-semibold text-[var(--pp-ink)]">
-                    {highlightText(contact.name, query)}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    {!contact.readAt && <span className="h-2 w-2 rounded-full bg-amber-500" />}
+                    <p className={`font-semibold ${contact.readAt ? "text-[var(--pp-ink)]" : "text-[var(--pp-ink)]"}`}>
+                      {highlightText(contact.name, query)}
+                    </p>
+                  </div>
                   <p className="text-xs text-[var(--pp-muted)]">ID {contact.id.slice(0, 6)}</p>
                 </td>
                 <td className="px-5 py-4 text-[var(--pp-muted)]" data-label="Email">
@@ -153,6 +168,15 @@ function AdminContactsTable({
                 </td>
                 <td className="px-5 py-4 text-[var(--pp-muted)]" data-label="Date">
                   {new Date(contact.createdAt).toLocaleDateString("en-IN")}
+                </td>
+                <td className="px-5 py-4 text-right" data-label="View">
+                  <button
+                    type="button"
+                    className="btn-outline admin-btn admin-btn-size"
+                    onClick={() => onOpen(contact)}
+                  >
+                    View
+                  </button>
                 </td>
               </tr>
             ))

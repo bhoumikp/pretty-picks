@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { X } from "lucide-react";
 import ToastStack from "@/components/ui/toast-stack";
 import AdminCategoriesTable from "@/components/admin/admin-categories-table";
 import AdminSelect from "@/components/admin/admin-select";
 import { validateRequired, validateUrlOptional } from "@/lib/validation";
+import AdminConfirmModal from "@/components/admin/admin-confirm-modal";
 
 interface CategoryRow {
   id: string;
@@ -87,12 +88,32 @@ export default function AdminCategories({
 
   const [form, setForm] = useState(emptyForm);
   const [modalOpen, setModalOpen] = useState(false);
+  const modalId = useId();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; image?: string }>({});
   const [toasts, setToasts] = useState<
     Array<{ id: string; message: string; type?: "success" | "error" | "warning" | "primary" }>
   >([]);
+  const [deleteTarget, setDeleteTarget] = useState<CategoryRow | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const custom = event as CustomEvent<{ id?: string }>;
+      if (!modalOpen) return;
+      if (custom.detail?.id && custom.detail.id !== modalId) {
+        setModalOpen(false);
+      }
+    };
+    window.addEventListener("pp-admin-modal-open", handler);
+    return () => window.removeEventListener("pp-admin-modal-open", handler);
+  }, [modalId, modalOpen]);
+
+  useEffect(() => {
+    if (!modalOpen) return;
+    window.dispatchEvent(new CustomEvent("pp-admin-modal-open", { detail: { id: modalId } }));
+  }, [modalId, modalOpen]);
 
   const syncUrl = useCallback(
     (
@@ -370,15 +391,21 @@ export default function AdminCategories({
     setSaving(false);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this category?")) return;
-    const response = await fetch(`/api/categories/${id}`, { method: "DELETE" });
+  const handleDelete = (category: CategoryRow) => {
+    setDeleteTarget(category);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
+    const response = await fetch(`/api/categories/${deleteTarget.id}`, { method: "DELETE" });
     const toastId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
     if (!response.ok) {
       setToasts((prev) => [
         ...prev,
         { id: toastId, type: "error", message: "Unable to delete category." },
       ]);
+      setDeleteLoading(false);
       return;
     }
     setToasts((prev) => [...prev, { id: toastId, type: "success", message: "Category deleted." }]);
@@ -387,6 +414,8 @@ export default function AdminCategories({
     setPage(nextPage);
     await fetchCategories(query, nextPage, sort, dir, status, { force: true });
     syncUrl(query, nextPage, sort, dir, status, rowsPerPage);
+    setDeleteLoading(false);
+    setDeleteTarget(null);
   };
 
   const handleToggleActive = async (category: CategoryRow) => {
@@ -473,6 +502,17 @@ export default function AdminCategories({
   return (
     <>
       <div className="grid gap-6">
+        <AdminConfirmModal
+          open={Boolean(deleteTarget)}
+          title="Delete category?"
+          description={deleteTarget ? `This will remove ${deleteTarget.name}.` : undefined}
+          confirmLabel="Delete"
+          status="danger"
+          destructive
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleteTarget(null)}
+          loading={deleteLoading}
+        />
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">Catalog</p>
@@ -551,7 +591,10 @@ export default function AdminCategories({
           onSort={handleSort}
           onPageChange={handlePageChange}
           onEdit={openEditModal}
-          onDelete={handleDelete}
+          onDelete={(id) => {
+            const target = categories.find((item) => item.id === id);
+            if (target) handleDelete(target);
+          }}
           onToggleActive={handleToggleActive}
           selectedIds={selectedIds}
           onToggleSelect={handleSelect}
