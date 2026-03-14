@@ -48,12 +48,14 @@ interface AdminSidebarProps {
   mobileOpen?: boolean;
   onClose?: () => void;
   collapsed?: boolean;
+  onTestToasts?: () => void;
 }
 
 export default function AdminSidebar({
   mobileOpen = false,
   onClose,
   collapsed = false,
+  onTestToasts,
 }: AdminSidebarProps) {
   const pathname = usePathname();
   const [openSection, setOpenSection] = useState<string | null>(null);
@@ -280,6 +282,17 @@ export default function AdminSidebar({
           </p>
           {renderLinks()}
         </div>
+        <div className={`mt-auto pt-6 ${collapsed ? "lg:pb-2" : ""}`}>
+          <button
+            type="button"
+            onClick={onTestToasts}
+            className={`btn-outline admin-btn admin-btn-size w-full ${collapsed ? "lg:w-12 lg:px-0" : ""}`}
+            aria-label="Test toasts"
+          >
+            <span className={`${collapsed ? "lg:hidden" : ""}`}>Test toasts</span>
+            {collapsed && <span className="hidden text-xs lg:inline">TT</span>}
+          </button>
+        </div>
       </aside>
 
       <div
@@ -293,7 +306,7 @@ export default function AdminSidebar({
           onClick={onClose}
         />
         <aside
-          className={`absolute left-0 top-0 h-full w-[84vw] max-w-[18rem] border-r border-[var(--pp-border)] bg-white px-6 py-8 transition-transform ${
+          className={`absolute left-0 top-0 flex h-full w-[84vw] max-w-[18rem] flex-col border-r border-[var(--pp-border)] bg-white px-6 py-8 transition-transform ${
             mobileOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
@@ -316,6 +329,18 @@ export default function AdminSidebar({
           <div className="mt-10">
             <p className="text-[11px] uppercase tracking-[0.3em] text-[var(--pp-muted)]">Navigation</p>
             {renderLinks()}
+          </div>
+          <div className="mt-auto pt-6">
+            <button
+              type="button"
+              onClick={() => {
+                onTestToasts?.();
+                onClose?.();
+              }}
+              className="btn-outline admin-btn admin-btn-size w-full"
+            >
+              Test toasts
+            </button>
           </div>
         </aside>
       </div>

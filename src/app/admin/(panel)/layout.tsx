@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import AdminShell from "@/components/admin/admin-shell";
 import { authOptions } from "@/lib/auth";
+import "./admin.css";
 
 export const metadata = {
   title: {

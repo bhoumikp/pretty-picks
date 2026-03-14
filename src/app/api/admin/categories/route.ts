@@ -18,11 +18,12 @@ export async function GET(request: Request) {
   const dir = (searchParams.get("dir") ?? "asc").trim();
   const type = (searchParams.get("type") ?? "parent").trim();
 
-  const allowedSorts = new Set(["name", "slug", "parent", "createdAt", "updatedAt"]);
+  const allowedSorts = new Set(["name", "slug", "parent", "status", "createdAt", "updatedAt"]);
   const sortKey = (allowedSorts.has(sort) ? sort : "name") as
     | "name"
     | "slug"
     | "parent"
+    | "status"
     | "createdAt"
     | "updatedAt";
   const dirKey: Prisma.SortOrder = dir === "asc" ? "asc" : "desc";
@@ -53,6 +54,8 @@ export async function GET(request: Request) {
       ? { slug: dirKey }
       : sortKey === "parent"
       ? { parent: { name: dirKey } }
+      : sortKey === "status"
+      ? { active: dirKey }
       : sortKey === "createdAt"
       ? { createdAt: dirKey }
       : { updatedAt: dirKey };
@@ -75,6 +78,7 @@ export async function GET(request: Request) {
     image: category.image ?? null,
     parentId: category.parentId ?? null,
     parentName: category.parent?.name ?? null,
+    active: category.active,
     createdAt: category.createdAt.toISOString(),
     updatedAt: category.updatedAt.toISOString(),
   }));

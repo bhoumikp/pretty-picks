@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useContext, useMemo, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import AdminSidebar from "@/components/admin/admin-sidebar";
-import ToastStack from "@/components/ui/toast-stack";
+import AdminToastProvider from "@/components/admin/admin-toast-provider";
+import { ToastContext } from "@/components/admin/admin-toast-provider";
+import { LogOut } from "lucide-react";
 
 const pageTitles = [
   { href: "/admin", label: "Dashboard" },
@@ -15,14 +17,15 @@ const pageTitles = [
   { href: "/admin/settings", label: "Settings" },
 ];
 
-export default function AdminShell({
+function AdminShellBody({
   children,
-  initialCollapsed = false,
+  initialCollapsed,
 }: {
   children: React.ReactNode;
-  initialCollapsed?: boolean;
+  initialCollapsed: boolean;
 }) {
   const pathname = usePathname();
+  const toastContext = useContext(ToastContext);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const sidebarCollapsed = useSyncExternalStore(
     (callback) => {
@@ -43,9 +46,6 @@ export default function AdminShell({
     },
     () => initialCollapsed
   );
-  const [toasts, setToasts] = useState<
-    Array<{ id: string; message: string; type?: "success" | "error" | "warning" | "primary"; durationMs?: number }>
-  >([]);
 
   const pageTitle = useMemo(() => {
     const match = pageTitles.find((item) => {
@@ -55,19 +55,11 @@ export default function AdminShell({
     return match?.label ?? "Admin";
   }, [pathname]);
 
-  const pushToast = (
-    message: string,
-    type: "success" | "error" | "warning" | "primary" = "success"
-  ) => {
-    const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-    setToasts((prev) => [...prev, { id, message, type }]);
-  };
-
   const testToasts = () => {
-    pushToast("Success toast", "success");
-    pushToast("Error toast", "error");
-    pushToast("Warning toast", "warning");
-    pushToast("Primary toast", "primary");
+    toastContext?.pushToast({ message: "Success toast", type: "success" });
+    toastContext?.pushToast({ message: "Error toast", type: "error" });
+    toastContext?.pushToast({ message: "Warning toast", type: "warning" });
+    toastContext?.pushToast({ message: "Primary toast", type: "primary" });
   };
 
   const toggleSidebarCollapsed = () => {
@@ -88,6 +80,7 @@ export default function AdminShell({
         mobileOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         collapsed={sidebarCollapsed}
+        onTestToasts={testToasts}
       />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-30 border-b border-[var(--pp-border)] bg-white/80 px-6 py-4 backdrop-blur transition-[padding] duration-300 ease-out">
@@ -126,15 +119,14 @@ export default function AdminShell({
               </h1>
             </div>
             <div className="flex items-center gap-3">
-              <button
-                type="button"
-                className="btn-outline admin-btn admin-btn-size"
-                onClick={testToasts}
-              >
-                Test toasts
-              </button>
               <form action="/api/auth/signout" method="post">
-                <button className="btn-outline admin-btn admin-btn-size">Sign out</button>
+                <button className="btn-outline admin-btn admin-btn-size hidden md:inline-flex">Sign out</button>
+                <button
+                  className="inline-flex h-9 w-9 items-center justify-center text-red-600 transition hover:text-red-700 md:hidden"
+                  aria-label="Sign out"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
               </form>
             </div>
           </div>
@@ -143,7 +135,20 @@ export default function AdminShell({
           {children}
         </main>
       </div>
-      <ToastStack toasts={toasts} onClose={(id) => setToasts((prev) => prev.filter((t) => t.id !== id))} />
     </div>
+  );
+}
+
+export default function AdminShell({
+  children,
+  initialCollapsed = false,
+}: {
+  children: React.ReactNode;
+  initialCollapsed?: boolean;
+}) {
+  return (
+    <AdminToastProvider>
+      <AdminShellBody initialCollapsed={initialCollapsed}>{children}</AdminShellBody>
+    </AdminToastProvider>
   );
 }

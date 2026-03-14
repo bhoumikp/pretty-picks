@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { X } from "lucide-react";
 import ToastStack from "@/components/ui/toast-stack";
 import AdminCategoriesTable from "@/components/admin/admin-categories-table";
+import AdminSelect from "@/components/admin/admin-select";
 import { validateRequired, validateUrlOptional } from "@/lib/validation";
 
 interface CategoryRow {
@@ -13,6 +14,7 @@ interface CategoryRow {
   image?: string | null;
   parentId?: string | null;
   parentName?: string | null;
+  active: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -283,6 +285,44 @@ export default function AdminSubcategories({
     syncUrl(query, nextPage, sort, dir, rowsPerPage);
   };
 
+  const handleToggleActive = async (subcategory: CategoryRow) => {
+    const nextActive = !subcategory.active;
+    setSubcategories((prev) =>
+      prev.map((item) =>
+        item.id === subcategory.id ? { ...item, active: nextActive, updatedAt: new Date().toISOString() } : item
+      )
+    );
+
+    const response = await fetch(`/api/categories/${subcategory.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ active: nextActive }),
+    });
+    const toastId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    if (!response.ok) {
+      setSubcategories((prev) =>
+        prev.map((item) =>
+          item.id === subcategory.id
+            ? { ...item, active: subcategory.active, updatedAt: subcategory.updatedAt }
+            : item
+        )
+      );
+      setToasts((prev) => [
+        ...prev,
+        { id: toastId, type: "error", message: "Unable to update sub category status." },
+      ]);
+      return;
+    }
+    setToasts((prev) => [
+      ...prev,
+      {
+        id: toastId,
+        type: "success",
+        message: nextActive ? "Sub Category activated." : "Sub Category deactivated.",
+      },
+    ]);
+  };
+
   return (
     <>
       <div className="grid gap-6">
@@ -291,8 +331,8 @@ export default function AdminSubcategories({
             <p className="text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">Catalog</p>
             <h2 className="text-2xl font-[var(--font-heading)]">Sub Categories</h2>
           </div>
-          <div className="flex flex-1 items-center justify-end gap-3">
-            <div className="flex w-full max-w-xs items-center gap-2">
+          <div className="flex w-full flex-col gap-3 sm:flex-1 sm:flex-row sm:items-center sm:justify-end">
+            <div className="flex w-full items-center gap-2 sm:max-w-xs">
               <input
                 value={query}
                 onChange={(event) => {
@@ -303,7 +343,11 @@ export default function AdminSubcategories({
                 className="h-10 w-full border border-[var(--pp-border)] bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--pp-gold)]/30"
               />
             </div>
-            <button type="button" onClick={openAddModal} className="btn-primary admin-btn admin-btn-size">
+            <button
+              type="button"
+              onClick={openAddModal}
+              className="btn-primary admin-btn admin-btn-size w-full sm:w-auto"
+            >
               <span className="admin-btn-label">Add Sub Category</span>
             </button>
           </div>
@@ -320,23 +364,20 @@ export default function AdminSubcategories({
           onPageChange={handlePageChange}
           onEdit={openEditModal}
           onDelete={handleDelete}
+          onToggleActive={handleToggleActive}
           isLoading={loading}
           showParentColumn
           footerSlot={
             <div className="flex items-center gap-2 text-xs text-[var(--pp-muted)]">
               <span className="h-5 w-[2px] bg-[var(--pp-ink)]/20" />
               Rows
-              <select
-                className="admin-select border border-[var(--pp-border)] bg-white px-3 py-1 text-xs"
+              <AdminSelect
                 value={rowsPerPage}
-                onChange={(event) => handleRowsChange(Number(event.target.value))}
-              >
-                {[10, 15, 25, 50].map((value) => (
-                  <option key={value} value={value}>
-                    {value}
-                  </option>
-                ))}
-              </select>
+                onChange={(nextValue) => handleRowsChange(Number(nextValue))}
+                options={[10, 15, 25, 50].map((value) => ({ value, label: String(value) }))}
+                header="Rows"
+                buttonClassName="border border-[var(--pp-border)] bg-white px-3 py-1 text-xs"
+              />
             </div>
           }
         />
@@ -360,27 +401,20 @@ export default function AdminSubcategories({
             </div>
             <form onSubmit={handleSubmit} className="mt-4 grid gap-4" noValidate>
               <div className="grid gap-2">
-                <select
-                  className={`admin-select border px-4 py-3 text-sm ${
+                <AdminSelect
+                  value={form.parentId ?? ""}
+                  onChange={(nextValue) => setForm({ ...form, parentId: String(nextValue) })}
+                  options={[
+                    { value: "", label: "Select parent category" },
+                    ...parentOptions.map((parent) => ({ value: parent.id, label: parent.name })),
+                  ]}
+                  fullWidth
+                  buttonClassName={`w-full border px-4 py-3 text-sm ${
                     fieldErrors.parentId ? "border-red-300" : "border-[var(--pp-border)]"
                   }`}
-                  value={form.parentId}
-                  onChange={(event) => setForm({ ...form, parentId: event.target.value })}
-                  onBlur={(event) => {
-                    if (!fieldErrors.parentId) return;
-                    const result = validateRequired(event.target.value, "Parent category");
-                    if (!result) {
-                      setFieldErrors((prev) => ({ ...prev, parentId: undefined }));
-                    }
-                  }}
-                >
-                  <option value="">Select parent category</option>
-                  {parentOptions.map((parent) => (
-                    <option key={parent.id} value={parent.id}>
-                      {parent.name}
-                    </option>
-                  ))}
-                </select>
+                  header="Parent category"
+                  ariaLabel="Parent category"
+                />
                 <span data-show={Boolean(fieldErrors.parentId)} className="field-error text-xs normal-case text-red-600">
                   {fieldErrors.parentId ?? ""}
                 </span>

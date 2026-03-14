@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Power, PowerOff, Trash2 } from "lucide-react";
 import AdminTableShell from "@/components/admin/admin-table-shell";
 
 interface CategoryRow {
@@ -10,6 +10,7 @@ interface CategoryRow {
   slug: string;
   image?: string | null;
   parentName?: string | null;
+  active: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -25,6 +26,7 @@ interface AdminCategoriesTableProps {
   onPageChange: (nextPage: number) => void;
   onEdit: (category: CategoryRow) => void;
   onDelete: (id: string) => void;
+  onToggleActive?: (category: CategoryRow) => void;
   isLoading?: boolean;
   footerSlot?: React.ReactNode;
   showParentColumn?: boolean;
@@ -41,6 +43,7 @@ export default function AdminCategoriesTable({
   onPageChange,
   onEdit,
   onDelete,
+  onToggleActive,
   isLoading = false,
   footerSlot,
   showParentColumn = false,
@@ -53,7 +56,7 @@ export default function AdminCategoriesTable({
     const index = sort.indexOf(key);
     return index >= 0 ? index + 1 : null;
   };
-  const columnCount = showParentColumn ? 6 : 5;
+  const columnCount = showParentColumn ? 7 : 6;
 
   return (
     <AdminTableShell
@@ -64,7 +67,7 @@ export default function AdminCategoriesTable({
       isLoading={isLoading}
       footerSlot={footerSlot}
     >
-      <table className="w-full text-left text-sm">
+      <table className="admin-table w-full text-left text-sm">
         <thead className="border-b border-[var(--pp-border)] bg-white/70 text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">
           <tr>
             <th className="px-5 py-4">
@@ -118,6 +121,21 @@ export default function AdminCategoriesTable({
             <th className="px-5 py-4">
               <button
                 type="button"
+                onClick={() => onSort("status")}
+                className="inline-flex items-center gap-2 cursor-pointer"
+              >
+                Status
+                {getDirFor("status") && (
+                  <span className="text-[10px]">
+                    {getDirFor("status") === "asc" ? "↑" : "↓"}
+                    {getSortRank("status")}
+                  </span>
+                )}
+              </button>
+            </th>
+            <th className="px-5 py-4">
+              <button
+                type="button"
                 onClick={() => onSort("updatedAt")}
                 className="inline-flex items-center gap-2 cursor-pointer"
               >
@@ -136,14 +154,14 @@ export default function AdminCategoriesTable({
         <tbody>
             {categories.length === 0 ? (
               <tr>
-                <td className="px-5 py-8 text-sm text-[var(--pp-muted)]" colSpan={columnCount}>
+                <td className="admin-table-empty px-5 py-8 text-sm text-[var(--pp-muted)]" colSpan={columnCount}>
                   No categories found.
                 </td>
               </tr>
             ) : (
               categories.map((category) => (
               <tr key={category.id} className="border-b border-[var(--pp-border)] last:border-b-0">
-                <td className="px-5 py-4">
+                <td className="admin-table-main px-5 py-4" data-label="Category">
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center bg-[var(--pp-beige)] text-xs text-[var(--pp-muted)]">
                       {category.name.slice(0, 2).toUpperCase()}
@@ -154,13 +172,15 @@ export default function AdminCategoriesTable({
                     </div>
                   </div>
                 </td>
-                <td className="px-5 py-4 text-[var(--pp-muted)]">/{category.slug}</td>
+                <td className="px-5 py-4 text-[var(--pp-muted)]" data-label="Slug">
+                  /{category.slug}
+                </td>
                 {showParentColumn && (
-                  <td className="px-5 py-4 text-[var(--pp-muted)]">
+                  <td className="px-5 py-4 text-[var(--pp-muted)]" data-label="Parent">
                     {category.parentName ?? "—"}
                   </td>
                 )}
-                <td className="px-5 py-4">
+                <td className="px-5 py-4" data-label="Image">
                   {category.image ? (
                     <div className="relative h-10 w-14 overflow-hidden rounded-lg bg-[var(--pp-beige)]">
                       <Image
@@ -175,11 +195,32 @@ export default function AdminCategoriesTable({
                     <span className="text-xs text-[var(--pp-muted)]">—</span>
                   )}
                 </td>
-                <td className="px-5 py-4 text-[var(--pp-muted)]">
+                <td className="px-5 py-4" data-label="Status">
+                  <span
+                    className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+                      category.active ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                    }`}
+                  >
+                    {category.active ? "Active" : "Inactive"}
+                  </span>
+                </td>
+                <td className="px-5 py-4 text-[var(--pp-muted)]" data-label="Updated">
                   {new Date(category.updatedAt).toLocaleDateString("en-IN")}
                 </td>
-                <td className="px-5 py-4">
+                <td className="admin-table-actions px-5 py-4" data-label="Actions">
                   <div className="flex justify-end gap-2">
+                    {onToggleActive && (
+                      <button
+                        onClick={() => onToggleActive(category)}
+                        className="btn-round group relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--pp-border)] text-[var(--pp-ink)] transition hover:border-[var(--pp-gold)] hover:bg-[var(--pp-beige)]"
+                        aria-label={category.active ? "Deactivate" : "Activate"}
+                      >
+                        {category.active ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}
+                        <span className="pointer-events-none absolute -top-9 right-0 hidden whitespace-nowrap border border-[var(--pp-border)] bg-white px-2 py-1 text-xs text-[var(--pp-ink)] opacity-0 shadow-sm transition group-hover:block group-hover:opacity-100">
+                          {category.active ? "Deactivate" : "Activate"}
+                        </span>
+                      </button>
+                    )}
                     <button
                       onClick={() => onEdit(category)}
                       className="btn-round group relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--pp-border)] text-[var(--pp-ink)] transition hover:border-[var(--pp-gold)] hover:bg-[var(--pp-beige)]"

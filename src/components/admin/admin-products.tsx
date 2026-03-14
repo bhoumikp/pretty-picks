@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import type { CategorySummary, ProductImage } from "@/types/catalog";
 import ToastStack from "@/components/ui/toast-stack";
 import { validateMinLength, validateNumberMin, validateRequired, validateUrlOptional } from "@/lib/validation";
+import AdminSelect from "@/components/admin/admin-select";
 
 interface AdminProductFormProps {
   categories: CategorySummary[];
@@ -379,27 +380,26 @@ export default function AdminProductForm({
             </span>
           </div>
           <div className="grid gap-2">
-            <select
-              className={`admin-select border px-4 py-3 text-sm ${
-                fieldErrors.categoryId ? "border-red-300" : "border-[var(--pp-border)]"
-              }`}
+            <AdminSelect
               value={form.categoryId}
-              onChange={(event) => setForm({ ...form, categoryId: event.target.value })}
-              onBlur={(event) => {
-                if (!fieldErrors.categoryId) return;
-                const result = validateRequired(event.target.value, "Category");
-                if (!result) {
+              onChange={(nextValue) => {
+                const nextCategoryId = String(nextValue);
+                setForm({ ...form, categoryId: nextCategoryId });
+                if (fieldErrors.categoryId && nextCategoryId) {
                   setFieldErrors((prev) => ({ ...prev, categoryId: undefined }));
                 }
               }}
-            >
-              <option value="">Select category</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: "", label: "Select category" },
+                ...categories.map((category) => ({ value: category.id, label: category.name })),
+              ]}
+              fullWidth
+              buttonClassName={`w-full border px-4 py-3 text-sm ${
+                fieldErrors.categoryId ? "border-red-300" : "border-[var(--pp-border)]"
+              }`}
+              header="Category"
+              ariaLabel="Category"
+            />
             <span
               data-show={Boolean(fieldErrors.categoryId)}
               className="field-error text-xs normal-case text-red-600"

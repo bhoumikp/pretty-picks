@@ -6,7 +6,7 @@ interface AdminTableProps {
 export default function AdminTable({ headers, rows }: AdminTableProps) {
   return (
     <div className="overflow-x-auto border border-[var(--pp-border)] bg-white">
-      <table className="min-w-full text-sm">
+      <table className="admin-table min-w-full text-sm">
         <thead className="bg-[var(--pp-beige)] text-left">
           <tr>
             {headers.map((header) => (
@@ -20,7 +20,7 @@ export default function AdminTable({ headers, rows }: AdminTableProps) {
           {rows.map((row, index) => (
             <tr key={index} className="border-t border-[var(--pp-border)]">
               {row.map((cell, cellIndex) => (
-                <td key={cellIndex} className="px-4 py-3">
+                <td key={cellIndex} className="px-4 py-3" data-label={headers[cellIndex]}>
                   {cell}
                 </td>
               ))}

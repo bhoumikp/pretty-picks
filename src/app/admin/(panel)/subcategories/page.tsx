@@ -20,11 +20,12 @@ export default async function AdminSubcategoriesPage({
   const query = (params.q ?? "").trim();
   const sort = (params.sort ?? "updatedAt").trim();
   const dir = (params.dir ?? "desc").trim();
-  const allowedSorts = new Set(["name", "slug", "parent", "createdAt", "updatedAt"]);
+  const allowedSorts = new Set(["name", "slug", "parent", "status", "createdAt", "updatedAt"]);
   const sortKey = (allowedSorts.has(sort) ? sort : "updatedAt") as
     | "name"
     | "slug"
     | "parent"
+    | "status"
     | "createdAt"
     | "updatedAt";
   const dirKey: Prisma.SortOrder = dir === "asc" ? "asc" : "desc";
@@ -49,12 +50,26 @@ export default async function AdminSubcategoriesPage({
       ? { slug: dirKey }
       : sortKey === "parent"
       ? { parent: { name: dirKey } }
-      : sortKey === "createdAt"
+    : sortKey === "status"
+    ? { active: dirKey }
+    : sortKey === "createdAt"
       ? { createdAt: dirKey }
       : { updatedAt: dirKey };
 
   let subcategories: Array<
-    Prisma.CategoryGetPayload<{ include: { parent: true } }>
+    Prisma.CategoryGetPayload<{
+      select: {
+        id: true;
+        name: true;
+        slug: true;
+        image: true;
+        active: true;
+        parentId: true;
+        parent: { select: { name: true } };
+        createdAt: true;
+        updatedAt: true;
+      };
+    }>
   > = [];
   let total = 0;
   let dbUnavailable = false;
@@ -66,9 +81,19 @@ export default async function AdminSubcategoriesPage({
       prisma.category.findMany({
         where,
         orderBy,
-        include: { parent: true },
         take: pageSize,
         skip: (page - 1) * pageSize,
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          image: true,
+          active: true,
+          parentId: true,
+          parent: { select: { name: true } },
+          createdAt: true,
+          updatedAt: true,
+        },
       }),
       prisma.category.count({ where }),
       prisma.category.findMany({
@@ -90,6 +115,7 @@ export default async function AdminSubcategoriesPage({
     name: subcategory.name,
     slug: subcategory.slug,
     image: subcategory.image ?? null,
+    active: subcategory.active,
     parentId: subcategory.parentId ?? null,
     parentName: subcategory.parent?.name ?? null,
     createdAt: subcategory.createdAt.toISOString(),

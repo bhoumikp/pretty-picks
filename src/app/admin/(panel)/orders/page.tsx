@@ -1,5 +1,6 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import AdminOrders from "@/components/admin/admin-orders";
+import AdminOrdersPanel from "@/components/admin/admin-orders-panel";
 import OfflineBanner from "@/components/admin/offline-banner";
 
 export const revalidate = 0;
@@ -7,24 +8,66 @@ export const metadata = {
   title: { absolute: "Admin | Orders" },
 };
 
-export default async function AdminOrdersPage() {
-  let orders: Array<
-    Awaited<ReturnType<typeof prisma.order.findMany>>[number]
-  > = [];
+export default async function AdminOrdersPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ page?: string; q?: string; sort?: string; dir?: string }>;
+}) {
+  const params = (await searchParams) ?? {};
+  const pageSize = 15;
+  const page = Math.max(1, Number(params.page ?? "1") || 1);
+  const query = (params.q ?? "").trim();
+  const sort = (params.sort ?? "createdAt").trim();
+  const dir = (params.dir ?? "desc").trim();
+  const allowedSorts = new Set(["createdAt", "customerName", "status", "product"]);
+  const sortKey = (allowedSorts.has(sort) ? sort : "createdAt") as
+    | "createdAt"
+    | "customerName"
+    | "status"
+    | "product";
+  const dirKey: Prisma.SortOrder = dir === "asc" ? "asc" : "desc";
+
+  const where = query
+    ? {
+        OR: [
+          { customerName: { contains: query, mode: "insensitive" as const } },
+          { phone: { contains: query, mode: "insensitive" as const } },
+          { status: { contains: query, mode: "insensitive" as const } },
+          { product: { name: { contains: query, mode: "insensitive" as const } } },
+        ],
+      }
+    : undefined;
+
+  const orderBy: Prisma.OrderOrderByWithRelationInput =
+    sortKey === "customerName"
+      ? { customerName: dirKey }
+      : sortKey === "status"
+      ? { status: dirKey }
+      : sortKey === "product"
+      ? { product: { name: dirKey } }
+      : { createdAt: dirKey };
+
+  let orders: Array<Prisma.OrderGetPayload<{ include: { product: true } }>> = [];
+  let total = 0;
   let products: Array<
     Awaited<ReturnType<typeof prisma.product.findMany>>[number]
   > = [];
   let dbUnavailable = false;
 
   try {
-    const [ordersResult, productsResult] = await Promise.all([
+    const [ordersResult, totalResult, productsResult] = await Promise.all([
       prisma.order.findMany({
         include: { product: true },
-        orderBy: { createdAt: "desc" },
+        orderBy,
+        where,
+        take: pageSize,
+        skip: (page - 1) * pageSize,
       }),
+      prisma.order.count({ where }),
       prisma.product.findMany({ orderBy: { name: "asc" } }),
     ]);
     orders = ordersResult;
+    total = totalResult;
     products = productsResult;
   } catch (error) {
     console.error("Admin orders DB error:", error);
@@ -32,14 +75,27 @@ export default async function AdminOrdersPage() {
   }
 
   const serialized = orders.map((order) => ({
-    ...order,
+    id: order.id,
+    customerName: order.customerName,
+    phone: order.phone,
+    status: order.status,
+    productName: order.product?.name ?? null,
     createdAt: order.createdAt.toISOString(),
   }));
 
   return (
-    <div className="grid gap-4">
+    <div className="grid gap-6">
       {dbUnavailable && <OfflineBanner />}
-      <AdminOrders orders={serialized} products={products} />
+      <AdminOrdersPanel
+        initialOrders={serialized}
+        initialTotal={total}
+        initialPage={page}
+        pageSize={pageSize}
+        initialQuery={query}
+        initialSort={[sortKey]}
+        initialDir={[dirKey]}
+        products={products}
+      />
     </div>
   );
 }

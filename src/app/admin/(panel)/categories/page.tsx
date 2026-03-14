@@ -20,10 +20,11 @@ export default async function AdminCategoriesPage({
   const query = (params.q ?? "").trim();
   const sort = (params.sort ?? "name").trim();
   const dir = (params.dir ?? "asc").trim();
-  const allowedSorts = new Set(["name", "slug", "createdAt", "updatedAt"]);
+  const allowedSorts = new Set(["name", "slug", "status", "createdAt", "updatedAt"]);
   const sortKey = (allowedSorts.has(sort) ? sort : "name") as
     | "name"
     | "slug"
+    | "status"
     | "createdAt"
     | "updatedAt";
   const dirKey: Prisma.SortOrder = dir === "asc" ? "asc" : "desc";
@@ -45,11 +46,24 @@ export default async function AdminCategoriesPage({
       ? { name: dirKey }
       : sortKey === "slug"
       ? { slug: dirKey }
-      : sortKey === "createdAt"
+    : sortKey === "status"
+    ? { active: dirKey }
+    : sortKey === "createdAt"
       ? { createdAt: dirKey }
       : { updatedAt: dirKey };
 
-  let categories: Awaited<ReturnType<typeof prisma.category.findMany>> = [];
+  type CategoryRow = Prisma.CategoryGetPayload<{
+    select: {
+      id: true;
+      name: true;
+      slug: true;
+      image: true;
+      active: true;
+      createdAt: true;
+      updatedAt: true;
+    };
+  }>;
+  let categories: CategoryRow[] = [];
   let total = 0;
   let dbUnavailable = false;
 
@@ -60,6 +74,15 @@ export default async function AdminCategoriesPage({
         where,
         take: pageSize,
         skip: (page - 1) * pageSize,
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          image: true,
+          active: true,
+          createdAt: true,
+          updatedAt: true,
+        },
       }),
       prisma.category.count({ where }),
     ]);
@@ -75,6 +98,7 @@ export default async function AdminCategoriesPage({
     name: category.name,
     slug: category.slug,
     image: category.image ?? null,
+    active: category.active,
     createdAt: category.createdAt.toISOString(),
     updatedAt: category.updatedAt.toISOString(),
   }));

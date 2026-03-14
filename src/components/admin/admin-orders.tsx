@@ -1,24 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import type { ProductSummary } from "@/types/catalog";
-import { formatDate } from "@/lib/utils";
 import ToastStack from "@/components/ui/toast-stack";
 import { validatePhone, validateRequired } from "@/lib/validation";
-
-interface OrderRow {
-  id: string;
-  customerName: string;
-  phone: string;
-  status: string;
-  createdAt: string;
-  product?: ProductSummary | null;
-}
+import AdminSelect from "@/components/admin/admin-select";
 
 interface AdminOrdersProps {
-  orders: OrderRow[];
   products: ProductSummary[];
+  onCreated?: () => void;
+  onCancel?: () => void;
+  hideTitle?: boolean;
+  variant?: "card" | "bare";
 }
 
 const emptyForm = {
@@ -28,8 +21,13 @@ const emptyForm = {
   status: "Pending",
 };
 
-export default function AdminOrders({ orders, products }: AdminOrdersProps) {
-  const router = useRouter();
+export default function AdminOrders({
+  products,
+  onCreated,
+  onCancel,
+  hideTitle = false,
+  variant = "card",
+}: AdminOrdersProps) {
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(false);
   const [toasts, setToasts] = useState<
@@ -88,42 +86,36 @@ export default function AdminOrders({ orders, products }: AdminOrdersProps) {
     setLoading(false);
     const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
     setToasts((prev) => [...prev, { id, type: "success", message: "Order created." }]);
-    router.refresh();
+    onCreated?.();
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this order?")) return;
-    await fetch(`/api/orders/${id}`, { method: "DELETE" });
-    router.refresh();
-  };
-
-  return (
-    <div className="grid gap-8">
-      <form onSubmit={handleSubmit} className="soft-card p-6" noValidate>
-        <h3 className="text-lg font-[var(--font-heading)]">Add manual order</h3>
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
+  const formMarkup = (
+    <form onSubmit={handleSubmit} noValidate>
+        {!hideTitle && (
+          <h3 className="text-lg font-[var(--font-heading)]">Create manual order</h3>
+        )}
+        <div className="mt-4 grid gap-4">
           <div className="grid gap-2">
-            <select
-              className={`admin-select border px-4 py-3 text-sm ${
-                fieldErrors.productId ? "border-red-300" : "border-[var(--pp-border)]"
-              }`}
+            <AdminSelect
               value={form.productId}
-              onChange={(event) => setForm({ ...form, productId: event.target.value })}
-              onBlur={(event) => {
-                if (!fieldErrors.productId) return;
-                const result = validateRequired(event.target.value, "Product");
-                if (!result) {
+              onChange={(nextValue) => {
+                const nextProductId = String(nextValue);
+                setForm({ ...form, productId: nextProductId });
+                if (fieldErrors.productId && nextProductId) {
                   setFieldErrors((prev) => ({ ...prev, productId: undefined }));
                 }
               }}
-            >
-              <option value="">Select product</option>
-              {products.map((product) => (
-                <option key={product.id} value={product.id}>
-                  {product.name}
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: "", label: "Select product" },
+                ...products.map((product) => ({ value: product.id, label: product.name })),
+              ]}
+              fullWidth
+              buttonClassName={`w-full border px-4 py-3 text-sm ${
+                fieldErrors.productId ? "border-red-300" : "border-[var(--pp-border)]"
+              }`}
+              header="Product"
+              ariaLabel="Product"
+            />
             <span
               data-show={Boolean(fieldErrors.productId)}
               className="field-error text-xs normal-case text-red-600"
@@ -177,58 +169,42 @@ export default function AdminOrders({ orders, products }: AdminOrdersProps) {
               {fieldErrors.phone ?? ""}
             </span>
           </div>
-          <select
-            className="admin-select border border-[var(--pp-border)] px-4 py-3 text-sm"
+          <AdminSelect
             value={form.status}
-            onChange={(event) => setForm({ ...form, status: event.target.value })}
-          >
-            <option value="Pending">Pending</option>
-            <option value="Confirmed">Confirmed</option>
-            <option value="Shipped">Shipped</option>
-            <option value="Delivered">Delivered</option>
-          </select>
+            onChange={(nextValue) => setForm({ ...form, status: String(nextValue) })}
+            options={[
+              { value: "Pending", label: "Pending" },
+              { value: "Confirmed", label: "Confirmed" },
+              { value: "Shipped", label: "Shipped" },
+              { value: "Delivered", label: "Delivered" },
+            ]}
+            fullWidth
+            buttonClassName="w-full border border-[var(--pp-border)] px-4 py-3 text-sm"
+            header="Status"
+            ariaLabel="Status"
+          />
         </div>
-        <button
-          type="submit"
-          className="mt-4 bg-[var(--pp-gold)] px-6 py-3 text-sm font-semibold text-white"
-          disabled={loading}
-        >
-          {loading ? "Saving…" : "Create order"}
-        </button>
+        <div className="mt-4 flex items-center justify-end gap-3">
+          {onCancel && (
+            <button type="button" className="btn-outline admin-btn admin-btn-size" onClick={onCancel}>
+              Cancel
+            </button>
+          )}
+          <button type="submit" className="btn-primary admin-btn admin-btn-size" disabled={loading}>
+            {loading ? "Saving…" : "Create order"}
+          </button>
+        </div>
         {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
-      </form>
-
-      <div className="soft-card p-6">
-        <h3 className="text-lg font-[var(--font-heading)]">Orders</h3>
-        <div className="mt-4 space-y-4">
-          {orders.map((order) => (
-            <div
-              key={order.id}
-              className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--pp-border)] pb-4"
-            >
-              <div>
-                <p className="text-sm font-semibold">{order.product?.name}</p>
-                <p className="text-xs text-[var(--pp-muted)]">
-                  {order.customerName} · {order.phone}
-                </p>
-                <p className="text-xs text-[var(--pp-muted)]">
-                  {formatDate(new Date(order.createdAt))} · {order.status}
-                </p>
-              </div>
-              <button
-                onClick={() => handleDelete(order.id)}
-                className="border border-red-200 px-4 py-2 text-xs text-red-600"
-              >
-                Delete
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
       <ToastStack
         toasts={toasts}
         onClose={(id) => setToasts((prev) => prev.filter((toast) => toast.id !== id))}
       />
-    </div>
+    </form>
   );
+
+  if (variant === "bare") {
+    return <>{formMarkup}</>;
+  }
+
+  return <div className="soft-card p-6">{formMarkup}</div>;
 }

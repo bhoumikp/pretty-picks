@@ -2,7 +2,7 @@
 
 import Toast from "@/components/ui/toast";
 
-interface ToastItem {
+export interface ToastItem {
   id: string;
   message: string;
   type?: "success" | "error" | "warning" | "primary";
