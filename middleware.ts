@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export default function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
   if (process.env.NODE_ENV !== "production") {
     return NextResponse.next();
   }
@@ -9,6 +9,7 @@ export default function proxy(request: NextRequest) {
   const host = request.nextUrl.hostname;
   const url = request.nextUrl.clone();
 
+  // Admin subdomain → rewrite to /admin
   if (host === "admin.shopprettypicks.in") {
     if (!url.pathname.startsWith("/admin")) {
       url.pathname = `/admin${url.pathname === "/" ? "" : url.pathname}`;
@@ -16,7 +17,11 @@ export default function proxy(request: NextRequest) {
     }
   }
 
-  if ((host === "shopprettypicks.in" || host === "www.shopprettypicks.in") && url.pathname.startsWith("/admin")) {
+  // Prevent admin access on main domain
+  if (
+    (host === "shopprettypicks.in" || host === "www.shopprettypicks.in") &&
+    url.pathname.startsWith("/admin")
+  ) {
     url.pathname = "/";
     return NextResponse.redirect(url);
   }
@@ -25,5 +30,7 @@ export default function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next|favicon.ico|robots.txt|sitemap.xml).*)"],
+  matcher: [
+    "/((?!api|_next|favicon.ico|robots.txt|sitemap.xml).*)",
+  ],
 };
