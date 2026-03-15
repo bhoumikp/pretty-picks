@@ -17,19 +17,26 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const query = typeof resolvedParams.q === "string" ? resolvedParams.q : "";
   const category = typeof resolvedParams.category === "string" ? resolvedParams.category : "";
   const priceCap = typeof resolvedParams.price === "string" ? Number(resolvedParams.price) : undefined;
-  const featuredOnly =
-    resolvedParams.featured === "true" || resolvedParams.featured === "1";
+  const sort = typeof resolvedParams.sort === "string" ? resolvedParams.sort : "";
 
   let products: ProductSummary[] = [];
   let categories: CategorySummary[] = [];
 
   try {
     [products, categories] = await Promise.all([
-      prisma.product.findMany({
-        include: { category: true },
+      prisma.product
+        .findMany({
+        where: { archivedAt: null, isActive: true },
+        include: { category: true, _count: { select: { orders: true } } },
         orderBy: { createdAt: "desc" },
-      }),
-      prisma.category.findMany({ orderBy: { name: "asc" } }),
+      })
+        .then((items) =>
+          items.map((item) => {
+            const { _count, ...rest } = item;
+            return { ...rest, orderCount: _count.orders };
+          })
+        ),
+      prisma.category.findMany({ where: { archivedAt: null, isActive: true }, orderBy: { name: "asc" } }),
     ]);
   } catch (error) {
     console.error("ProductsPage: Prisma unavailable, rendering empty lists.", error);
@@ -64,7 +71,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           initialQuery={query}
           initialCategory={category}
           initialPriceCap={priceCap}
-          initialFeaturedOnly={featuredOnly}
+          initialSort={sort}
         />
       </div>
     </div>

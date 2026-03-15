@@ -14,6 +14,7 @@ interface ProductRow {
   name: string;
   price: number;
   stock: number;
+  isActive: boolean;
   categoryName?: string | null;
   image?: ProductImage | null;
   createdAt: string;
@@ -290,11 +291,11 @@ export default function AdminProductsClient({
   };
 
   const handleToggleActive = async (product: ProductRow) => {
-    const nextStock = product.stock > 0 ? 0 : 1;
+    const nextActive = !product.isActive;
     const nextUpdatedAt = new Date().toISOString();
     setProducts((prev) =>
       prev.map((item) =>
-        item.id === product.id ? { ...item, stock: nextStock, updatedAt: nextUpdatedAt } : item
+        item.id === product.id ? { ...item, isActive: nextActive, updatedAt: nextUpdatedAt } : item
       )
     );
 
@@ -302,17 +303,19 @@ export default function AdminProductsClient({
       const response = await fetch(`/api/products/${product.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stock: nextStock }),
+        body: JSON.stringify({ isActive: nextActive }),
       });
       if (!response.ok) throw new Error("Failed to update status");
       onToastRef.current?.({
-        message: nextStock > 0 ? "Product activated." : "Product deactivated.",
+        message: nextActive ? "Product activated." : "Product deactivated.",
         type: "success",
       });
     } catch {
       setProducts((prev) =>
         prev.map((item) =>
-          item.id === product.id ? { ...item, stock: product.stock, updatedAt: product.updatedAt } : item
+          item.id === product.id
+            ? { ...item, isActive: product.isActive, updatedAt: product.updatedAt }
+            : item
         )
       );
       onToastRef.current?.({ message: "Unable to update product status.", type: "error" });
@@ -336,12 +339,14 @@ export default function AdminProductsClient({
     setSelectedIds(new Set(products.map((product) => product.id)));
   };
 
-  const bulkUpdateStock = async (nextStock: number) => {
+  const bulkUpdateActive = async (nextActive: boolean) => {
     const ids = Array.from(selectedIds);
     if (!ids.length) return;
     const updatedAt = new Date().toISOString();
     setProducts((prev) =>
-      prev.map((item) => (selectedIds.has(item.id) ? { ...item, stock: nextStock, updatedAt } : item))
+      prev.map((item) =>
+        selectedIds.has(item.id) ? { ...item, isActive: nextActive, updatedAt } : item
+      )
     );
     setSelectedIds(new Set());
     await Promise.all(
@@ -349,7 +354,7 @@ export default function AdminProductsClient({
         fetch(`/api/products/${id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ stock: nextStock }),
+          body: JSON.stringify({ isActive: nextActive }),
         })
       )
     );
@@ -382,7 +387,7 @@ export default function AdminProductsClient({
   };
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-4">
       <AdminConfirmModal
         open={Boolean(deleteTarget)}
         title="Delete product?"
@@ -395,13 +400,13 @@ export default function AdminProductsClient({
         loading={deleteLoading}
       />
       <AdminProductsToastBridge onToastReady={(handler) => (onToastRef.current = handler)} />
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">Catalog</p>
           <h2 className="text-2xl font-[var(--font-heading)]">Products</h2>
         </div>
-        <div className="flex w-full flex-col gap-3 sm:flex-1 sm:flex-row sm:items-center sm:justify-end">
-          <div className="flex w-full flex-wrap items-end gap-3 sm:max-w-[28rem]">
+        <div className="flex w-full flex-col gap-2 sm:flex-1 sm:flex-row sm:items-center sm:justify-end">
+          <div className="flex w-full flex-wrap items-end gap-2 sm:max-w-[28rem]">
             <div className="flex w-full items-center gap-2 sm:flex-1">
               <label htmlFor="admin-products-search" className="sr-only">
                 Search products
@@ -417,7 +422,7 @@ export default function AdminProductsClient({
                 className="h-10 w-full border border-[var(--pp-border)] bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--pp-gold)]/30"
               />
             </div>
-            <div className="w-full sm:min-w-[160px] sm:w-auto">
+            <div className="w-full sm:w-auto">
               <AdminSelect
                 value={status}
                 onChange={(nextValue) => {
@@ -447,10 +452,10 @@ export default function AdminProductsClient({
         <div className="flex flex-wrap items-center gap-2 rounded border border-[var(--pp-border)] bg-white px-4 py-3 text-sm">
           <span className="text-[var(--pp-muted)]">{selectedIds.size} selected</span>
           <div className="ml-auto flex flex-wrap gap-2">
-            <button className="btn-outline admin-btn admin-btn-size" onClick={() => bulkUpdateStock(1)}>
+            <button className="btn-outline admin-btn admin-btn-size" onClick={() => bulkUpdateActive(true)}>
               Activate
             </button>
-            <button className="btn-outline admin-btn admin-btn-size" onClick={() => bulkUpdateStock(0)}>
+            <button className="btn-outline admin-btn admin-btn-size" onClick={() => bulkUpdateActive(false)}>
               Deactivate
             </button>
             <button className="btn-outline admin-btn admin-btn-size" onClick={bulkArchive}>

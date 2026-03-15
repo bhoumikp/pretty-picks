@@ -28,9 +28,14 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   let dbUnavailable = false;
 
   try {
-    category = await prisma.category.findUnique({
-      where: { slug: resolvedParams.slug },
-      include: { products: { include: { category: true } } },
+    category = await prisma.category.findFirst({
+      where: { slug: resolvedParams.slug, archivedAt: null, isActive: true },
+      include: {
+        products: {
+          where: { archivedAt: null, isActive: true },
+          include: { category: true },
+        },
+      },
     });
   } catch (error) {
     dbUnavailable = true;

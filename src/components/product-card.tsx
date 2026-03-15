@@ -29,8 +29,6 @@ export default function ProductCard({ product, variant = "grid" }: ProductCardPr
   const isNew = createdAt ? NOW - createdAt.getTime() < 1000 * 60 * 60 * 24 * 14 : false;
   const badge = isNew
     ? "New"
-    : product.featured
-    ? "Best Seller"
     : product.price <= 199
     ? "Under ₹199"
     : product.stock && product.stock <= 5
@@ -38,8 +36,6 @@ export default function ProductCard({ product, variant = "grid" }: ProductCardPr
     : undefined;
   const badgeTone = isNew
     ? "bg-[var(--pp-beige)] text-[var(--pp-ink)]"
-    : product.featured
-    ? "bg-[var(--pp-gold)]/90 text-[var(--pp-ink)]"
     : product.price <= 199
     ? "bg-white/90 text-[var(--pp-ink)]"
     : "bg-[var(--pp-ink)]/90 text-white";

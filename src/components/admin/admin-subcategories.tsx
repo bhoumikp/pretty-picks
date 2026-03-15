@@ -6,7 +6,8 @@ import ToastStack from "@/components/ui/toast-stack";
 import AdminCategoriesTable from "@/components/admin/admin-categories-table";
 import AdminConfirmModal from "@/components/admin/admin-confirm-modal";
 import AdminSelect from "@/components/admin/admin-select";
-import { validateRequired, validateUrlOptional } from "@/lib/validation";
+import { buildFieldErrors, validateRequired, validateUrlOptional } from "@/lib/validation";
+import { RequiredMark } from "@/components/admin/admin-form-helpers";
 
 interface CategoryRow {
   id: string;
@@ -15,7 +16,7 @@ interface CategoryRow {
   image?: string | null;
   parentId?: string | null;
   parentName?: string | null;
-  active: boolean;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -122,6 +123,9 @@ export default function AdminSubcategories({
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; image?: string; parentId?: string }>(
     {}
   );
+  const clearFieldError = (field: keyof typeof fieldErrors) => {
+    setFieldErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev));
+  };
   const [toasts, setToasts] = useState<
     Array<{ id: string; message: string; type?: "success" | "error" | "warning" | "primary" }>
   >([]);
@@ -356,27 +360,29 @@ export default function AdminSubcategories({
     setError(null);
   };
 
+  useEffect(() => {
+    if (!modalOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeModal();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [modalOpen]);
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSaving(true);
     setError(null);
     setFieldErrors({});
 
-    const nameError = validateRequired(form.name, "Sub Category name");
-    if (nameError) {
-      setFieldErrors({ name: nameError.message });
-      setSaving(false);
-      return;
-    }
-    const parentError = validateRequired(form.parentId, "Parent category");
-    if (parentError) {
-      setFieldErrors((prev) => ({ ...prev, parentId: parentError.message }));
-      setSaving(false);
-      return;
-    }
-    const urlError = validateUrlOptional(form.image, "Image URL");
-    if (urlError) {
-      setFieldErrors((prev) => ({ ...prev, image: urlError.message }));
+    const nextErrors = buildFieldErrors<"name" | "parentId" | "image">([
+      { key: "name", error: validateRequired(form.name, "Sub Category name") },
+      { key: "parentId", error: validateRequired(form.parentId, "Parent category") },
+      { key: "image", error: validateUrlOptional(form.image, "Image URL") },
+    ]);
+
+    if (Object.keys(nextErrors).length > 0) {
+      setFieldErrors(nextErrors);
       setSaving(false);
       return;
     }
@@ -448,24 +454,24 @@ export default function AdminSubcategories({
   };
 
   const handleToggleActive = async (subcategory: CategoryRow) => {
-    const nextActive = !subcategory.active;
+    const nextActive = !subcategory.isActive;
     setSubcategories((prev) =>
       prev.map((item) =>
-        item.id === subcategory.id ? { ...item, active: nextActive, updatedAt: new Date().toISOString() } : item
+        item.id === subcategory.id ? { ...item, isActive: nextActive, updatedAt: new Date().toISOString() } : item
       )
     );
 
     const response = await fetch(`/api/categories/${subcategory.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ active: nextActive }),
+      body: JSON.stringify({ isActive: nextActive }),
     });
     const toastId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
     if (!response.ok) {
       setSubcategories((prev) =>
         prev.map((item) =>
           item.id === subcategory.id
-            ? { ...item, active: subcategory.active, updatedAt: subcategory.updatedAt }
+            ? { ...item, isActive: subcategory.isActive, updatedAt: subcategory.updatedAt }
             : item
         )
       );
@@ -507,7 +513,7 @@ export default function AdminSubcategories({
     if (!ids.length) return;
     const updatedAt = new Date().toISOString();
     setSubcategories((prev) =>
-      prev.map((item) => (selectedIds.has(item.id) ? { ...item, active: nextActive, updatedAt } : item))
+      prev.map((item) => (selectedIds.has(item.id) ? { ...item, isActive: nextActive, updatedAt } : item))
     );
     setSelectedIds(new Set());
     await Promise.all(
@@ -515,7 +521,7 @@ export default function AdminSubcategories({
         fetch(`/api/categories/${id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ active: nextActive }),
+          body: JSON.stringify({ isActive: nextActive }),
         })
       )
     );
@@ -532,7 +538,7 @@ export default function AdminSubcategories({
 
   return (
     <>
-      <div className="grid gap-6">
+      <div className="grid gap-4">
         <AdminConfirmModal
           open={Boolean(deleteTarget)}
           title="Delete sub category?"
@@ -544,12 +550,12 @@ export default function AdminSubcategories({
           onCancel={() => setDeleteTarget(null)}
           loading={deleteLoading}
         />
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">Catalog</p>
             <h2 className="text-2xl font-[var(--font-heading)]">Sub Categories</h2>
           </div>
-          <div className="flex w-full flex-col gap-3 sm:flex-1 sm:flex-row sm:items-center sm:justify-end">
+          <div className="flex w-full flex-col gap-2 sm:flex-1 sm:flex-row sm:items-center sm:justify-end">
             <div className="flex w-full items-center gap-2 sm:max-w-xs">
               <label htmlFor="admin-subcategories-search" className="sr-only">
                 Search sub categories
@@ -565,7 +571,7 @@ export default function AdminSubcategories({
                 className="h-10 w-full border border-[var(--pp-border)] bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--pp-gold)]/30"
               />
             </div>
-            <div className="w-full sm:min-w-[170px] sm:w-auto">
+            <div className="w-full sm:w-auto">
               <AdminSelect
                 value={status}
                 onChange={(nextValue) => {
@@ -649,9 +655,12 @@ export default function AdminSubcategories({
       </div>
 
       {modalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40">
+        <div className="fixed inset-0 z-50 bg-black/40" onClick={closeModal}>
           <div className="flex h-full w-full items-center justify-center px-4 lg:pl-[var(--admin-sidebar-offset)] lg:pr-0">
-            <div className="w-full max-w-lg bg-white p-6 shadow-lg">
+            <div
+              className="w-full max-w-lg bg-white rounded-lg p-6 shadow-lg"
+              onClick={(event) => event.stopPropagation()}
+            >
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-[var(--font-heading)]">
                 {form.id ? "Edit Sub Category" : "Add Sub Category"}
@@ -667,18 +676,22 @@ export default function AdminSubcategories({
             </div>
             <form onSubmit={handleSubmit} className="mt-4 grid gap-4" noValidate>
               <div className="grid gap-2">
-                <label className="admin-label">Parent category</label>
+                <label className="admin-label">
+                  Parent category
+                  <RequiredMark />
+                </label>
                 <AdminSelect
                   value={form.parentId ?? ""}
-                  onChange={(nextValue) => setForm({ ...form, parentId: String(nextValue) })}
+                  onChange={(nextValue) => {
+                    setForm({ ...form, parentId: String(nextValue) });
+                    if (fieldErrors.parentId) clearFieldError("parentId");
+                  }}
                   options={[
                     { value: "", label: "Select parent category" },
                     ...parentOptions.map((parent) => ({ value: parent.id, label: parent.name })),
                   ]}
                   fullWidth
-                  buttonClassName={`w-full admin-input ${
-                    fieldErrors.parentId ? "border-red-300" : "border-[var(--pp-border)]"
-                  }`}
+                  buttonClassName={`w-full admin-input ${fieldErrors.parentId ? "is-error" : ""}`}
                   header="Parent category"
                   ariaLabel="Parent category"
                 />
@@ -689,15 +702,17 @@ export default function AdminSubcategories({
               <div className="grid gap-2">
                 <label htmlFor="admin-subcategory-name" className="admin-label">
                   Sub Category name
+                  <RequiredMark />
                 </label>
                 <input
                   id="admin-subcategory-name"
-                  className={`admin-input ${
-                    fieldErrors.name ? "border-red-300" : "border-[var(--pp-border)]"
-                  }`}
+                  className={`admin-input ${fieldErrors.name ? "is-error" : ""}`}
                   placeholder="Sub Category name"
                   value={form.name}
-                  onChange={(event) => setForm({ ...form, name: event.target.value })}
+                  onChange={(event) => {
+                    setForm({ ...form, name: event.target.value });
+                    if (fieldErrors.name) clearFieldError("name");
+                  }}
                   onBlur={(event) => {
                     if (!fieldErrors.name) return;
                     const result = validateRequired(event.target.value, "Sub Category name");
@@ -716,12 +731,13 @@ export default function AdminSubcategories({
                 </label>
                 <input
                   id="admin-subcategory-image"
-                  className={`admin-input ${
-                    fieldErrors.image ? "border-red-300" : "border-[var(--pp-border)]"
-                  }`}
+                  className={`admin-input ${fieldErrors.image ? "is-error" : ""}`}
                   placeholder="Image URL"
                   value={form.image}
-                  onChange={(event) => setForm({ ...form, image: event.target.value })}
+                  onChange={(event) => {
+                    setForm({ ...form, image: event.target.value });
+                    if (fieldErrors.image) clearFieldError("image");
+                  }}
                   onBlur={(event) => {
                     if (!fieldErrors.image) return;
                     const result = validateUrlOptional(event.target.value, "Image URL");

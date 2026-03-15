@@ -33,11 +33,7 @@ export default async function AdminProductsPage({
   const dirKey: Prisma.SortOrder = dir === "asc" ? "asc" : "desc";
 
   const statusFilter =
-    status === "active"
-      ? { stock: { gt: 0 } }
-      : status === "inactive"
-      ? { stock: { lte: 0 } }
-      : {};
+    status === "active" ? { isActive: true } : status === "inactive" ? { isActive: false } : {};
 
   const where = {
     archivedAt: null,
@@ -62,7 +58,7 @@ export default async function AdminProductsPage({
     if (sortKey === "category") return { category: { name: dirKey } };
     if (sortKey === "price") return { price: dirKey };
     if (sortKey === "stock") return { stock: dirKey };
-    if (sortKey === "status") return { stock: dirKey };
+    if (sortKey === "status") return { isActive: dirKey };
     return { updatedAt: dirKey };
   })();
 
@@ -91,6 +87,7 @@ export default async function AdminProductsPage({
       name: product.name,
       price: product.price,
       stock: product.stock,
+      isActive: product.isActive,
       categoryName: product.category?.name ?? null,
       image: images[0] ?? null,
       createdAt: product.createdAt.toISOString(),

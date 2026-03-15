@@ -170,7 +170,6 @@ function AdminOrdersTable({
                     <p className="font-semibold text-[var(--pp-ink)]">
                       {order.productName ? highlightText(order.productName, query) : "—"}
                     </p>
-                    <p className="text-xs text-[var(--pp-muted)]">ID {order.id.slice(0, 6)}</p>
                   </div>
                 </td>
                 <td className="px-5 py-4" data-label="Customer">

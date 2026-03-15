@@ -12,7 +12,7 @@ interface ProductsClientProps {
   initialQuery: string;
   initialCategory: string;
   initialPriceCap?: number;
-  initialFeaturedOnly?: boolean;
+  initialSort?: string;
 }
 
 const MATERIALS = ["Alloy", "Enamel", "Faux Pearl", "Anti-tarnish"];
@@ -23,7 +23,7 @@ export default function ProductsClient({
   initialQuery,
   initialCategory,
   initialPriceCap,
-  initialFeaturedOnly = false,
+  initialSort = "newest",
 }: ProductsClientProps) {
   const [query, setQuery] = useState(initialQuery);
   const [category, setCategory] = useState(initialCategory);
@@ -33,8 +33,7 @@ export default function ProductsClient({
       : [0, 999]
   );
   const [material, setMaterial] = useState("");
-  const [featuredOnly, setFeaturedOnly] = useState(initialFeaturedOnly);
-  const [sort, setSort] = useState("newest");
+  const [sort, setSort] = useState(initialSort);
   const [visible, setVisible] = useState(8);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
@@ -44,7 +43,7 @@ export default function ProductsClient({
     { value: "newest", label: "Newest" },
     { value: "price-low", label: "Price: low to high" },
     { value: "price-high", label: "Price: high to low" },
-    { value: "popular", label: "Popular" },
+    { value: "popular", label: "Most loved" },
   ];
 
   const filtered = useMemo(() => {
@@ -55,8 +54,7 @@ export default function ProductsClient({
       const materialMatch = material
         ? String(product.material ?? "").toLowerCase().includes(material.toLowerCase())
         : true;
-      const featuredMatch = featuredOnly ? Boolean(product.featured) : true;
-      return nameMatch && categoryMatch && priceMatch && materialMatch && featuredMatch;
+      return nameMatch && categoryMatch && priceMatch && materialMatch;
     });
 
     switch (sort) {
@@ -65,11 +63,11 @@ export default function ProductsClient({
       case "price-high":
         return result.sort((a, b) => b.price - a.price);
       case "popular":
-        return result.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
+        return result.sort((a, b) => (b.orderCount ?? 0) - (a.orderCount ?? 0));
       default:
         return result;
     }
-  }, [products, query, category, priceRange, material, featuredOnly, sort]);
+  }, [products, query, category, priceRange, material, sort]);
 
   const visibleItems = filtered.slice(0, visible);
 
@@ -88,21 +86,17 @@ export default function ProductsClient({
         material
           ? { label: `Material: ${material}`, onRemove: () => setMaterial("") }
           : null,
-        featuredOnly
-          ? { label: "Featured", onRemove: () => setFeaturedOnly(false) }
-          : null,
         priceRange[1] < 999
           ? { label: `Under ₹${priceRange[1]}`, onRemove: () => setPriceRange([0, 999]) }
           : null,
       ].filter(Boolean) as { label: string; onRemove: () => void }[],
-    [query, category, categoryLabel, material, featuredOnly, priceRange]
+    [query, category, categoryLabel, material, priceRange]
   );
 
   const clearFilters = () => {
     setQuery("");
     setCategory("");
     setMaterial("");
-    setFeaturedOnly(false);
     setPriceRange([0, 999]);
     setSort("newest");
     setVisible(8);
@@ -210,17 +204,6 @@ export default function ProductsClient({
                   ))}
                 </div>
               </div>
-              <label className="flex cursor-pointer items-center gap-2 pt-5">
-                <input
-                  type="checkbox"
-                  checked={featuredOnly}
-                  onChange={(event) => {
-                    setFeaturedOnly(event.target.checked);
-                    trackEvent("filter_used", { type: "featured", value: event.target.checked });
-                  }}
-                />
-                Featured only
-              </label>
               <button className="cursor-pointer pt-5 text-xs font-semibold text-[var(--pp-ink)] underline underline-offset-4" onClick={clearFilters}>
                 Clear filters
               </button>
@@ -379,17 +362,6 @@ export default function ProductsClient({
                     ))}
                   </div>
                 </div>
-                <label className="flex cursor-pointer items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={featuredOnly}
-                    onChange={(event) => {
-                      setFeaturedOnly(event.target.checked);
-                      trackEvent("filter_used", { type: "featured", value: event.target.checked });
-                    }}
-                  />
-                  Featured only
-                </label>
                 <div className="flex items-center justify-between">
                   <button
                     className="cursor-pointer text-xs font-semibold text-[var(--pp-ink)] underline underline-offset-4"

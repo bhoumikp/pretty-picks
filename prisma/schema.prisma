@@ -22,7 +22,7 @@ model Category {
   name      String
   slug      String    @unique
   image     String?
-  active    Boolean   @default(true)
+  isActive  Boolean   @default(true)
   archivedAt DateTime?
   parentId  String?
   parent    Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
@@ -40,8 +40,8 @@ model Product {
   description String
   material    String
   images      Json
-  featured    Boolean  @default(false)
   stock       Int      @default(0)
+  isActive    Boolean  @default(true)
   archivedAt  DateTime?
   categoryId  String
   category    Category @relation(fields: [categoryId], references: [id])
@@ -67,6 +67,23 @@ model Contact {
   message   String
   readAt    DateTime?
   createdAt DateTime  @default(now())
+}
+
+model Media {
+  id        String   @id @default(cuid())
+  url       String
+  publicId  String?
+  format    String?
+  width     Int?
+  height    Int?
+  bytes     Int?
+  alt       String?
+  folder    String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([publicId])
+  @@index([folder])
 }
 
 model AuditLog {

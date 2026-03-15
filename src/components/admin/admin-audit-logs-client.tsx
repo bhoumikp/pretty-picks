@@ -334,14 +334,14 @@ export default function AdminAuditLogsClient({
   };
 
   return (
-    <div className="grid gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className="grid gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">Security</p>
           <h2 className="text-2xl font-[var(--font-heading)]">Audit logs</h2>
         </div>
-        <div className="flex w-full flex-col gap-3 sm:flex-1 sm:flex-row sm:items-center sm:justify-end">
-          <div className="flex w-full flex-wrap items-end gap-3 sm:max-w-[32rem]">
+        <div className="flex w-full flex-col gap-2 sm:flex-1 sm:flex-row sm:items-center sm:justify-end">
+          <div className="flex w-full flex-wrap items-end gap-2 sm:max-w-[32rem]">
             <div className="flex w-full items-center gap-2 sm:flex-1">
               <label htmlFor="admin-audit-search" className="sr-only">
                 Search audit logs
@@ -357,7 +357,7 @@ export default function AdminAuditLogsClient({
                 className="h-10 w-full border border-[var(--pp-border)] bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--pp-gold)]/30"
               />
             </div>
-            <div className="w-full sm:min-w-[150px] sm:w-auto">
+            <div className="w-full sm:w-auto">
               <AdminSelect
                 value={action}
                 onChange={(nextValue) => {
@@ -373,7 +373,7 @@ export default function AdminAuditLogsClient({
                 buttonClassName="h-10 w-full border border-[var(--pp-border)] bg-white px-3 py-2 text-xs"
               />
             </div>
-            <div className="w-full sm:min-w-[150px] sm:w-auto">
+            <div className="w-full sm:w-auto">
               <AdminSelect
                 value={entity}
                 onChange={(nextValue) => {

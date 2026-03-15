@@ -21,7 +21,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   if (body.name) data.slug = slugify(body.name);
   if (body.price) data.price = Number(body.price);
   if (body.stock !== undefined) data.stock = Number(body.stock);
-  if (body.featured !== undefined) data.featured = Boolean(body.featured);
+  if (body.isActive !== undefined) data.isActive = Boolean(body.isActive);
   if ("archivedAt" in body) data.archivedAt = body.archivedAt ? new Date(body.archivedAt) : null;
 
   const product = await prisma.product.update({

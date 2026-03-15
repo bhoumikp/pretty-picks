@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { validateMatch, validateMinLength, validateRequired } from "@/lib/validation";
+import { buildFieldErrors, validateMatch, validateMinLength, validateRequired } from "@/lib/validation";
+import { RequiredMark } from "@/components/admin/admin-form-helpers";
 import ToastStack from "@/components/ui/toast-stack";
 
 export default function AdminSettings() {
@@ -19,6 +20,9 @@ export default function AdminSettings() {
     newPassword?: string;
     confirmPassword?: string;
   }>({});
+  const clearFieldError = (field: keyof typeof fieldErrors) => {
+    setFieldErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev));
+  };
 
   const pushToast = (message: string, type: "success" | "error" | "warning" | "primary") => {
     const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -48,25 +52,20 @@ export default function AdminSettings() {
     const newPassword = String(formData.get("newPassword") || "");
     const confirmPassword = String(formData.get("confirmPassword") || "");
 
-    const currentError = validateRequired(currentPassword, "Current password");
-    if (currentError) {
+    const nextErrors = buildFieldErrors<"currentPassword" | "newPassword" | "confirmPassword">([
+      { key: "currentPassword", error: validateRequired(currentPassword, "Current password") },
+      { key: "newPassword", error: validateMinLength(newPassword, 8, "New password") },
+      {
+        key: "confirmPassword",
+        error: validateMatch(confirmPassword, newPassword, "Confirmation", "new password"),
+        message: "New password and confirmation do not match.",
+      },
+    ]);
+
+    if (Object.keys(nextErrors).length > 0) {
       setStatus("error");
-      setMessage(currentError.message);
-      setFieldErrors({ currentPassword: currentError.message });
-      return;
-    }
-    const newError = validateMinLength(newPassword, 8, "New password");
-    if (newError) {
-      setStatus("error");
-      setMessage(newError.message);
-      setFieldErrors({ newPassword: newError.message });
-      return;
-    }
-    const matchError = validateMatch(confirmPassword, newPassword, "Confirmation", "new password");
-    if (matchError) {
-      setStatus("error");
-      setMessage("New password and confirmation do not match.");
-      setFieldErrors({ confirmPassword: "New password and confirmation do not match." });
+      setMessage(Object.values(nextErrors)[0] ?? "Please fix the highlighted fields.");
+      setFieldErrors(nextErrors);
       return;
     }
 
@@ -105,15 +104,19 @@ export default function AdminSettings() {
         <form onSubmit={handleSubmit} className="mt-6 grid gap-4" noValidate>
           <label className="grid gap-2 admin-label">
             Current password
+            <RequiredMark />
             <div
               className={`flex items-center border bg-white px-4 py-2 ${
-                fieldErrors.currentPassword ? "border-red-300" : "border-[var(--pp-border)]"
+                fieldErrors.currentPassword ? "admin-input-error" : "border-[var(--pp-border)]"
               }`}
             >
               <input
                 name="currentPassword"
                 type={showCurrent ? "text" : "password"}
                 className="w-full bg-transparent py-1 text-sm focus:outline-none"
+                onChange={() => {
+                  if (fieldErrors.currentPassword) clearFieldError("currentPassword");
+                }}
                 onBlur={(event) => {
                   if (!fieldErrors.currentPassword) return;
                   const result = validateRequired(event.target.value, "Current password");
@@ -168,16 +171,20 @@ export default function AdminSettings() {
           </label>
           <label className="grid gap-2 admin-label">
             New password
+            <RequiredMark />
             <div
               className={`flex items-center border bg-white px-4 py-2 ${
-                fieldErrors.newPassword ? "border-red-300" : "border-[var(--pp-border)]"
+                fieldErrors.newPassword ? "admin-input-error" : "border-[var(--pp-border)]"
               }`}
             >
               <input
                 name="newPassword"
                 type={showNew ? "text" : "password"}
                 value={newPasswordValue}
-                onChange={(event) => setNewPasswordValue(event.target.value)}
+                onChange={(event) => {
+                  setNewPasswordValue(event.target.value);
+                  if (fieldErrors.newPassword) clearFieldError("newPassword");
+                }}
                 onBlur={(event) => {
                   if (!fieldErrors.newPassword) return;
                   const result = validateMinLength(event.target.value, 8, "New password");
@@ -241,15 +248,19 @@ export default function AdminSettings() {
           </label>
           <label className="grid gap-2 admin-label">
             Confirm password
+            <RequiredMark />
             <div
               className={`flex items-center border bg-white px-4 py-2 ${
-                fieldErrors.confirmPassword ? "border-red-300" : "border-[var(--pp-border)]"
+                fieldErrors.confirmPassword ? "admin-input-error" : "border-[var(--pp-border)]"
               }`}
             >
               <input
                 name="confirmPassword"
                 type={showConfirm ? "text" : "password"}
                 className="w-full bg-transparent py-1 pr-2 text-sm focus:outline-none"
+                onChange={() => {
+                  if (fieldErrors.confirmPassword) clearFieldError("confirmPassword");
+                }}
                 onBlur={(event) => {
                   if (!fieldErrors.confirmPassword) return;
                   const result = validateMatch(

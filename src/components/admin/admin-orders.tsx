@@ -3,7 +3,8 @@
 import { useState } from "react";
 import type { ProductSummary } from "@/types/catalog";
 import ToastStack from "@/components/ui/toast-stack";
-import { validatePhone, validateRequired } from "@/lib/validation";
+import { buildFieldErrors, validatePhone, validateRequired } from "@/lib/validation";
+import { RequiredMark } from "@/components/admin/admin-form-helpers";
 import AdminSelect from "@/components/admin/admin-select";
 
 interface AdminOrdersProps {
@@ -41,6 +42,9 @@ export default function AdminOrders({
     customerName?: string;
     phone?: string;
   }>({});
+  const clearFieldError = (field: keyof typeof fieldErrors) => {
+    setFieldErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev));
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -49,21 +53,14 @@ export default function AdminOrders({
     setError(null);
     setFieldErrors({});
 
-    const productError = validateRequired(form.productId, "Product");
-    if (productError) {
-      setFieldErrors({ productId: "Please select a product." });
-      setLoading(false);
-      return;
-    }
-    const nameError = validateRequired(form.customerName, "Customer name");
-    if (nameError) {
-      setFieldErrors({ customerName: nameError.message });
-      setLoading(false);
-      return;
-    }
-    const phoneError = validatePhone(form.phone);
-    if (phoneError) {
-      setFieldErrors({ phone: phoneError.message });
+    const nextErrors = buildFieldErrors<"productId" | "customerName" | "phone">([
+      { key: "productId", error: validateRequired(form.productId, "Product"), message: "Please select a product." },
+      { key: "customerName", error: validateRequired(form.customerName, "Customer name") },
+      { key: "phone", error: validatePhone(form.phone) },
+    ]);
+
+    if (Object.keys(nextErrors).length > 0) {
+      setFieldErrors(nextErrors);
       setLoading(false);
       return;
     }
@@ -100,14 +97,17 @@ export default function AdminOrders({
         )}
         <div className="mt-4 grid gap-4">
           <div className="grid gap-2">
-            <label className="admin-label">Product</label>
+            <label className="admin-label">
+              Product
+              <RequiredMark />
+            </label>
             <AdminSelect
               value={form.productId}
               onChange={(nextValue) => {
                 const nextProductId = String(nextValue);
                 setForm({ ...form, productId: nextProductId });
                 if (fieldErrors.productId && nextProductId) {
-                  setFieldErrors((prev) => ({ ...prev, productId: undefined }));
+                  clearFieldError("productId");
                 }
               }}
               options={[
@@ -115,9 +115,7 @@ export default function AdminOrders({
                 ...products.map((product) => ({ value: product.id, label: product.name })),
               ]}
               fullWidth
-              buttonClassName={`w-full admin-input ${
-                fieldErrors.productId ? "border-red-300" : "border-[var(--pp-border)]"
-              }`}
+              buttonClassName={`w-full admin-input ${fieldErrors.productId ? "is-error" : ""}`}
               header="Product"
               ariaLabel="Product"
             />
@@ -131,15 +129,17 @@ export default function AdminOrders({
           <div className="grid gap-2">
             <label htmlFor="admin-order-customer" className="admin-label">
               Customer name
+              <RequiredMark />
             </label>
             <input
               id="admin-order-customer"
-              className={`admin-input ${
-                fieldErrors.customerName ? "border-red-300" : "border-[var(--pp-border)]"
-              }`}
+              className={`admin-input ${fieldErrors.customerName ? "is-error" : ""}`}
               placeholder="Customer name"
               value={form.customerName}
-              onChange={(event) => setForm({ ...form, customerName: event.target.value })}
+              onChange={(event) => {
+                setForm({ ...form, customerName: event.target.value });
+                if (fieldErrors.customerName) clearFieldError("customerName");
+              }}
               onBlur={(event) => {
                 if (!fieldErrors.customerName) return;
                 const result = validateRequired(event.target.value, "Customer name");
@@ -158,15 +158,17 @@ export default function AdminOrders({
           <div className="grid gap-2">
             <label htmlFor="admin-order-phone" className="admin-label">
               Phone number
+              <RequiredMark />
             </label>
             <input
               id="admin-order-phone"
-              className={`admin-input ${
-                fieldErrors.phone ? "border-red-300" : "border-[var(--pp-border)]"
-              }`}
+              className={`admin-input ${fieldErrors.phone ? "is-error" : ""}`}
               placeholder="Phone number"
               value={form.phone}
-              onChange={(event) => setForm({ ...form, phone: event.target.value })}
+              onChange={(event) => {
+                setForm({ ...form, phone: event.target.value });
+                if (fieldErrors.phone) clearFieldError("phone");
+              }}
               onBlur={(event) => {
                 if (!fieldErrors.phone) return;
                 const result = validatePhone(event.target.value);

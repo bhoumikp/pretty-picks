@@ -417,7 +417,7 @@ export default function AdminContactsClient({
         >
           <div className="flex h-full w-full items-center justify-center px-4 lg:pl-[var(--admin-sidebar-offset)] lg:pr-0">
             <div
-              className={`w-full max-w-xl bg-white shadow-lg transition-all duration-200 ${
+              className={`w-full max-w-xl bg-white rounded-lg shadow-lg transition-all duration-200 ${
                 closing ? "translate-y-2 opacity-0" : "translate-y-0 opacity-100"
               }`}
               onClick={(event) => event.stopPropagation()}

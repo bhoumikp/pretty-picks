@@ -166,7 +166,6 @@ function AdminAuditLogsTable({
                     <p className="font-semibold text-[var(--pp-ink)]">
                       {highlightText(log.actorEmail, query)}
                     </p>
-                    <p className="text-xs text-[var(--pp-muted)]">ID {log.id.slice(0, 6)}</p>
                   </div>
                 </td>
                 <td className="px-5 py-4" data-label="Action">

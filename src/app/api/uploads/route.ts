@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin";
 import cloudinary from "@/lib/cloudinary";
 import { logAudit } from "@/lib/audit";
+import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
@@ -28,9 +29,21 @@ export async function POST(request: Request) {
         resource_type: "image",
       });
 
+      const media = await prisma.media.create({
+        data: {
+          url: result.secure_url,
+          publicId: result.public_id,
+          format: result.format ?? null,
+          width: result.width ?? null,
+          height: result.height ?? null,
+          bytes: result.bytes ?? null,
+        },
+      });
+
       return {
         url: result.secure_url,
         publicId: result.public_id,
+        mediaId: media.id,
       };
     })
   );
@@ -57,6 +70,10 @@ export async function DELETE(request: Request) {
 
   await cloudinary.uploader.destroy(body.publicId, {
     resource_type: "image",
+  });
+
+  await prisma.media.deleteMany({
+    where: { publicId: body.publicId },
   });
 
   await logAudit({

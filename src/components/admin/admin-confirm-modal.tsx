@@ -83,7 +83,7 @@ export default function AdminConfirmModal({
   );
   const modalClass = useMemo(
     () =>
-      `w-full max-w-md bg-white shadow-lg transition-all duration-200 ${active ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"}`,
+      `w-full max-w-md bg-white rounded-lg shadow-lg transition-all duration-200 ${active ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"}`,
     [active]
   );
 

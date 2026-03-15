@@ -1,11 +1,12 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useState } from "react";
 import Image from "next/image";
 import { Pencil, Power, PowerOff, Trash2 } from "lucide-react";
 import AdminTableShell from "@/components/admin/admin-table-shell";
 import AdminEmptyState from "@/components/admin/admin-empty-state";
 import { highlightText } from "@/lib/highlight";
+import AdminMediaViewer from "@/components/admin/admin-media-viewer";
 
 interface CategoryRow {
   id: string;
@@ -13,7 +14,7 @@ interface CategoryRow {
   slug: string;
   image?: string | null;
   parentName?: string | null;
-  active: boolean;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -59,6 +60,7 @@ function AdminCategoriesTable({
   footerSlot,
   showParentColumn = false,
 }: AdminCategoriesTableProps) {
+  const [previewItem, setPreviewItem] = useState<{ url: string; title?: string | null } | null>(null);
   const getDirFor = (key: string) => {
     const index = sort.indexOf(key);
     return index >= 0 ? dir[index] ?? "desc" : undefined;
@@ -73,7 +75,8 @@ function AdminCategoriesTable({
   const skeletonRows = Array.from({ length: Math.min(6, pageSize) }, (_, index) => index);
 
   return (
-    <AdminTableShell
+    <>
+      <AdminTableShell
       page={page}
       pageSize={pageSize}
       total={total}
@@ -198,7 +201,7 @@ function AdminCategoriesTable({
                   </td>
                 )}
                 <td className="px-5 py-4">
-                  <div className="h-10 w-14 rounded-lg bg-[var(--pp-beige)]/70 animate-pulse" />
+                  <div className="h-12 w-16 rounded-sm bg-[var(--pp-beige)]/70 animate-pulse" />
                 </td>
                 <td className="px-5 py-4">
                   <div className="h-5 w-20 rounded-full bg-[var(--pp-beige)]/70 animate-pulse" />
@@ -234,7 +237,6 @@ function AdminCategoriesTable({
                       <p className="font-semibold text-[var(--pp-ink)]">
                         {highlightText(category.name, query)}
                       </p>
-                      <p className="text-xs text-[var(--pp-muted)]">ID {category.id.slice(0, 6)}</p>
                     </div>
                   </div>
                 </td>
@@ -248,13 +250,19 @@ function AdminCategoriesTable({
                 )}
                 <td className="px-5 py-4" data-label="Image">
                   {category.image ? (
-                    <div className="relative h-10 w-14 overflow-hidden rounded-lg bg-[var(--pp-beige)]">
+                    <div className="relative h-12 w-16 overflow-hidden rounded-sm bg-[var(--pp-beige)] cursor-pointer">
                       <Image
                         src={category.image}
                         alt={category.name}
                         fill
-                        sizes="56px"
+                        sizes="64px"
                         className="object-cover"
+                      />
+                      <button
+                        type="button"
+                        className="absolute inset-0 z-10 cursor-pointer"
+                        onClick={() => setPreviewItem({ url: category.image ?? "", title: category.name })}
+                        aria-label={`Preview ${category.name}`}
                       />
                     </div>
                   ) : (
@@ -263,11 +271,11 @@ function AdminCategoriesTable({
                 </td>
                 <td className="px-5 py-4" data-label="Status">
                   <span
-                    className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                      category.active ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
-                    }`}
-                  >
-                    {category.active ? "Active" : "Inactive"}
+                      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+                        category.isActive ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                      }`}
+                    >
+                    {category.isActive ? "Active" : "Inactive"}
                   </span>
                 </td>
                 <td className="px-5 py-4 text-[var(--pp-muted)]" data-label="Updated">
@@ -299,11 +307,11 @@ function AdminCategoriesTable({
                       <button
                         onClick={() => onToggleActive(category)}
                         className="btn-round group relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--pp-border)] text-[var(--pp-ink)] transition hover:border-[var(--pp-gold)] hover:bg-[var(--pp-beige)]"
-                        aria-label={category.active ? "Deactivate" : "Activate"}
+                        aria-label={category.isActive ? "Deactivate" : "Activate"}
                       >
-                        {category.active ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}
+                        {category.isActive ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}
                         <span className="pointer-events-none absolute -top-9 right-0 hidden whitespace-nowrap border border-[var(--pp-border)] bg-white px-2 py-1 text-xs text-[var(--pp-ink)] opacity-0 shadow-sm transition group-hover:block group-hover:opacity-100">
-                          {category.active ? "Deactivate" : "Activate"}
+                          {category.isActive ? "Deactivate" : "Activate"}
                         </span>
                       </button>
                     )}
@@ -314,7 +322,13 @@ function AdminCategoriesTable({
           )}
         </tbody>
       </table>
-    </AdminTableShell>
+      </AdminTableShell>
+      <AdminMediaViewer
+        open={Boolean(previewItem)}
+        item={previewItem ? { url: previewItem.url, title: previewItem.title ?? "Category image" } : null}
+        onClose={() => setPreviewItem(null)}
+      />
+    </>
   );
 }
 

@@ -14,16 +14,16 @@ export const metadata = {
 };
 
 export default async function HomePage() {
-  let featuredProducts: ProductSummary[] = [];
+  let mostLovedProducts: ProductSummary[] = [];
   let categories: CategorySummary[] = [];
   let under199: ProductSummary[] = [];
 
   try {
-    const [featuredResult, categoriesResult, underResult] = await Promise.allSettled([
+    const [lovedResult, categoriesResult, underResult] = await Promise.allSettled([
       prisma.product.findMany({
-        where: { featured: true },
+        where: { archivedAt: null, isActive: true },
         take: 4,
-        orderBy: { createdAt: "desc" },
+        orderBy: [{ orders: { _count: "desc" } }, { createdAt: "desc" }],
         select: {
           id: true,
           name: true,
@@ -31,20 +31,21 @@ export default async function HomePage() {
           price: true,
           createdAt: true,
           material: true,
-          featured: true,
           stock: true,
           images: true,
+          _count: { select: { orders: true } },
           category: {
             select: { id: true, name: true, slug: true, image: true },
           },
         },
       }),
       prisma.category.findMany({
+        where: { archivedAt: null, isActive: true },
         orderBy: { name: "asc" },
         select: { id: true, name: true, slug: true, image: true },
       }),
       prisma.product.findMany({
-        where: { price: { lte: 199 } },
+        where: { price: { lte: 199 }, archivedAt: null, isActive: true },
         take: 3,
         orderBy: { price: "asc" },
         select: {
@@ -56,8 +57,14 @@ export default async function HomePage() {
         },
       }),
     ]);
-    if (featuredResult.status === "fulfilled") {
-      featuredProducts = featuredResult.value;
+    if (lovedResult.status === "fulfilled") {
+      mostLovedProducts = lovedResult.value.map((product) => {
+        const { _count, ...rest } = product;
+        return {
+          ...rest,
+          orderCount: _count.orders,
+        };
+      });
     }
     if (categoriesResult.status === "fulfilled") {
       categories = categoriesResult.value;
@@ -128,17 +135,17 @@ export default async function HomePage() {
         <div className="page-shell">
           <div className="mb-6">
             <div>
-              <p className="eyebrow">Featured</p>
+              <p className="eyebrow">Most loved</p>
               <h2 className="section-title">Most loved</h2>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {featuredProducts.map((product) => (
+            {mostLovedProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
           <div className="mt-6 flex justify-center">
-              <Link href="/products?featured=true" className="btn-primary btn-sweep text-sm">
+              <Link href="/products?sort=popular" className="btn-primary btn-sweep text-sm">
                 <span className="btn-sweep-label">View All</span>
               </Link>
           </div>

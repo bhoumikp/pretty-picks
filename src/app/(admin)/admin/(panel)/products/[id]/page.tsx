@@ -65,7 +65,6 @@ export default async function AdminProductEditPage({ params }: RouteContext) {
                 description: product.description,
                 material: product.material,
                 images,
-                featured: product.featured,
                 stock: product.stock,
                 categoryId: product.categoryId,
               }

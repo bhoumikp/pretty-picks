@@ -31,21 +31,23 @@ export default function AdminTableShell({
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
-    <div className="soft-card relative p-0" aria-busy={isLoading}>
-      {isLoading && (
-        <div className="absolute inset-0 z-10 overflow-hidden">
-          <div className="absolute inset-0 bg-white/55" />
-          <div className="absolute inset-0 bg-[linear-gradient(110deg,transparent,rgba(255,255,255,0.6),transparent)] animate-[shimmer_1.2s_infinite]" />
+    <div className="flex flex-col">
+      <div className="soft-card relative p-0 overflow-visible" aria-busy={isLoading}>
+        {isLoading && (
+          <div className="absolute inset-0 z-10 overflow-hidden">
+            <div className="absolute inset-0 bg-white/55" />
+            <div className="absolute inset-0 bg-[linear-gradient(110deg,transparent,rgba(255,255,255,0.6),transparent)] animate-[shimmer_1.2s_infinite]" />
+          </div>
+        )}
+        <div
+          className={`overflow-x-auto transition-opacity duration-200 ${
+            isLoading ? "pointer-events-none opacity-70" : ""
+          }`}
+        >
+          {children}
         </div>
-      )}
-      <div
-        className={`overflow-x-auto transition-opacity duration-200 ${
-          isLoading ? "pointer-events-none opacity-70" : ""
-        }`}
-      >
-        {children}
       </div>
-      <div className="sticky bottom-0 flex flex-wrap items-center gap-3 border-t border-[var(--pp-border)] bg-white px-5 py-4 text-sm">
+      <div className="admin-sticky-footer admin-table-footer flex flex-wrap items-center gap-3 px-5 py-2 text-sm">
         <span className="text-[var(--pp-muted)]">
           Page {page} of {totalPages} · {total} items
         </span>
@@ -54,7 +56,7 @@ export default function AdminTableShell({
           <button
             type="button"
             onClick={() => onPageChange(Math.max(1, page - 1))}
-            className={`rounded-full border px-3 py-1 text-xs ${
+            className={`rounded border px-3 py-1 text-xs ${
               page <= 1
                 ? "pointer-events-none border-[var(--pp-border)] text-[var(--pp-muted)]"
                 : "border-[var(--pp-border)] text-[var(--pp-ink)]"
@@ -71,7 +73,7 @@ export default function AdminTableShell({
                 <button
                   type="button"
                   onClick={() => onPageChange(pageNumber)}
-                  className={`rounded-full border px-3 py-1 text-xs ${
+                  className={`rounded border px-3 py-1 text-xs ${
                     pageNumber === page
                       ? "border-[var(--pp-gold)] bg-[var(--pp-gold)]/10 text-[var(--pp-ink)]"
                       : "border-[var(--pp-border)] text-[var(--pp-ink)]"
@@ -86,7 +88,7 @@ export default function AdminTableShell({
           <button
             type="button"
             onClick={() => onPageChange(Math.min(totalPages, page + 1))}
-            className={`rounded-full border px-3 py-1 text-xs ${
+            className={`rounded border px-3 py-1 text-xs ${
               page >= totalPages
                 ? "pointer-events-none border-[var(--pp-border)] text-[var(--pp-muted)]"
                 : "border-[var(--pp-border)] text-[var(--pp-ink)]"

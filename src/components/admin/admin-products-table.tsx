@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Power, PowerOff, Pencil, Trash2 } from "lucide-react";
@@ -9,12 +9,14 @@ import type { ProductImage } from "@/types/catalog";
 import AdminTableShell from "@/components/admin/admin-table-shell";
 import AdminEmptyState from "@/components/admin/admin-empty-state";
 import { highlightText } from "@/lib/highlight";
+import AdminMediaViewer from "@/components/admin/admin-media-viewer";
 
 interface ProductRow {
   id: string;
   name: string;
   price: number;
   stock: number;
+  isActive: boolean;
   categoryName?: string | null;
   image?: ProductImage | null;
   createdAt: string;
@@ -58,6 +60,7 @@ function AdminProductsTable({
   isLoading = false,
   footerSlot,
 }: AdminProductsTableProps) {
+  const [previewItem, setPreviewItem] = useState<{ url: string; title?: string | null } | null>(null);
   const getDirFor = (key: string) => {
     const index = sort.indexOf(key);
     return index >= 0 ? dir[index] ?? "desc" : undefined;
@@ -71,7 +74,8 @@ function AdminProductsTable({
   const skeletonRows = Array.from({ length: Math.min(6, pageSize) }, (_, index) => index);
 
   return (
-    <AdminTableShell
+    <>
+      <AdminTableShell
       page={page}
       pageSize={pageSize}
       total={total}
@@ -192,7 +196,7 @@ function AdminProductsTable({
                 </td>
                 <td className="px-5 py-4">
                   <div className="flex items-center gap-3">
-                    <div className="h-12 w-10 rounded-lg bg-[var(--pp-beige)]/70 animate-pulse" />
+                    <div className="h-14 w-12 rounded-sm bg-[var(--pp-beige)]/70 animate-pulse" />
                     <div className="space-y-2">
                       <div className="h-3 w-32 rounded bg-[var(--pp-beige)]/70 animate-pulse" />
                       <div className="h-2 w-16 rounded bg-[var(--pp-beige)]/50 animate-pulse" />
@@ -227,7 +231,7 @@ function AdminProductsTable({
             <AdminEmptyState colSpan={8} message="No products found." />
           ) : (
             products.map((product) => {
-              const isActive = product.stock > 0;
+              const isActive = product.isActive;
               return (
                 <tr key={product.id} className="border-b border-[var(--pp-border)] last:border-b-0">
                   <td className="px-5 py-4" data-label="Select">
@@ -240,22 +244,31 @@ function AdminProductsTable({
                   </td>
                   <td className="admin-table-main px-5 py-4" data-label="Product">
                     <div className="flex items-center gap-3">
-                      <div className="relative h-12 w-10 overflow-hidden rounded-lg bg-[var(--pp-beige)]">
+                      <div className="relative h-14 w-12 overflow-hidden rounded-sm bg-[var(--pp-beige)] cursor-pointer">
                         {product.image?.url && (
-                          <Image
-                            src={product.image.url}
-                            alt={product.name}
-                            fill
-                            sizes="40px"
-                            className="object-cover"
-                          />
+                          <>
+                            <Image
+                              src={product.image.url}
+                              alt={product.name}
+                              fill
+                              sizes="48px"
+                              className="object-cover"
+                            />
+                            <button
+                              type="button"
+                              className="absolute inset-0 z-10 cursor-pointer"
+                              onClick={() =>
+                                setPreviewItem({ url: product.image?.url ?? "", title: product.name })
+                              }
+                              aria-label={`Preview ${product.name}`}
+                            />
+                          </>
                         )}
                       </div>
                       <div>
                         <p className="font-semibold text-[var(--pp-ink)]">
                           {highlightText(product.name, query)}
                         </p>
-                        <p className="text-xs text-[var(--pp-muted)]">ID {product.id.slice(0, 6)}</p>
                       </div>
                     </div>
                   </td>
@@ -320,7 +333,13 @@ function AdminProductsTable({
           )}
         </tbody>
       </table>
-    </AdminTableShell>
+      </AdminTableShell>
+      <AdminMediaViewer
+        open={Boolean(previewItem)}
+        item={previewItem ? { url: previewItem.url, title: previewItem.title ?? "Product image" } : null}
+        onClose={() => setPreviewItem(null)}
+      />
+    </>
   );
 }
 

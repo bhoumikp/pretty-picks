@@ -20,7 +20,7 @@ export async function PATCH(
     slug?: string;
     image?: string | null;
     parentId?: string | null;
-    active?: boolean;
+    isActive?: boolean;
     archivedAt?: Date | null;
   } = {};
 
@@ -37,8 +37,8 @@ export async function PATCH(
     data.parentId = body.parentId ? String(body.parentId) : null;
   }
 
-  if (typeof body.active === "boolean") {
-    data.active = body.active;
+  if (typeof body.isActive === "boolean") {
+    data.isActive = body.isActive;
   }
   if ("archivedAt" in body) {
     data.archivedAt = body.archivedAt ? new Date(body.archivedAt) : null;

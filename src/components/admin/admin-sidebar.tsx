@@ -10,12 +10,14 @@ import {
   ChevronDown,
   ShoppingBag,
   FileText,
+  Image as ImageIcon,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 const navIcons: Record<string, React.ReactElement> = {
   Dashboard: <LayoutGrid className="h-4 w-4" />,
   Products: <Boxes className="h-4 w-4" />,
+  Media: <ImageIcon className="h-4 w-4" />,
   Categories: <Layers className="h-4 w-4" />,
   Orders: <ShoppingBag className="h-4 w-4" />,
   "Audit Logs": <FileText className="h-4 w-4" />,
@@ -32,13 +34,10 @@ const adminLinks: AdminNavLink[] = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/orders", label: "Orders" },
   { href: "/admin/products", label: "Products" },
+  { href: "/admin/media", label: "Media" },
   {
     href: "/admin/categories",
     label: "Categories",
-    children: [
-      { href: "/admin/categories", label: "Categories" },
-      { href: "/admin/subcategories", label: "Sub Categories" },
-    ],
   },
   { href: "/admin/audit-logs", label: "Audit Logs" },
   { href: "/admin/settings", label: "Settings" },
@@ -79,7 +78,8 @@ export default function AdminSidebar({
       {adminLinks.map((link) => {
         const isActive =
           pathname === link.href ||
-          (link.href !== "/admin" && pathname.startsWith(link.href));
+          (link.href !== "/admin" && pathname.startsWith(link.href)) ||
+          (link.href === "/admin/categories" && pathname.startsWith("/admin/subcategories"));
         const hasChildren = Boolean(link.children?.length);
         const isChildActive = link.children?.some(
           (child) => pathname === child.href || pathname.startsWith(child.href)

@@ -39,7 +39,7 @@ export async function GET(request: Request) {
   const where = {
     archivedAt: null,
     ...scopeFilter,
-    ...(status === "active" ? { active: true } : status === "inactive" ? { active: false } : {}),
+    ...(status === "active" ? { isActive: true } : status === "inactive" ? { isActive: false } : {}),
     ...(query
       ? {
           OR: [
@@ -58,7 +58,7 @@ export async function GET(request: Request) {
       : sortKey === "parent"
       ? { parent: { name: dirKey } }
       : sortKey === "status"
-      ? { active: dirKey }
+      ? { isActive: dirKey }
       : sortKey === "createdAt"
       ? { createdAt: dirKey }
       : { updatedAt: dirKey };
@@ -81,7 +81,7 @@ export async function GET(request: Request) {
     image: category.image ?? null,
     parentId: category.parentId ?? null,
     parentName: category.parent?.name ?? null,
-    active: category.active,
+    isActive: category.isActive,
     createdAt: category.createdAt.toISOString(),
     updatedAt: category.updatedAt.toISOString(),
   }));

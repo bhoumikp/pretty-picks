@@ -18,10 +18,10 @@ export interface ProductSummary {
   slug: string;
   price: number;
   images: unknown;
-  featured?: boolean;
   stock?: number;
   material?: string;
   description?: string;
   createdAt?: string | Date;
+  orderCount?: number;
   category?: CategorySummary | null;
 }

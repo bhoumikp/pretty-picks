@@ -156,7 +156,6 @@ function AdminContactsTable({
                       {highlightText(contact.name, query)}
                     </p>
                   </div>
-                  <p className="text-xs text-[var(--pp-muted)]">ID {contact.id.slice(0, 6)}</p>
                 </td>
                 <td className="px-5 py-4 text-[var(--pp-muted)]" data-label="Email">
                   {highlightText(contact.email, query)}

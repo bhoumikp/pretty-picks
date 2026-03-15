@@ -35,7 +35,7 @@ export default async function AdminSubcategoriesPage({
 
   const where = {
     parentId: { not: null },
-    ...(status === "active" ? { active: true } : status === "inactive" ? { active: false } : {}),
+    ...(status === "active" ? { isActive: true } : status === "inactive" ? { isActive: false } : {}),
     ...(query
       ? {
           OR: [
@@ -55,7 +55,7 @@ export default async function AdminSubcategoriesPage({
       : sortKey === "parent"
       ? { parent: { name: dirKey } }
     : sortKey === "status"
-    ? { active: dirKey }
+    ? { isActive: dirKey }
     : sortKey === "createdAt"
       ? { createdAt: dirKey }
       : { updatedAt: dirKey };
@@ -67,7 +67,7 @@ export default async function AdminSubcategoriesPage({
         name: true;
         slug: true;
         image: true;
-        active: true;
+        isActive: true;
         parentId: true;
         parent: { select: { name: true } };
         createdAt: true;
@@ -92,7 +92,7 @@ export default async function AdminSubcategoriesPage({
           name: true,
           slug: true,
           image: true,
-          active: true,
+          isActive: true,
           parentId: true,
           parent: { select: { name: true } },
           createdAt: true,
@@ -119,7 +119,7 @@ export default async function AdminSubcategoriesPage({
     name: subcategory.name,
     slug: subcategory.slug,
     image: subcategory.image ?? null,
-    active: subcategory.active,
+    isActive: subcategory.isActive,
     parentId: subcategory.parentId ?? null,
     parentName: subcategory.parent?.name ?? null,
     createdAt: subcategory.createdAt.toISOString(),

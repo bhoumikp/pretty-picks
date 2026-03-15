@@ -17,8 +17,8 @@ export const revalidate = 60;
 
 export async function generateMetadata({ params }: ProductPageProps) {
   const resolvedParams = await params;
-  const product = await prisma.product.findUnique({
-    where: { slug: resolvedParams.slug },
+  const product = await prisma.product.findFirst({
+    where: { slug: resolvedParams.slug, archivedAt: null, isActive: true },
     select: { name: true, description: true },
   });
 
@@ -34,8 +34,8 @@ export async function generateMetadata({ params }: ProductPageProps) {
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const resolvedParams = await params;
-  const product = await prisma.product.findUnique({
-    where: { slug: resolvedParams.slug },
+  const product = await prisma.product.findFirst({
+    where: { slug: resolvedParams.slug, archivedAt: null, isActive: true },
     include: { category: true },
   });
 
@@ -45,6 +45,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
     where: {
       categoryId: product.categoryId,
       NOT: { id: product.id },
+      archivedAt: null,
+      isActive: true,
     },
     take: 4,
     include: { category: true },

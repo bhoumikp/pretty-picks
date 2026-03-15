@@ -5,12 +5,16 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { siteConfig } from "@/data/site";
 import ToastStack from "@/components/ui/toast-stack";
-import { validateEmail, validateMinLength } from "@/lib/validation";
+import { buildFieldErrors, validateEmail, validateMinLength } from "@/lib/validation";
+import { RequiredMark } from "@/components/admin/admin-form-helpers";
 
 export default function AdminLoginPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
+  const clearFieldError = (field: keyof typeof fieldErrors) => {
+    setFieldErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev));
+  };
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [toasts, setToasts] = useState<
@@ -29,15 +33,13 @@ export default function AdminLoginPage() {
     const email = String(formData.get("email"));
     const password = String(formData.get("password"));
 
-    const emailError = validateEmail(email);
-    if (emailError) {
-      setFieldErrors({ email: emailError.message });
-      setLoading(false);
-      return;
-    }
-    const passwordError = validateMinLength(password, 8, "Password");
-    if (passwordError) {
-      setFieldErrors({ password: passwordError.message });
+    const nextErrors = buildFieldErrors<"email" | "password">([
+      { key: "email", error: validateEmail(email) },
+      { key: "password", error: validateMinLength(password, 8, "Password") },
+    ]);
+
+    if (Object.keys(nextErrors).length > 0) {
+      setFieldErrors(nextErrors);
       setLoading(false);
       return;
     }
@@ -107,15 +109,15 @@ export default function AdminLoginPage() {
           <form onSubmit={handleSubmit} className="mt-6 grid gap-4" noValidate>
             <label className="grid gap-2 text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">
               Email
+              <RequiredMark />
                 <input
                   name="email"
                   type="email"
                   placeholder="Enter Email"
-                  className={`border bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--pp-gold)]/40 ${
-                    fieldErrors.email
-                      ? "border-red-300 focus:ring-red-300/40"
-                      : "border-[var(--pp-border)]"
-                  }`}
+                  className={`admin-input ${fieldErrors.email ? "is-error" : ""}`}
+                  onChange={() => {
+                    if (fieldErrors.email) clearFieldError("email");
+                  }}
                   onBlur={(event) => {
                     if (!fieldErrors.email) return;
                     const result = validateEmail(event.target.value);
@@ -133,11 +135,10 @@ export default function AdminLoginPage() {
             </label>
             <label className="grid gap-2 text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">
               Password
+              <RequiredMark />
               <div
                 className={`flex items-center gap-2 border bg-white px-4 py-2 ${
-                  fieldErrors.password
-                    ? "border-red-300"
-                    : "border-[var(--pp-border)]"
+                  fieldErrors.password ? "admin-input-error" : "border-[var(--pp-border)]"
                 }`}
               >
                 <input
@@ -146,7 +147,10 @@ export default function AdminLoginPage() {
                   placeholder="Enter Password"
                   className="w-full bg-transparent text-sm focus:outline-none"
                   value={passwordValue}
-                  onChange={(event) => setPasswordValue(event.target.value)}
+                  onChange={(event) => {
+                    setPasswordValue(event.target.value);
+                    if (fieldErrors.password) clearFieldError("password");
+                  }}
                   onBlur={(event) => {
                     if (!fieldErrors.password) return;
                     const result = validateMinLength(event.target.value, 6, "Password");

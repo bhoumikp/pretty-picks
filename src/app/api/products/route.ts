@@ -6,7 +6,7 @@ import { logAudit } from "@/lib/audit";
 
 export async function GET() {
   const products = await prisma.product.findMany({
-    where: { archivedAt: null },
+    where: { archivedAt: null, isActive: true },
     include: { category: true },
   });
   return NextResponse.json(products);
@@ -25,8 +25,8 @@ export async function POST(request: Request) {
       description: body.description,
       material: body.material,
       images: body.images ?? [],
-      featured: Boolean(body.featured),
       stock: Number(body.stock ?? 0),
+      isActive: body.isActive ?? true,
       categoryId: body.categoryId,
     },
   });

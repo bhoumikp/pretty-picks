@@ -24,18 +24,19 @@ export default async function CategoriesPage({ searchParams }: CategoriesPagePro
 
   try {
     categories = await prisma.category.findMany({
+      where: { archivedAt: null, isActive: true },
       orderBy: { name: "asc" },
       select: { id: true, name: true, slug: true, image: true },
     });
     const fallbackSlug = selectedSlug || categories[0]?.slug;
     if (fallbackSlug) {
-      const selectedCategory = await prisma.category.findUnique({
-        where: { slug: fallbackSlug },
+      const selectedCategory = await prisma.category.findFirst({
+        where: { slug: fallbackSlug, archivedAt: null, isActive: true },
         select: { name: true },
       });
       selectedCategoryName = selectedCategory?.name ?? selectedCategoryName;
       selectedProducts = await prisma.product.findMany({
-        where: { category: { slug: fallbackSlug } },
+        where: { category: { slug: fallbackSlug }, archivedAt: null, isActive: true },
         orderBy: { createdAt: "desc" },
         select: {
           id: true,
@@ -43,7 +44,6 @@ export default async function CategoriesPage({ searchParams }: CategoriesPagePro
           slug: true,
           price: true,
           material: true,
-          featured: true,
           stock: true,
           images: true,
           category: {

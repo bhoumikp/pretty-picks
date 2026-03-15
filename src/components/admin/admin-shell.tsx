@@ -13,6 +13,7 @@ import AdminConfirmModal from "@/components/admin/admin-confirm-modal";
 const pageTitles = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/products", label: "Products" },
+  { href: "/admin/media", label: "Media" },
   { href: "/admin/categories", label: "Categories" },
   { href: "/admin/subcategories", label: "Sub Categories" },
   { href: "/admin/orders", label: "Orders" },
@@ -114,7 +115,7 @@ function AdminShellBody({
 
   return (
     <div
-      className={`min-h-screen bg-[var(--pp-beige)] transition-[padding] duration-300 ease-out ${
+      className={`admin-shell min-h-screen bg-[var(--pp-beige)] transition-[padding] duration-300 ease-out ${
         sidebarCollapsed ? "lg:pl-20" : "lg:pl-72"
       }`}
       style={
@@ -143,7 +144,7 @@ function AdminShellBody({
         collapsed={sidebarCollapsed}
         onTestToasts={testToasts}
       />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col min-h-0">
         <header className="sticky top-0 z-30 border-b border-[var(--pp-border)] bg-white/80 px-6 py-4 backdrop-blur transition-[padding] duration-300 ease-out">
           <div className="flex w-full items-center justify-between">
             <div className="flex items-center gap-3">
@@ -220,7 +221,7 @@ function AdminShellBody({
             </div>
           </div>
         </header>
-        <main className="relative flex-1 transition-[padding] duration-300 ease-out admin-fade-in">
+        <main className="admin-main relative flex-1 transition-[padding] duration-300 ease-out admin-fade-in">
           <div className="px-6 py-8">{children}</div>
         </main>
       </div>

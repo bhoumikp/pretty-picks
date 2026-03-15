@@ -1,4 +1,5 @@
 export type ValidationError = { field: string; message: string };
+export type FieldErrors<T extends string> = Partial<Record<T, string>>;
 
 export const validateRequired = (value: string, field: string): ValidationError | null => {
   if (!value.trim()) return { field, message: `${field} is required.` };
@@ -65,4 +66,16 @@ export const validateUrlOptional = (value: string, field: string): ValidationErr
   } catch {
     return { field, message: `${field} must be a valid URL.` };
   }
+};
+
+// Admin forms: prefer buildFieldErrors to map validation results in one place.
+export const buildFieldErrors = <T extends string>(
+  entries: Array<{ key: T; error: ValidationError | null; message?: string }>
+): FieldErrors<T> => {
+  const next: FieldErrors<T> = {};
+  entries.forEach(({ key, error, message }) => {
+    if (!error) return;
+    next[key] = message ?? error.message;
+  });
+  return next;
 };

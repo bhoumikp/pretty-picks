@@ -107,7 +107,7 @@ export default function AdminOrdersPanel({
         >
           <div className="flex h-full w-full items-center justify-center px-4 lg:pl-[var(--admin-sidebar-offset)] lg:pr-0">
             <div
-              className={`w-full max-w-lg bg-white p-6 shadow-lg transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform ${
+              className={`w-full max-w-lg bg-white rounded-lg p-6 shadow-lg transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform ${
                 closing ? "translate-y-6 scale-[0.96] opacity-0" : "translate-y-0 scale-100 opacity-100"
               }`}
               onClick={(event) => event.stopPropagation()}

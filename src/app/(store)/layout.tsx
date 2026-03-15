@@ -1,19 +1,13 @@
+import "../storefront.css";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
-import WhatsAppButton from "@/components/whatsapp-button";
-import MobileBottomNav from "@/components/mobile-bottom-nav";
 
-export default function SiteLayout({ children }: { children: React.ReactNode }) {
+export default function StoreLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col overflow-x-hidden">
+    <div className="storefront">
       <Navbar />
-      <main className="flex-1 pb-20 pt-16 md:pb-0 md:pt-20">{children}</main>
+      <main className="pt-20 md:pt-24">{children}</main>
       <Footer />
-      <WhatsAppButton
-        floating
-        message="Hi! I want to order from Pretty Picks. Please share the latest catalogue."
-      />
-      <MobileBottomNav />
     </div>
   );
 }
