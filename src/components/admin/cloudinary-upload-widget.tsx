@@ -607,7 +607,7 @@ async function getCroppedBlob(imageSrc: string, cropArea: CropArea) {
 
 function createImage(url: string) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
-    const image = new Image();
+    const image = new window.Image();
     image.addEventListener("load", () => resolve(image));
     image.addEventListener("error", () => reject(new Error("Unable to load image.")));
     image.src = url;
