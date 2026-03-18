@@ -6,9 +6,9 @@ import WhatsAppFab from "@/components/whatsapp-fab";
 
 export default function StoreLayout({ children }: { children: React.ReactNode }) {
 	return (
-		<div className="storefront">
+		<div className="storefront flex flex-col min-h-screen">
 			<Navbar />
-			<main className="pt-20 md:pt-24">{children}</main>
+			<main className="flex-grow pt-20 md:pt-24">{children}</main>
 			<Footer />
 			<MobileBottomNav />
 			<WhatsAppFab />

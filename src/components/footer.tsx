@@ -5,7 +5,7 @@ export default function Footer() {
 	const categoryLinks = navigation.filter((item) => item.href.startsWith("/category/"));
 
 	return (
-		<footer className="border-t border-white/10 bg-[var(--pp-ink)] text-white">
+		<footer className="border-t border-white/10 bg-[var(--pp-ink)] text-white pb-20 md:pb-0">
 			<div className="page-shell grid gap-10 py-12 md:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
 				<div>
 					<h3 className="font-[var(--font-heading)] text-2xl text-white">

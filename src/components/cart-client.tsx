@@ -65,10 +65,10 @@ export default function CartClient() {
 				items: items.map((item) => ({ productId: item.id, quantity: item.quantity })),
 				source: "cart",
 			}),
-		}).catch(() => {});
-		
+		}).catch(() => { });
+
 		openWhatsApp(orderMessage);
-		
+
 		// Securely clear the local persistent storage now that checkout fired
 		clearCart();
 		setItems([]);
@@ -119,7 +119,7 @@ export default function CartClient() {
 									<div className="flex flex-wrap items-center gap-3">
 										<div className="flex items-center gap-2 rounded-full border border-[var(--pp-border)] px-2 py-1 text-xs">
 											<button
-												className="h-6 w-6 rounded-full border border-[var(--pp-border)]"
+												className="h-6 w-6"
 												onClick={() => setItems(updateCartItem(item.id, item.quantity - 1))}
 												aria-label="Decrease quantity"
 											>
@@ -127,7 +127,7 @@ export default function CartClient() {
 											</button>
 											<span className="min-w-[18px] text-center font-semibold">{item.quantity}</span>
 											<button
-												className="h-6 w-6 rounded-full border border-[var(--pp-border)]"
+												className="h-6 w-6"
 												onClick={() => setItems(updateCartItem(item.id, item.quantity + 1))}
 												aria-label="Increase quantity"
 											>
@@ -175,13 +175,13 @@ export default function CartClient() {
 				</div>
 			)}
 			{showConfirmModal && (
-				<div 
-					className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4 opacity-0 animate-in fade-in duration-200" 
+				<div
+					className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4 opacity-0 animate-in fade-in duration-200"
 					style={{ animationFillMode: 'forwards' }}
 					onClick={() => setShowConfirmModal(false)}
 				>
-					<div 
-						className="w-full max-w-sm scale-95 transform rounded-3xl bg-white p-6 shadow-xl transition-all animate-in zoom-in-95 duration-200" 
+					<div
+						className="w-full max-w-sm scale-95 transform rounded-3xl bg-white p-6 shadow-xl transition-all animate-in zoom-in-95 duration-200"
 						style={{ animationFillMode: 'forwards' }}
 						onClick={(e) => e.stopPropagation()}
 					>
