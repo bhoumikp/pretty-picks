@@ -5,98 +5,98 @@ import OfflineBanner from "@/components/admin/offline-banner";
 
 export const revalidate = 0;
 export const metadata = {
-  title: { absolute: "Admin | Dashboard" },
+	title: { absolute: "Admin | Dashboard" },
 };
 
 async function AdminDashboardContent() {
-  let productCount = 0;
-  let orderCount = 0;
-  let orders: Array<{ product?: { price?: number | null } | null }> = [];
-  let dbUnavailable = false;
+	let productCount = 0;
+	let orderCount = 0;
+	let orders: Array<{ totalAmount: number }> = [];
+	let dbUnavailable = false;
 
-  try {
-    const results = await Promise.all([
-      prisma.product.count(),
-      prisma.order.count(),
-      prisma.order.findMany({ include: { product: true } }),
-    ]);
-    [productCount, orderCount, orders] = results;
-  } catch (error) {
-    console.error("Admin dashboard DB error:", error);
-    dbUnavailable = true;
-  }
+	try {
+		const results = await Promise.all([
+			prisma.product.count(),
+			prisma.order.count(),
+			prisma.order.findMany({ select: { totalAmount: true } }),
+		]);
+		[productCount, orderCount, orders] = results;
+	} catch (error) {
+		console.error("Admin dashboard DB error:", error);
+		dbUnavailable = true;
+	}
 
-  const totalRevenue = orders.reduce(
-    (sum, order) => sum + (order.product?.price ?? 0),
-    0
-  );
+	const totalRevenue = orders.reduce(
+		(sum, order) => sum + order.totalAmount,
+		0
+	);
 
-  return (
-    <div className="grid gap-6">
-      <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">
-          Overview
-        </p>
-        <h2 className="text-2xl font-[var(--font-heading)]">Dashboard</h2>
-        {dbUnavailable && (
-          <div className="mt-3">
-            <OfflineBanner message="Database is currently unreachable. Showing placeholder stats." />
-          </div>
-        )}
-      </div>
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="soft-card p-5">
-          <p className="text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">
-            Total products
-          </p>
-          <h3 className="mt-3 text-3xl font-[var(--font-heading)]">
-            {productCount}
-          </h3>
-        </div>
-        <div className="soft-card p-5">
-          <p className="text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">
-            Total orders
-          </p>
-          <h3 className="mt-3 text-3xl font-[var(--font-heading)]">
-            {orderCount}
-          </h3>
-        </div>
-        <div className="soft-card p-5">
-          <p className="text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">
-            Total revenue
-          </p>
-          <h3 className="mt-3 text-3xl font-[var(--font-heading)]">
-            {formatCurrency(totalRevenue)}
-          </h3>
-        </div>
-      </div>
-    </div>
-  );
+	return (
+		<div className="grid gap-6">
+			<div>
+				<p className="text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">
+					Overview
+				</p>
+				<h2 className="text-2xl font-[var(--font-heading)]">Dashboard</h2>
+				{dbUnavailable && (
+					<div className="mt-3">
+						<OfflineBanner message="Database is currently unreachable. Showing placeholder stats." />
+					</div>
+				)}
+			</div>
+			<div className="grid gap-4 md:grid-cols-3">
+				<div className="soft-card p-5">
+					<p className="text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">
+						Total products
+					</p>
+					<h3 className="mt-3 text-3xl font-[var(--font-heading)]">
+						{productCount}
+					</h3>
+				</div>
+				<div className="soft-card p-5">
+					<p className="text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">
+						Total orders
+					</p>
+					<h3 className="mt-3 text-3xl font-[var(--font-heading)]">
+						{orderCount}
+					</h3>
+				</div>
+				<div className="soft-card p-5">
+					<p className="text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">
+						Total revenue
+					</p>
+					<h3 className="mt-3 text-3xl font-[var(--font-heading)]">
+						{formatCurrency(totalRevenue)}
+					</h3>
+				</div>
+			</div>
+		</div>
+	);
 }
 
 function AdminDashboardSkeleton() {
-  return (
-    <div className="grid gap-6">
-      <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">Overview</p>
-        <h2 className="mt-2 text-2xl font-[var(--font-heading)]">Dashboard</h2>
-      </div>
-      <div className="grid gap-4 md:grid-cols-3">
-        {[...Array(3)].map((_, index) => (
-          <div key={index} className="soft-card p-5">
-            <div className="h-3 w-24 animate-pulse rounded bg-[var(--pp-border)] opacity-70" />
-            <div className="mt-4 h-8 w-20 animate-pulse rounded bg-[var(--pp-border)] opacity-70" />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+	return (
+		<div className="grid gap-6">
+			<div>
+				<p className="text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">Overview</p>
+				<h2 className="mt-2 text-2xl font-[var(--font-heading)]">Dashboard</h2>
+			</div>
+			<div className="grid gap-4 md:grid-cols-3">
+				{[...Array(3)].map((_, index) => (
+					<div key={index} className="soft-card p-5">
+						<div className="h-3 w-24 animate-pulse rounded bg-[var(--pp-border)] opacity-70" />
+						<div className="mt-4 h-8 w-20 animate-pulse rounded bg-[var(--pp-border)] opacity-70" />
+					</div>
+				))}
+			</div>
+		</div>
+	);
 }
 
 export default function AdminDashboard() {
-  return (
-    <Suspense fallback={<AdminDashboardSkeleton />}>
-      <AdminDashboardContent />
-    </Suspense>
-  );
+	return (
+		<Suspense fallback={<AdminDashboardSkeleton />}>
+			<AdminDashboardContent />
+		</Suspense>
+	);
 }

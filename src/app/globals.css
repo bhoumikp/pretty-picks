@@ -1,89 +1,89 @@
 @import "tailwindcss";
 
 :root {
-  --pp-white: #fcfbf9;
-  --pp-beige: #f4efe8;
-  --pp-gold: #c6a26a;
-  --pp-ink: #1f1b18;
-  --pp-muted: #6f6a63;
-  --pp-border: rgba(31, 27, 24, 0.12);
+	--pp-white: #fcfbf9;
+	--pp-beige: #f4efe8;
+	--pp-gold: #c6a26a;
+	--pp-ink: #1f1b18;
+	--pp-muted: #6f6a63;
+	--pp-border: rgba(31, 27, 24, 0.12);
 }
 
 @theme inline {
-  --color-background: var(--pp-white);
-  --color-foreground: var(--pp-ink);
+	--color-background: var(--pp-white);
+	--color-foreground: var(--pp-ink);
 }
 
 * {
-  box-sizing: border-box;
+	box-sizing: border-box;
 }
 
 html {
-  overflow-x: hidden;
+	overflow-x: hidden;
 }
 
 body {
-  background: var(--pp-white);
-  color: var(--pp-ink);
-  font-family: var(--font-body), ui-sans-serif, system-ui, -apple-system,
-    sans-serif;
-  overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-  user-select: none;
+	background: var(--pp-white);
+	color: var(--pp-ink);
+	font-family: var(--font-body), ui-sans-serif, system-ui, -apple-system,
+		sans-serif;
+	overflow-x: hidden;
+	-webkit-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
+	user-select: none;
 }
 
 .featured-carousel {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  -webkit-overflow-scrolling: touch;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+	-webkit-overflow-scrolling: touch;
 }
 
 .featured-carousel::-webkit-scrollbar {
-  display: none;
-  height: 0;
+	display: none;
+	height: 0;
 }
 
 input,
 textarea {
-  user-select: text;
+	user-select: text;
 }
 
 a {
-  color: inherit;
-  text-decoration: none;
+	color: inherit;
+	text-decoration: none;
 }
 
 button {
-  cursor: pointer;
+	cursor: pointer;
 }
 
 button:disabled {
-  cursor: not-allowed;
+	cursor: not-allowed;
 }
 
 .toast-progress {
-  animation-name: toast-progress;
-  animation-timing-function: linear;
-  animation-fill-mode: forwards;
+	animation-name: toast-progress;
+	animation-timing-function: linear;
+	animation-fill-mode: forwards;
 }
 
 @keyframes toast-progress {
-  from {
-    width: 100%;
-  }
-  to {
-    width: 0%;
-  }
+	from {
+		width: 100%;
+	}
+	to {
+		width: 0%;
+	}
 }
 
 @layer utilities {
-  @keyframes shimmer {
-    0% {
-      transform: translateX(-100%);
-    }
-    100% {
-      transform: translateX(100%);
-    }
-  }
+	@keyframes shimmer {
+		0% {
+			transform: translateX(-100%);
+		}
+		100% {
+			transform: translateX(100%);
+		}
+	}
 }

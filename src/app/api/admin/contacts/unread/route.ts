@@ -6,9 +6,9 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export async function GET() {
-  const session = await requireAdmin();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+	const session = await requireAdmin();
+	if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const total = await prisma.contact.count({ where: { readAt: null } });
-  return NextResponse.json({ total });
+	const total = await prisma.contact.count({ where: { readAt: null } });
+	return NextResponse.json({ total });
 }

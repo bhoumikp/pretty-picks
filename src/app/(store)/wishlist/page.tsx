@@ -1,9 +1,9 @@
 import WishlistClient from "@/components/wishlist-client";
 
 export const metadata = {
-  title: "Wishlist",
+	title: "Wishlist",
 };
 
 export default function WishlistPage() {
-  return <WishlistClient />;
+	return <WishlistClient />;
 }
