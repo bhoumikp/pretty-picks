@@ -21,6 +21,18 @@
 	.pp-scrollbar::-webkit-scrollbar-thumb:hover {
 		background: transparent;
 	}
+
+	.hero-carousel-track {
+		display: flex;
+	}
+
+	.hero-carousel-track::-webkit-scrollbar {
+		width: 0;
+		height: 0;
+		display: none;
+		background: transparent;
+	}
+
 	.page-shell {
 		max-width: 1760px;
 		margin-left: auto;
@@ -79,8 +91,8 @@
 		position: absolute;
 		inset: 0;
 		background: var(--pp-gold);
-		transform: translateX(0);
 		z-index: 0;
+		transform: translateX(0); /* Default state covered */
 	}
 
 	.btn-sweep:hover {
@@ -89,11 +101,11 @@
 	}
 
 	.btn-sweep:hover::before {
-		animation: btn-sweep-out 0.5s ease forwards;
+		animation: btn-sweep-out 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 	}
 
 	.btn-sweep:not(:hover)::before {
-		animation: btn-sweep-in 0.5s ease forwards;
+		animation: btn-sweep-in 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 	}
 
 	.btn-sweep-label {
@@ -172,7 +184,6 @@
 		animation: badge-pop 0.35s ease-out;
 	}
 
-	.storefront button:not(.whatsapp-fab),
 	.storefront .btn-primary,
 	.storefront .btn-outline {
 		border-radius: 0 !important;
@@ -300,6 +311,7 @@
 	}
 
 	@keyframes whatsapp-glow {
+
 		0%,
 		100% {
 			box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4),
@@ -313,6 +325,7 @@
 	}
 
 	@keyframes whatsapp-ring-pulse {
+
 		0%,
 		100% {
 			transform: scale(1);

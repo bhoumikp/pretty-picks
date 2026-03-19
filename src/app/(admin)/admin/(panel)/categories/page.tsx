@@ -97,6 +97,7 @@ export default async function AdminCategoriesPage({
 			slug: true;
 			image: true;
 			isActive: true;
+			_count: { select: { products: { where: { archivedAt: null } } } };
 			createdAt: true;
 			updatedAt: true;
 		};
@@ -110,6 +111,7 @@ export default async function AdminCategoriesPage({
 			isActive: true;
 			parentId: true;
 			parent: { select: { name: true } };
+			_count: { select: { products: { where: { archivedAt: null } } } };
 			createdAt: true;
 			updatedAt: true;
 		};
@@ -136,6 +138,7 @@ export default async function AdminCategoriesPage({
 						isActive: true,
 						parentId: true,
 						parent: { select: { name: true } },
+						_count: { select: { products: { where: { archivedAt: null } } } },
 						createdAt: true,
 						updatedAt: true,
 					},
@@ -163,6 +166,7 @@ export default async function AdminCategoriesPage({
 						slug: true,
 						image: true,
 						isActive: true,
+						_count: { select: { products: { where: { archivedAt: null } } } },
 						createdAt: true,
 						updatedAt: true,
 					},
@@ -183,6 +187,7 @@ export default async function AdminCategoriesPage({
 		slug: category.slug,
 		image: category.image ?? null,
 		isActive: category.isActive,
+		productCount: category._count.products,
 		createdAt: category.createdAt.toISOString(),
 		updatedAt: category.updatedAt.toISOString(),
 	}));
@@ -195,6 +200,7 @@ export default async function AdminCategoriesPage({
 		isActive: subcategory.isActive,
 		parentId: subcategory.parentId ?? null,
 		parentName: subcategory.parent?.name ?? null,
+		productCount: subcategory._count.products,
 		createdAt: subcategory.createdAt.toISOString(),
 		updatedAt: subcategory.updatedAt.toISOString(),
 	}));

@@ -18,6 +18,7 @@ const navIcons: Record<string, React.ReactElement> = {
 	Dashboard: <LayoutGrid className="h-4 w-4" />,
 	Products: <Boxes className="h-4 w-4" />,
 	Media: <ImageIcon className="h-4 w-4" />,
+	Banners: <LayoutGrid className="h-4 w-4" />,
 	Categories: <Layers className="h-4 w-4" />,
 	Orders: <ShoppingBag className="h-4 w-4" />,
 	"Audit Logs": <FileText className="h-4 w-4" />,
@@ -35,6 +36,7 @@ const adminLinks: AdminNavLink[] = [
 	{ href: "/admin/orders", label: "Orders" },
 	{ href: "/admin/products", label: "Products" },
 	{ href: "/admin/media", label: "Media" },
+	{ href: "/admin/banners", label: "Banners" },
 	{
 		href: "/admin/categories",
 		label: "Categories",

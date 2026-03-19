@@ -15,6 +15,7 @@ interface CategoryRow {
 	image?: string | null;
 	parentName?: string | null;
 	isActive: boolean;
+	productCount?: number;
 	createdAt: string;
 	updatedAt: string;
 }
@@ -69,7 +70,7 @@ function AdminCategoriesTable({
 		const index = sort.indexOf(key);
 		return index >= 0 ? index + 1 : null;
 	};
-	const columnCount = showParentColumn ? 8 : 7;
+	const columnCount = (showParentColumn ? 8 : 7) + 1;
 	const allSelected = categories.length > 0 && categories.every((category) => selectedIds.has(category.id));
 	const showSkeleton = isLoading && categories.length === 0;
 	const skeletonRows = Array.from({ length: Math.min(6, pageSize) }, (_, index) => index);
@@ -125,6 +126,7 @@ function AdminCategoriesTable({
 								)}
 							</button>
 						</th>
+						<th className="px-5 py-4">Products</th>
 						{showParentColumn && (
 							<th className="px-5 py-4">
 								<button
@@ -201,6 +203,9 @@ function AdminCategoriesTable({
 									</td>
 								)}
 								<td className="px-5 py-4">
+									<div className="h-3 w-8 rounded bg-[var(--pp-beige)]/70 animate-pulse" />
+								</td>
+								<td className="px-5 py-4">
 									<div className="h-12 w-16 rounded-sm bg-[var(--pp-beige)]/70 animate-pulse" />
 								</td>
 								<td className="px-5 py-4">
@@ -248,6 +253,9 @@ function AdminCategoriesTable({
 										{category.parentName ? highlightText(category.parentName, query) : "—"}
 									</td>
 								)}
+								<td className="px-5 py-4 font-mono text-xs tabular-nums text-[var(--pp-muted)]" data-label="Products">
+									{category.productCount ?? 0}
+								</td>
 								<td className="px-5 py-4" data-label="Image">
 									{category.image ? (
 										<div className="relative h-12 w-16 overflow-hidden rounded-sm bg-[var(--pp-beige)] cursor-pointer">

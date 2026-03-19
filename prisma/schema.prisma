@@ -114,3 +114,37 @@ model AuditLog {
 	@@index([action, createdAt])
 	@@index([createdAt])
 }
+
+model SiteSetting {
+	id                 String   @id @default("singleton")
+	storefrontLogoUrl  String?
+	storefrontMobileLogoUrl String?
+	storefrontLogoAlt  String?
+	launchDate         DateTime?
+	showCountdown      Boolean  @default(false)
+	createdAt          DateTime @default(now())
+	updatedAt          DateTime @updatedAt
+}
+
+model HeroBanner {
+	id        String   @id @default(cuid())
+	eyebrow  String?
+	title     String
+	subtitle  String?
+	image     String
+	mobileImage String?
+	link      String?
+	ctaLabel String?
+	priority  Int      @default(0)
+	isActive  Boolean  @default(true)
+	createdAt DateTime @default(now())
+	updatedAt DateTime @updatedAt
+}
+
+model Waitlist {
+	id         String   @id @default(cuid())
+	email      String   @unique
+	couponCode String?  @unique
+	isUsed     Boolean  @default(false)
+	createdAt  DateTime @default(now())
+}

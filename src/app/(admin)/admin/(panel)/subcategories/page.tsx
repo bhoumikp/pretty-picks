@@ -71,6 +71,7 @@ export default async function AdminSubcategoriesPage({
 				isActive: true;
 				parentId: true;
 				parent: { select: { name: true } };
+				_count: { select: { products: { where: { archivedAt: null } } } };
 				createdAt: true;
 				updatedAt: true;
 			};
@@ -96,6 +97,7 @@ export default async function AdminSubcategoriesPage({
 					isActive: true,
 					parentId: true,
 					parent: { select: { name: true } },
+					_count: { select: { products: { where: { archivedAt: null } } } },
 					createdAt: true,
 					updatedAt: true,
 				},
@@ -123,6 +125,7 @@ export default async function AdminSubcategoriesPage({
 		isActive: subcategory.isActive,
 		parentId: subcategory.parentId ?? null,
 		parentName: subcategory.parent?.name ?? null,
+		productCount: subcategory._count.products,
 		createdAt: subcategory.createdAt.toISOString(),
 		updatedAt: subcategory.updatedAt.toISOString(),
 	}));

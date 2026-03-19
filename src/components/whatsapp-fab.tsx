@@ -25,7 +25,7 @@ export default function WhatsAppFab() {
 			onClick={handleClick}
 			aria-label="Chat on WhatsApp"
 			title="Chat on WhatsApp"
-			className="whatsapp-fab fixed bottom-20 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg transition-all duration-300 hover:scale-110 active:scale-95 md:bottom-6 md:right-6"
+			className="whatsapp-fab fixed bottom-24 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg transition-all duration-300 hover:scale-110 active:scale-95 lg:bottom-6 lg:right-6"
 			style={{ touchAction: "manipulation" }}
 		>
 			<svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">

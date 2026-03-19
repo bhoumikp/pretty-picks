@@ -49,6 +49,46 @@ export default function RootLayout({
 				className={`${headingFont.variable} ${bodyFont.variable} antialiased`}
 				suppressHydrationWarning
 			>
+				<script
+					type="application/ld+json"
+					dangerouslySetInnerHTML={{
+						__html: JSON.stringify({
+							"@context": "https://schema.org",
+							"@graph": [
+								{
+									"@type": "Organization",
+									"@id": `https://${siteConfig.domain}/#organization`,
+									name: siteConfig.name,
+									url: `https://${siteConfig.domain}`,
+									description: siteConfig.description,
+									contactPoint: {
+										"@type": "ContactPoint",
+										email: siteConfig.supportEmail,
+										contactType: "customer service",
+									},
+									sameAs: [siteConfig.instagramUrl],
+								},
+								{
+									"@type": "WebSite",
+									"@id": `https://${siteConfig.domain}/#website`,
+									url: `https://${siteConfig.domain}`,
+									name: siteConfig.name,
+									publisher: {
+										"@id": `https://${siteConfig.domain}/#organization`,
+									},
+									potentialAction: {
+										"@type": "SearchAction",
+										target: {
+											"@type": "EntryPoint",
+											urlTemplate: `https://${siteConfig.domain}/products?q={search_term_string}`,
+										},
+										"query-input": "required name=search_term_string",
+									},
+								},
+							],
+						}),
+					}}
+				/>
 				<Providers>{children}</Providers>
 			</body>
 		</html>

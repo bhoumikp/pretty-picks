@@ -3,6 +3,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import ProductGrid from "@/components/product-grid";
 import ProductCard from "@/components/product-card";
+import { getSiteSettings } from "@/lib/site-settings";
 import type { CategorySummary, ProductSummary } from "@/types/catalog";
 
 export const revalidate = 60;
@@ -21,13 +22,24 @@ export default async function CategoriesPage({ searchParams }: CategoriesPagePro
 	let categories: CategorySummary[] = [];
 	let selectedProducts: ProductSummary[] = [];
 	let selectedCategoryName = "Categories";
+	let isLaunched = true;
 
 	try {
-		categories = await prisma.category.findMany({
-			where: { archivedAt: null, isActive: true },
-			orderBy: { name: "asc" },
-			select: { id: true, name: true, slug: true, image: true },
-		});
+		const [categoriesData, settings] = await Promise.all([
+			prisma.category.findMany({
+				where: { archivedAt: null, isActive: true },
+				orderBy: { name: "asc" },
+				select: { id: true, name: true, slug: true, image: true },
+			}),
+			getSiteSettings(),
+		]);
+
+		categories = categoriesData;
+		
+		if (settings?.showCountdown && settings?.launchDate) {
+			isLaunched = new Date() >= new Date(settings.launchDate);
+		}
+
 		const fallbackSlug = selectedSlug || categories[0]?.slug;
 		if (fallbackSlug) {
 			const selectedCategory = await prisma.category.findFirst({
@@ -53,7 +65,7 @@ export default async function CategoriesPage({ searchParams }: CategoriesPagePro
 			});
 		}
 	} catch (error) {
-		console.error("CategoriesPage: Prisma unavailable, rendering empty list.", error);
+		console.error("CategoriesPage: Data fetching failed.", error);
 	}
 
 	return (
@@ -116,11 +128,11 @@ export default async function CategoriesPage({ searchParams }: CategoriesPagePro
 							<>
 								<div className="grid grid-cols-2 gap-3 md:hidden">
 									{selectedProducts.map((product) => (
-										<ProductCard key={product.id} product={product} />
+										<ProductCard key={product.id} product={product} isLaunchMode={!isLaunched} />
 									))}
 								</div>
 								<div className="hidden md:block">
-									<ProductGrid products={selectedProducts} />
+									<ProductGrid products={selectedProducts} isLaunchMode={!isLaunched} />
 								</div>
 							</>
 						)}

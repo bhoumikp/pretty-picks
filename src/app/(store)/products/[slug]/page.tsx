@@ -8,6 +8,7 @@ import ProductGallery from "@/components/product-gallery";
 import ProductOrderActions from "@/components/product-order-actions";
 import { siteConfig } from "@/data/site";
 import { primaryImage } from "@/lib/images";
+import { getSiteSettings } from "@/lib/site-settings";
 
 interface ProductPageProps {
 	params: Promise<{ slug: string }>;
@@ -19,16 +20,30 @@ export async function generateMetadata({ params }: ProductPageProps) {
 	const resolvedParams = await params;
 	const product = await prisma.product.findFirst({
 		where: { slug: resolvedParams.slug, archivedAt: null, isActive: true },
-		select: { name: true, description: true },
+		select: { name: true, description: true, price: true, images: true },
 	});
 
 	if (!product) {
 		return { title: "Product" };
 	}
 
+	const image = primaryImage(product.images);
+	const description = `${product.name} — ₹${product.price}. ${product.description ?? "Shop at Pretty Picks for affordable artificial jewellery."}`;
+
 	return {
 		title: product.name,
-		description: product.description,
+		description,
+		openGraph: {
+			title: `${product.name} | Pretty Picks`,
+			description,
+			...(image && { images: [{ url: image, width: 800, height: 1000, alt: product.name }] }),
+		},
+		twitter: {
+			card: "summary_large_image",
+			title: `${product.name} | Pretty Picks`,
+			description,
+			...(image && { images: [image] }),
+		},
 	};
 }
 
@@ -69,30 +84,111 @@ export default async function ProductPage({ params }: ProductPageProps) {
 		};
 	});
 
+	// If no related products, fetch "Most Loved" products as fallback
+	let fallbackProducts: any[] = [];
+	if (sanitizedRelated.length === 0) {
+		const mostLoved = await prisma.product.findMany({
+			where: { archivedAt: null, isActive: true },
+			take: 4,
+			orderBy: { createdAt: "desc" }, // Simple fallback for now
+			include: { category: true },
+		});
+		fallbackProducts = mostLoved.map((item) => {
+			const isFCatVisible = item.category && item.category.isActive && !item.category.archivedAt;
+			return { ...item, category: isFCatVisible ? item.category : null };
+		});
+	}
+	
+	const siteSettings = await getSiteSettings();
+	const isLaunched = siteSettings?.launchDate ? new Date() >= siteSettings.launchDate : true;
+	const isLaunchMode = Boolean(siteSettings?.showCountdown && !isLaunched);
+
 	const productUrl = `https://${siteConfig.domain}/products/${product.slug}`;
 
+	const productJsonLd = {
+		"@context": "https://schema.org",
+		"@type": "Product",
+		name: product.name,
+		description: product.description,
+		image: primaryImage(product.images),
+		url: productUrl,
+		brand: {
+			"@type": "Brand",
+			name: siteConfig.name,
+		},
+		offers: {
+			"@type": "Offer",
+			price: product.price,
+			priceCurrency: "INR",
+			availability: product.stock > 0
+				? "https://schema.org/InStock"
+				: "https://schema.org/OutOfStock",
+			seller: {
+				"@type": "Organization",
+				name: siteConfig.name,
+			},
+		},
+		...(product.material && { material: product.material }),
+		...(categoryName && { category: categoryName }),
+	};
+
 	return (
-		<div className="page-shell section-pad pb-24 md:pb-12">
-			<div className="grid gap-10 md:grid-cols-[1.05fr_0.95fr]">
+		<>
+			<script
+				type="application/ld+json"
+				dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+			/>
+			<div className="page-shell section-pad pb-24 md:pb-12">
+			{/* Mobile Breadcrumbs & Back */}
+			<div className="mb-6 flex items-center justify-between md:hidden">
+				<Breadcrumbs
+					items={[
+						{ label: "Home", href: "/" },
+						...(categorySlug
+							? [{ label: categoryName, href: `/category/${categorySlug}` }]
+							: [{ label: categoryName }]),
+						{ label: product.name },
+					]}
+				/>
+				<Link
+					href="/products"
+					className="group flex items-center gap-2 text-[10px] uppercase tracking-widest text-[var(--pp-muted)] transition-colors hover:text-[var(--pp-gold)]"
+				>
+					<span className="transition-transform group-hover:-translate-x-1">←</span>
+					<span>Back</span>
+				</Link>
+			</div>
+
+			<div className="grid gap-10 md:grid-cols-[4.5fr_5.5fr] lg:gap-16">
 				<ProductGallery images={product.images} name={product.name} />
 				<div>
-					<Breadcrumbs
-						items={[
-							{ label: "Home", href: "/" },
-							...(categorySlug
-								? [{ label: categoryName, href: `/category/${categorySlug}` }]
-								: [{ label: categoryName }]),
-							{ label: product.name },
-						]}
-					/>
-					<p className="eyebrow">{categoryName}</p>
-					<h1 className="mt-4 font-[var(--font-heading)] text-4xl font-medium tracking-tight text-[var(--pp-ink)]">
+					{/* Desktop Breadcrumbs & Back */}
+					<div className="mb-6 hidden items-center justify-between md:flex">
+						<Breadcrumbs
+							items={[
+								{ label: "Home", href: "/" },
+								...(categorySlug
+									? [{ label: categoryName, href: `/category/${categorySlug}` }]
+									: [{ label: categoryName }]),
+								{ label: product.name },
+							]}
+						/>
+						<Link
+							href="/products"
+							className="group flex items-center gap-2 text-[10px] uppercase tracking-widest text-[var(--pp-muted)] transition-colors hover:text-[var(--pp-gold)]"
+						>
+							<span className="transition-transform group-hover:-translate-x-1">←</span>
+							<span>Back</span>
+						</Link>
+					</div>
+					<p className="eyebrow tracking-[0.2em]">{categoryName}</p>
+					<h1 className="mt-4 font-[var(--font-heading)] text-4xl font-light leading-tight tracking-tight text-[var(--pp-ink)] md:text-5xl lg:text-6xl">
 						{product.name}
 					</h1>
-					<p className="mt-3 text-lg font-semibold text-[var(--pp-ink)]">
+					<p className="mt-3 text-2xl font-light tracking-tight text-[var(--pp-gold)]">
 						{formatCurrency(product.price)}
 					</p>
-					<p className="mt-4 text-base leading-relaxed text-[var(--pp-muted)]">
+					<p className="mt-6 text-sm leading-relaxed text-[var(--pp-muted)] md:text-base lg:max-w-md">
 						{product.description}
 					</p>
 					<div className="mt-6 grid gap-3 rounded-2xl border border-[var(--pp-border)] bg-white p-4 text-sm">
@@ -121,29 +217,35 @@ export default async function ProductPage({ params }: ProductPageProps) {
 						price={product.price}
 						productUrl={productUrl}
 						image={primaryImage(product.images)}
+						isLaunchMode={isLaunchMode}
 					/>
-					<div className="mt-6">
-						<Link href="/products" className="btn-outline text-sm">
-							Back to products
-						</Link>
-					</div>
 				</div>
 			</div>
 
-			<section className="mt-16">
-				<div className="mb-6 flex items-end justify-between">
-					<div>
-						<p className="section-kicker">Related</p>
-						<h2 className="section-title">Similar picks</h2>
+			{(sanitizedRelated.length > 0 || fallbackProducts.length > 0) && (
+				<section className="mt-10 border-t border-[var(--pp-border)] pt-12">
+					<div className="mb-10 flex items-end justify-between">
+						<div>
+							<p className="section-kicker">
+								{sanitizedRelated.length > 0 ? "Related" : "Discover more"}
+							</p>
+							<h2 className="section-title">
+								{sanitizedRelated.length > 0 ? "Similar picks" : "Most loved pieces"}
+							</h2>
+						</div>
+						{sanitizedRelated.length > 0 && categorySlug && (
+							<Link href={`/category/${categorySlug}`} className="text-sm font-medium text-[var(--pp-gold)] hover:underline">
+								View category
+							</Link>
+						)}
 					</div>
-					{categorySlug && (
-						<Link href={`/category/${categorySlug}`} className="text-sm text-[var(--pp-gold)]">
-							View category
-						</Link>
-					)}
-				</div>
-				<ProductGrid products={sanitizedRelated} />
-			</section>
+					<ProductGrid 
+						products={sanitizedRelated.length > 0 ? sanitizedRelated : fallbackProducts} 
+						isLaunchMode={isLaunchMode}
+					/>
+				</section>
+			)}
 		</div>
+		</>
 	);
 }

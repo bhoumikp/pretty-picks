@@ -45,7 +45,7 @@ export default function MobileBottomNav() {
 	const isCategories = pathname === "/categories" || (isHome && hash === "#categories");
 
 	return (
-		<div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--pp-border)] bg-white/95 backdrop-blur md:hidden">
+		<div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--pp-border)] bg-white/95 backdrop-blur lg:hidden">
 			<div className="flex items-center justify-around py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
 				<Link
 					href="/"

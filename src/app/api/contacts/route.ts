@@ -19,6 +19,11 @@ export async function POST(request: Request) {
 		return NextResponse.json({ error: "Missing fields" }, { status: 400 });
 	}
 
+	// Security: Prevent oversized payloads
+	if (body.name.length > 100 || body.email.length > 254 || body.message.length > 2000) {
+		return NextResponse.json({ error: "Input too long" }, { status: 400 });
+	}
+
 	const contact = await prisma.contact.create({
 		data: {
 			name: body.name,

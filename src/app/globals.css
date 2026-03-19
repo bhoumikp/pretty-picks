@@ -33,6 +33,48 @@ body {
 	user-select: none;
 }
 
+/* ── Ticker/Marquee animation ── */
+@keyframes ticker {
+	0% {
+		transform: translateX(0);
+	}
+
+	100% {
+		transform: translateX(-33.333%);
+	}
+}
+
+/* ── Custom Storefront Scrollbars (WebKit) ── */
+::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+
+::-webkit-scrollbar-track {
+	background: rgba(31, 27, 24, 0.04);
+}
+
+::-webkit-scrollbar-thumb {
+	background: rgba(198, 162, 106, 0.6);
+	/* increased from 0.4 */
+	border-radius: 100px;
+	border: 2.5px solid var(--pp-white);
+	background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: rgba(198, 162, 106, 0.85);
+	/* increased from 0.7 */
+}
+
+/* Firefox scrollbar support */
+@supports (scrollbar-width: thin) {
+	* {
+		/* scrollbar-width: thin; */
+		/* scrollbar-color: rgba(198, 162, 106, 0.6) transparent; */
+	}
+}
+
 .featured-carousel {
 	scrollbar-width: none;
 	-ms-overflow-style: none;
@@ -72,6 +114,7 @@ button:disabled {
 	from {
 		width: 100%;
 	}
+
 	to {
 		width: 0%;
 	}
@@ -82,8 +125,57 @@ button:disabled {
 		0% {
 			transform: translateX(-100%);
 		}
+
 		100% {
 			transform: translateX(100%);
+		}
+	}
+
+	.animate-in {
+		animation-duration: 500ms;
+		animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+		animation-fill-mode: both;
+	}
+
+	.fade-in {
+		animation-name: fade-in;
+	}
+
+	.slide-in-from-bottom-4 {
+		animation-name: slide-in-from-bottom-4;
+	}
+
+	.zoom-in-95 {
+		animation-name: zoom-in-95;
+	}
+
+	@keyframes fade-in {
+		from {
+			opacity: 0;
+		}
+
+		to {
+			opacity: 1;
+		}
+	}
+
+	@keyframes slide-in-from-bottom-4 {
+		from {
+			transform: translateY(1rem);
+		}
+
+		to {
+			transform: translateY(0);
+		}
+	}
+
+	@keyframes zoom-in-95 {
+		from {
+			transform: scale(0.95);
+		}
+
+		to {
+			transform: scale(1);
 		}
 	}
 }

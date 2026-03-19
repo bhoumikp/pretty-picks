@@ -10,7 +10,8 @@ export type AnalyticsEvent =
 	| "remove_from_cart"
 	| "cart_qty_increase"
 	| "cart_qty_decrease"
-	| "load_more_products";
+	| "load_more_products"
+	| "waitlist_signup";
 
 export function trackEvent(event: AnalyticsEvent, payload?: Record<string, unknown>) {
 	if (typeof window === "undefined") return;

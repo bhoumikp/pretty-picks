@@ -11,7 +11,7 @@ export interface ToastItem {
 
 interface ToastStackProps {
 	toasts: ToastItem[];
-	onClose: (id: string) => void;
+	onClose?: (id: string) => void;
 }
 
 export default function ToastStack({ toasts, onClose }: ToastStackProps) {
@@ -25,7 +25,7 @@ export default function ToastStack({ toasts, onClose }: ToastStackProps) {
 					message={toast.message}
 					type={toast.type}
 					durationMs={toast.durationMs}
-					onClose={() => onClose(toast.id)}
+					onClose={() => onClose?.(toast.id)}
 				/>
 			))}
 		</div>

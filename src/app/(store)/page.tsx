@@ -6,20 +6,60 @@ import ProductCard from "@/components/product-card";
 import CategoryCard from "@/components/category-card";
 import { primaryImage } from "@/lib/images";
 import type { CategorySummary, ProductSummary } from "@/types/catalog";
+import HeroCarousel from "@/components/hero-carousel";
+import ScrollReveal from "@/components/scroll-reveal";
+import CountdownTimer from "@/components/countdown-timer";
+import CelebrationTrigger from "@/components/celebration-trigger";
+import { getSiteSettings } from "@/lib/site-settings";
+
+type HeroBannerRow = {
+	id: string;
+	eyebrow: string | null;
+	title: string;
+	subtitle: string | null;
+	image: string;
+	mobileImage: string | null;
+	link: string | null;
+	ctaLabel: string | null;
+	priority: number;
+	isActive: boolean;
+	createdAt: Date;
+	updatedAt: Date;
+};
+
+const hasRenderableBannerContent = (banner: HeroBannerRow) =>
+	Boolean(banner.title?.trim()) && Boolean(banner.image?.trim());
 
 export const revalidate = 60;
 export const metadata = {
-	title: "Home",
-	description: "Affordable artificial jewellery curated for Instagram-ready looks.",
+	title: "Pretty Picks | Affordable Artificial Jewellery Online India",
+	description: "Shop trendy, affordable artificial jewellery at Pretty Picks. Earrings, necklaces, rings & bangles starting ₹99. Anti-tarnish, hypoallergenic & Instagram-ready styles. Free shipping across India.",
+	keywords: [
+		"artificial jewellery",
+		"affordable jewellery online",
+		"fashion jewellery India",
+		"earrings online",
+		"necklace set online",
+		"rings for women",
+		"bangles online India",
+		"anti-tarnish jewellery",
+		"Pretty Picks",
+		"jewellery under 199",
+		"trendy jewellery",
+	],
 };
 
 export default async function HomePage() {
 	let mostLovedProducts: ProductSummary[] = [];
 	let categories: CategorySummary[] = [];
 	let under199: ProductSummary[] = [];
+	let banners: HeroBannerRow[] = [];
+	let serializedBanners: any[] = [];
+	let siteSettings: any = null;
+	let isLaunched = false;
 
 	try {
-		const [lovedResult, categoriesResult, underResult] = await Promise.allSettled([
+		const results = await Promise.allSettled([
 			prisma.product.findMany({
 				where: { archivedAt: null, isActive: true },
 				take: 4,
@@ -57,7 +97,34 @@ export default async function HomePage() {
 					images: true,
 				},
 			}),
+			prisma.heroBanner.findMany({
+				where: { isActive: true },
+				orderBy: { priority: "desc" },
+			}),
+			getSiteSettings(),
 		]);
+
+		const [lovedResult, categoriesResult, underResult, bannersResult, settingsResult] = results;
+
+		if (settingsResult.status === "fulfilled") {
+			siteSettings = settingsResult.value;
+			if (siteSettings?.launchDate) {
+				const now = new Date();
+				const target = new Date(siteSettings.launchDate);
+				isLaunched = now >= target;
+			} else {
+				isLaunched = true;
+			}
+		} else {
+			isLaunched = true;
+		}
+
+		if (categoriesResult.status === "rejected") {
+			console.error("HomePage: Categories failed to load.", categoriesResult.reason);
+			throw new Error("Failed to load critical shop data.");
+		}
+		categories = categoriesResult.value;
+
 		if (lovedResult.status === "fulfilled") {
 			mostLovedProducts = lovedResult.value.map((product) => {
 				const { _count, ...rest } = product;
@@ -72,188 +139,255 @@ export default async function HomePage() {
 				};
 			});
 		}
-		if (categoriesResult.status === "fulfilled") {
-			categories = categoriesResult.value;
-		}
+
 		if (underResult.status === "fulfilled") {
 			under199 = underResult.value;
 		}
+
+		if (bannersResult.status === "fulfilled") {
+			banners = bannersResult.value.filter(hasRenderableBannerContent);
+		}
+
+		// Serialize Date objects for client components
+		serializedBanners = banners.map(b => ({
+			...b,
+			createdAt: b.createdAt.toISOString(),
+			updatedAt: b.updatedAt.toISOString(),
+		} as any));
+
+		// Fallback banner if DB is empty or unreachable
+		if (!serializedBanners.length) {
+			const now = new Date().toISOString();
+			serializedBanners = [
+				{
+					id: "default-1",
+					eyebrow: "Pretty Picks",
+					title: "Everyday *Elegance,* Every Piece",
+					subtitle: "Curated artificial jewellery that's lightweight, anti-tarnish, and crafted for your everyday.",
+					image: "/images/hero.svg",
+					mobileImage: null,
+					link: "/products",
+					ctaLabel: "Shop Collection",
+					priority: 0,
+					isActive: true,
+					createdAt: now,
+					updatedAt: now,
+				},
+				{
+					id: "default-2",
+					eyebrow: "Fresh Drop",
+					title: "Fresh *Drops* for Your Reel",
+					subtitle: "Discover our latest collection of Instagram-ready styles that sparkle under every light.",
+					image: "/images/hero.svg",
+					mobileImage: null,
+					link: "/products?sort=newest",
+					ctaLabel: "View New Arrivals",
+					priority: 0,
+					isActive: true,
+					createdAt: now,
+					updatedAt: now,
+				}
+			];
+		}
 	} catch (error) {
-		console.error("HomePage: Prisma unavailable, rendering empty lists.", error);
+		console.error("HomePage: Data fetching failed.", error);
+		// Minimal fallback for server-side error
+		return <div className="p-20 text-center">Unable to load storefront. Please try refreshing.</div>;
 	}
 
 	return (
-		<div className="bg-white">
-			<section id="categories" className="section-pad">
-				<div className="page-shell">
-					<div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
-						<div className="fade-in">
-							<p className="eyebrow">Pretty Picks</p>
-							<h1 className="mt-3 text-3xl font-semibold tracking-tight text-[var(--pp-ink)] sm:text-4xl md:text-5xl">
-								Affordable Jewellery for Everyday Elegance
-							</h1>
-							<p className="mt-4 text-base leading-relaxed text-[var(--pp-muted)]">
-								Curated pieces that elevate your everyday style. Instagram-friendly,
-								lightweight, and designed to shine on every reel.
-							</p>
-							<div className="mt-6 flex flex-wrap gap-3">
-								<Link href="/products" className="btn-primary btn-sweep text-sm">
-									<span className="btn-sweep-label">Shop Collection</span>
-								</Link>
-								<Link href="/products" className="btn-secondary text-sm">
-									View Best Sellers
-								</Link>
-							</div>
-							<div className="mt-8 grid grid-cols-1 gap-3 text-xs text-[var(--pp-muted)] sm:grid-cols-2">
-								{trustBadges.map((badge) => (
-									<span
-										key={badge}
-										className="rounded-xl border border-[var(--pp-border)] bg-[var(--pp-beige)] px-3 py-2"
-									>
-										{badge}
+		<>
+			<CelebrationTrigger isLaunched={isLaunched} launchDate={siteSettings?.launchDate?.toISOString() ?? null} />
+			{/* ── Conditional Hero Logic ── */}
+			{siteSettings?.showCountdown && !isLaunched ? (
+				<section className="relative h-[calc(100vh-4rem)] min-h-[500px] w-full overflow-hidden md:h-[calc(100vh-5rem)] bg-[var(--pp-beige)]">
+					{/* Overlays (Matching Carousel) */}
+					<div className="absolute inset-0 bg-gradient-to-r from-[var(--pp-beige)]/95 via-[var(--pp-beige)]/60 to-transparent" />
+					<div className="absolute inset-0 bg-gradient-to-t from-[var(--pp-beige)]/50 via-transparent to-transparent" />
+
+					{/* Background Decor (Matching Carousel Special Slide style) */}
+					<div className="absolute top-0 left-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--pp-gold)]/10 blur-[120px]" />
+
+					<div className="page-shell relative z-10 flex h-full flex-col items-center justify-center">
+						<div className="max-w-4xl px-4 sm:px-0 text-center mx-auto">
+							<ScrollReveal animation="fade-up" delay={100}>
+								{/* Brand Logo */}
+								{siteSettings.storefrontLogoUrl && (
+									<div className="mb-6 flex justify-center">
+										<Image
+											src={siteSettings.storefrontLogoUrl}
+											alt={siteSettings.storefrontLogoAlt || "Pretty Picks"}
+											width={240}
+											height={120}
+											className="h-16 w-auto object-contain sm:h-20"
+										/>
+									</div>
+								)}
+
+								<div className="mb-3 flex items-center justify-center gap-3">
+									<span className="h-px w-6 sm:w-10 bg-[var(--pp-gold)]" />
+									<span className="eyebrow text-[var(--pp-gold)]">Coming Soon</span>
+									<span className="h-px w-6 sm:w-10 bg-[var(--pp-gold)]" />
+								</div>
+
+								<h1 className="font-[var(--font-heading)] text-2xl font-light leading-tight tracking-tight text-[var(--pp-ink)] sm:text-5xl md:text-6xl lg:text-7xl">
+									<span className="block mb-1">
+										{"Our Full *Collection*".split("*").map((part, i) => (
+											i % 2 === 1 ? <span key={i} className="italic text-[var(--pp-gold)]">{part}</span> : part
+										))}
 									</span>
-								))}
-							</div>
-						</div>
-						<div className="relative">
-							<div className="relative h-[360px] overflow-hidden rounded-[28px] bg-[var(--pp-beige)] shadow-sm sm:h-[420px] lg:h-[520px]">
-								<Image
-									src="/images/hero.svg"
-									alt="Pretty Picks jewellery"
-									fill
-									className="object-cover"
-									priority
-								/>
-								<div className="absolute inset-0 bg-gradient-to-tr from-black/5 via-transparent to-white/40" />
-							</div>
-							<div className="absolute -bottom-6 right-6 hidden rounded-2xl border border-[var(--pp-border)] bg-white/90 p-4 text-xs shadow-lg backdrop-blur md:block">
-								<p className="font-semibold">Instagram-first pieces</p>
-								<p className="mt-1 text-[var(--pp-muted)]">
-									Lightweight, anti-tarnish, and reel-ready.
+									<span className="block">Arrives Soon</span>
+								</h1>
+
+								<p className="mx-auto mt-4 max-w-lg text-[10px] leading-relaxed text-[var(--pp-muted)] sm:text-sm md:text-base">
+									Be among the first to explore our signature anti-tarnish jewelry. Join the waitlist for exclusive early-access perks.
 								</p>
-							</div>
+							</ScrollReveal>
+
+							<ScrollReveal animation="fade-up" delay={300}>
+								<div className="mt-10 flex justify-center">
+									<CountdownTimer targetDate={siteSettings.launchDate!.toISOString()} />
+								</div>
+							</ScrollReveal>
 						</div>
 					</div>
-				</div>
-			</section>
+				</section>
+			) : (
+				<HeroCarousel banners={serializedBanners} trustBadges={trustBadges} />
+			)}
 
+			{/* ── Most Loved (Fade Up) ── */}
 			<section className="section-pad">
 				<div className="page-shell">
-					<div className="mb-6">
-						<div>
+					<ScrollReveal animation="fade-up">
+						<div className="mb-6">
 							<p className="eyebrow">Most loved</p>
 							<h2 className="section-title">Most loved</h2>
 						</div>
-					</div>
-					<div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
-						{mostLovedProducts.map((product) => (
-							<ProductCard key={product.id} product={product} />
-						))}
-					</div>
-					<div className="mt-6 flex justify-center">
+						<div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
+							{mostLovedProducts.map((product) => (
+								<ProductCard
+									key={product.id}
+									product={product}
+									isLaunchMode={!isLaunched}
+								/>
+							))}
+						</div>
+						<div className="mt-6 flex justify-center">
 							<Link href="/products?sort=popular" className="btn-primary btn-sweep text-sm">
 								<span className="btn-sweep-label">View All</span>
 							</Link>
-					</div>
+						</div>
+					</ScrollReveal>
 				</div>
 			</section>
 
+			{/* ── Categories (Slide Horizontal) ── */}
 			<section className="section-pad">
 				<div className="page-shell">
-					<div className="mb-6">
-						<p className="eyebrow">Categories</p>
-						<h2 className="section-title">Shop by mood</h2>
-					</div>
-					<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-						{categories.map((category) => (
-							<CategoryCard key={category.id} category={category} />
-						))}
-					</div>
+					<ScrollReveal animation="slide-left">
+						<div className="mb-6">
+							<p className="eyebrow">Categories</p>
+							<h2 className="section-title">Shop by mood</h2>
+						</div>
+						<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+							{categories.map((category) => (
+								<CategoryCard key={category.id} category={category} />
+							))}
+						</div>
+					</ScrollReveal>
 				</div>
 			</section>
 
+			{/* ── Under ₹199 (Zoom In) ── */}
 			<section className="section-pad">
 				<div className="page-shell">
-					<div className="rounded-xl bg-[var(--pp-beige)] p-8 shadow-sm md:p-10">
-						<div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-							<div>
-								<p className="eyebrow">Shop under ₹199</p>
-								<h2 className="mt-3 text-3xl font-[var(--font-heading)]">
-									Small price, big sparkle
-								</h2>
-								<p className="mt-3 text-sm text-[var(--pp-muted)]">
-									Budget-friendly picks that still look premium. Perfect for gifting
-									or styling every day.
-								</p>
-								<div className="mt-5">
-									<Link href="/products?price=199" className="btn-primary btn-sweep text-sm">
-										<span className="btn-sweep-label">Explore Collection</span>
-									</Link>
+					<ScrollReveal animation="zoom-in">
+						<div className="rounded-xl bg-[var(--pp-beige)] p-8 shadow-sm md:p-10">
+							<div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+								<div className="max-w-md">
+									<p className="eyebrow">Shop under ₹199</p>
+									<h2 className="mt-3 text-3xl font-[var(--font-heading)]">
+										Small price, big sparkle
+									</h2>
+									<p className="mt-3 text-sm text-[var(--pp-muted)]">
+										Budget-friendly picks that still look premium. Perfect for gifting
+										or styling every day.
+									</p>
+									<div className="mt-5">
+										<Link href="/products?price=199" className="btn-primary btn-sweep text-sm">
+											<span className="btn-sweep-label">Explore Collection</span>
+										</Link>
+									</div>
+								</div>
+								<div className="grid grid-cols-3 gap-3 sm:gap-4">
+									{under199.map((product) => (
+										<Link
+											key={product.id}
+											href={`/products/${product.slug}`}
+											className="rounded-xl bg-white p-3 shadow-sm transition-all duration-300 hover:shadow-lg"
+										>
+											<div className="relative aspect-square overflow-hidden rounded-lg bg-[var(--pp-beige)]">
+												<Image
+													src={primaryImage(product.images)}
+													alt={product.name}
+													fill
+													className="object-cover"
+												/>
+											</div>
+											<div className="mt-2 text-center">
+												<p className="text-[10px] sm:text-xs font-semibold truncate">{product.name}</p>
+												<p className="text-[9px] sm:text-xs text-[var(--pp-muted)]">₹{product.price}</p>
+											</div>
+										</Link>
+									))}
 								</div>
 							</div>
-							<div className="grid gap-4 md:grid-cols-3">
-								{under199.map((product) => (
-									<Link
-										key={product.id}
-										href={`/products/${product.slug}`}
-										className="rounded-xl bg-white p-4 shadow-sm transition-all duration-300 hover:shadow-lg"
-									>
-										<div className="relative aspect-square overflow-hidden rounded-xl bg-[var(--pp-beige)]">
-											<Image
-												src={primaryImage(product.images)}
-												alt={product.name}
-												fill
-												className="object-cover transition-all duration-300 hover:scale-105"
-											/>
-										</div>
-										<div className="mt-3">
-											<p className="text-sm font-semibold">{product.name}</p>
-											<p className="text-xs text-[var(--pp-muted)]">₹{product.price}</p>
-										</div>
-									</Link>
-								))}
-							</div>
 						</div>
-					</div>
+					</ScrollReveal>
 				</div>
 			</section>
 
+			{/* ── Instagram (Fade In Staggered) ── */}
 			<section className="section-pad">
-				<div className="page-shell">
-					<div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-						<div>
-							<p className="eyebrow">Instagram</p>
-							<h2 className="section-title">Follow us on Instagram</h2>
-						</div>
-						<a
-							href={siteConfig.instagramUrl}
-							target="_blank"
-							rel="noreferrer"
-							className="btn-secondary text-sm w-full sm:w-auto text-center"
-						>
-							View Instagram
-						</a>
-					</div>
-					<div className="mt-2 grid grid-cols-2 gap-3 sm:pp-scrollbar sm:flex sm:gap-4 sm:overflow-x-auto sm:pb-3 sm:pt-1 sm:-mx-1 sm:px-1 sm:snap-x sm:snap-mandatory">
-						{instagramPosts.map((post) => (
+				<div className="page-shell text-center sm:text-left">
+					<ScrollReveal animation="fade-in">
+						<div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+							<div>
+								<p className="eyebrow">Instagram</p>
+								<h2 className="section-title">Follow us on Instagram</h2>
+							</div>
 							<a
-								key={post.postUrl}
-								href={post.postUrl}
+								href={siteConfig.instagramUrl}
 								target="_blank"
 								rel="noreferrer"
-								className="group relative block aspect-square w-full overflow-hidden bg-[var(--pp-beige)] sm:w-[160px] sm:shrink-0 sm:snap-start md:w-[180px] lg:w-[200px]"
+								className="btn-secondary text-sm w-full sm:w-auto text-center"
 							>
-								<Image
-									src={post.imageUrl}
-									alt={post.alt}
-									fill
-									className="object-cover transition-transform duration-300 group-hover:scale-105"
-								/>
+								View Instagram
 							</a>
-						))}
-					</div>
+						</div>
+						<div className="mt-2 grid grid-cols-2 gap-3 sm:pp-scrollbar sm:flex sm:gap-4 sm:overflow-x-auto sm:pb-3 sm:pt-1 sm:-mx-1 sm:px-1 sm:snap-x sm:snap-mandatory">
+							{instagramPosts.map((post, idx) => (
+								<ScrollReveal key={post.postUrl} animation="stagger" delay={idx * 100} className="w-full sm:w-auto">
+									<a
+										href={post.postUrl}
+										target="_blank"
+										rel="noreferrer"
+										className="group relative block aspect-square w-full overflow-hidden bg-[var(--pp-beige)] sm:w-[160px] sm:shrink-0 sm:snap-start md:w-[180px] lg:w-[200px]"
+									>
+										<Image
+											src={post.imageUrl}
+											alt={post.alt}
+											fill
+											className="object-cover transition-transform duration-300 group-hover:scale-105"
+										/>
+									</a>
+								</ScrollReveal>
+							))}
+						</div>
+					</ScrollReveal>
 				</div>
 			</section>
-		</div>
+		</>
 	);
 }

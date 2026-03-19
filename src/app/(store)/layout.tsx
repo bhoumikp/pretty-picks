@@ -1,14 +1,42 @@
 import "../storefront.css";
+import { prisma } from "@/lib/prisma";
+import { getSiteSettings } from "@/lib/site-settings";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import MobileBottomNav from "@/components/mobile-bottom-nav";
 import WhatsAppFab from "@/components/whatsapp-fab";
 
-export default function StoreLayout({ children }: { children: React.ReactNode }) {
+export default async function StoreLayout({ children }: { children: React.ReactNode }) {
+	const [categories, settings] = await Promise.all([
+		prisma.category.findMany({
+			where: {
+				isActive: true,
+				parentId: null,
+				archivedAt: null,
+			},
+			orderBy: {
+				name: "asc",
+			},
+			select: {
+				id: true,
+				name: true,
+				slug: true,
+			},
+		}),
+		getSiteSettings(),
+	]);
+
 	return (
 		<div className="storefront flex flex-col min-h-screen">
-			<Navbar />
-			<main className="flex-grow pt-20 md:pt-24">{children}</main>
+			<Navbar
+				categories={categories}
+				branding={{
+					storefrontLogoUrl: settings?.storefrontLogoUrl ?? null,
+					storefrontMobileLogoUrl: settings?.storefrontMobileLogoUrl ?? null,
+					storefrontLogoAlt: settings?.storefrontLogoAlt ?? null,
+				}}
+			/>
+			<main className="flex-grow pt-16 md:pt-20">{children}</main>
 			<Footer />
 			<MobileBottomNav />
 			<WhatsAppFab />

@@ -25,6 +25,16 @@ export async function POST(request: Request) {
 			return NextResponse.json({ error: "No items provided" }, { status: 400 });
 		}
 
+		// Security: Prevent spam with item and quantity limits
+		if (body.items.length > 20) {
+			return NextResponse.json({ error: "Too many items" }, { status: 400 });
+		}
+		for (const item of body.items) {
+			if (!item.productId || typeof item.quantity !== "number" || item.quantity < 1 || item.quantity > 100) {
+				return NextResponse.json({ error: "Invalid item data" }, { status: 400 });
+			}
+		}
+
 		// Securely fetch live prices from the database
 		const products = await prisma.product.findMany({
 			where: { id: { in: body.items.map((i) => i.productId) } },

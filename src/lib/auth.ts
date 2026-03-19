@@ -18,9 +18,9 @@ export const authOptions: NextAuthOptions = {
 				const user = await prisma.user.findUnique({
 					where: { email: credentials.email },
 				});
-				if (!user) throw new Error("EMAIL_NOT_FOUND");
+				if (!user) throw new Error("INVALID_CREDENTIALS");
 				const isValid = await compare(credentials.password, user.password);
-				if (!isValid) throw new Error("INVALID_PASSWORD");
+				if (!isValid) throw new Error("INVALID_CREDENTIALS");
 				return { id: user.id, email: user.email };
 			},
 		}),

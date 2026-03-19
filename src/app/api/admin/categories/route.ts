@@ -69,7 +69,12 @@ export async function GET(request: Request) {
 			where,
 			take: pageSize,
 			skip: (page - 1) * pageSize,
-			include: { parent: true },
+			include: {
+				parent: true,
+				_count: {
+					select: { products: { where: { archivedAt: null } } },
+				},
+			},
 		}),
 		prisma.category.count({ where }),
 	]);
@@ -82,6 +87,7 @@ export async function GET(request: Request) {
 		parentId: category.parentId ?? null,
 		parentName: category.parent?.name ?? null,
 		isActive: category.isActive,
+		productCount: category._count.products,
 		createdAt: category.createdAt.toISOString(),
 		updatedAt: category.updatedAt.toISOString(),
 	}));

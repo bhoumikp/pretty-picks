@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { navigation, siteConfig } from "@/data/site";
 import SearchBar from "@/components/search-bar";
+import { ChevronDown } from "lucide-react";
 import Image from "next/image";
 import { primaryImage } from "@/lib/images";
 import { getCart } from "@/lib/cart";
@@ -22,7 +23,16 @@ const subscribe = (callback: () => void) => {
 const getSnapshot = () =>
 	getCart().reduce((sum, item) => sum + item.quantity, 0);
 
-export default function Navbar() {
+interface NavbarProps {
+	categories?: Array<{ id: string; name: string; slug: string }>;
+	branding?: {
+		storefrontLogoUrl?: string | null;
+		storefrontMobileLogoUrl?: string | null;
+		storefrontLogoAlt?: string | null;
+	};
+}
+
+export default function Navbar({ categories = [], branding }: NavbarProps) {
 	const [open, setOpen] = useState(false);
 	const [searchOpen, setSearchOpen] = useState(false);
 	const [searchResults, setSearchResults] = useState<
@@ -32,14 +42,28 @@ export default function Navbar() {
 	const [searchLoading, setSearchLoading] = useState(false);
 	const pathname = usePathname();
 	const cartCount = useSyncExternalStore(subscribe, getSnapshot, () => 0);
-	const navLinks = [
-		{ href: "/", label: "Home" },
-		{ href: "/products", label: "Shop" },
-		{ href: "/category/earrings", label: "Earrings" },
-		{ href: "/category/necklaces", label: "Necklaces" },
-		{ href: "/category/rings", label: "Rings" },
-		{ href: "/category/bangles", label: "Bangles" },
-	];
+
+	const { visibleLinks, overflowLinks } = useMemo(() => {
+		const base = [
+			{ href: "/", label: "Home" },
+			{ href: "/products", label: "Shop" },
+		];
+		const categoryLinks = categories.map((cat) => ({
+			href: `/category/${cat.slug}`,
+			label: cat.name,
+		}));
+		
+		const all = [...base, ...categoryLinks];
+		// If 8 or fewer links total, show them all.
+		// Otherwise, show 7 plus a "More" dropdown.
+		if (all.length <= 8) {
+			return { visibleLinks: all, overflowLinks: [] };
+		}
+		return {
+			visibleLinks: all.slice(0, 7),
+			overflowLinks: all.slice(7),
+		};
+	}, [categories]);
 
 	const isActive = (href: string) => {
 		if (href === "/products") return pathname === "/products" || pathname.startsWith("/products/");
@@ -56,6 +80,11 @@ export default function Navbar() {
 		};
 	}, [open, searchOpen]);
 
+	const logoAlt = branding?.storefrontLogoAlt?.trim() || siteConfig.name;
+	const hasLogo = Boolean(branding?.storefrontLogoUrl);
+	const mobileLogoUrl = branding?.storefrontMobileLogoUrl || branding?.storefrontLogoUrl || null;
+	const hasMobileLogo = Boolean(mobileLogoUrl);
+
 	return (
 		<header className="fixed top-0 z-50 w-full border-b border-[var(--pp-border)] bg-[var(--pp-white)]/85 backdrop-blur">
 			<div className="page-shell relative flex items-center justify-between py-4 md:py-5">
@@ -71,16 +100,46 @@ export default function Navbar() {
 							<path d="M5 17H19" strokeWidth="1.8" strokeLinecap="round" />
 						</svg>
 					</button>
-					<Link href="/" className="hidden font-[var(--font-heading)] text-2xl tracking-tight lg:block">
-						{siteConfig.name}
+					<Link href="/" className="hidden lg:block">
+						{hasLogo ? (
+							<div className="flex items-center gap-3">
+								<div className="relative h-12 w-12 overflow-hidden rounded-full">
+									<Image
+										src={branding?.storefrontLogoUrl ?? ""}
+										alt={logoAlt}
+										fill
+										sizes="48px"
+										className="object-cover rounded-full"
+									/>
+								</div>
+								<span className="font-[var(--font-heading)] text-2xl tracking-tight">{siteConfig.name}</span>
+							</div>
+						) : (
+							<span className="font-[var(--font-heading)] text-2xl tracking-tight">{siteConfig.name}</span>
+						)}
 					</Link>
 				</div>
 				<div className="absolute inset-0 flex items-center justify-center lg:hidden pointer-events-none">
 					<Link
 						href="/"
-						className="pointer-events-auto font-[var(--font-heading)] text-xl tracking-tight"
+						className="pointer-events-auto"
 					>
-						{siteConfig.name}
+						{hasMobileLogo ? (
+							<div className="flex items-center gap-2">
+								<div className="relative h-9 w-9 overflow-hidden rounded-full">
+									<Image
+										src={mobileLogoUrl ?? ""}
+										alt={logoAlt}
+										fill
+										sizes="36px"
+										className="object-cover rounded-full"
+									/>
+								</div>
+								<span className="font-[var(--font-heading)] text-xl tracking-tight">{siteConfig.name}</span>
+							</div>
+						) : (
+							<span className="font-[var(--font-heading)] text-xl tracking-tight">{siteConfig.name}</span>
+						)}
 					</Link>
 				</div>
 				<div className="flex items-center gap-2 lg:hidden">
@@ -99,7 +158,7 @@ export default function Navbar() {
 					</button>
 				</div>
 				<nav className="hidden items-center gap-8 text-sm lg:flex">
-					{navLinks.map((item) => (
+					{visibleLinks.map((item) => (
 						<Link
 							key={item.href}
 							href={item.href}
@@ -112,6 +171,29 @@ export default function Navbar() {
 							{item.label}
 						</Link>
 					))}
+
+					{overflowLinks.length > 0 && (
+						<div className="group relative py-1">
+							<button className="flex items-center gap-1 font-semibold uppercase tracking-[0.2em] text-[var(--pp-ink)] transition hover:text-[var(--pp-gold)]">
+								More <ChevronDown className="h-4 w-4 transition-transform group-hover:rotate-180" />
+							</button>
+							<div className="invisible absolute top-full left-0 z-50 w-48 origin-top-left -translate-y-2 bg-white p-2 opacity-0 shadow-xl transition-all duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 border border-[var(--pp-border)]">
+								<div className="grid gap-1">
+									{overflowLinks.map((link) => (
+										<Link
+											key={link.href}
+											href={link.href}
+											className={`px-4 py-2 text-xs font-semibold uppercase tracking-[0.15em] transition hover:bg-[var(--pp-beige)] hover:text-[var(--pp-gold)] ${
+												isActive(link.href) ? "text-[var(--pp-gold)]" : "text-[var(--pp-ink)]"
+											}`}
+										>
+											{link.label}
+										</Link>
+									))}
+								</div>
+							</div>
+						</div>
+					)}
 				</nav>
 				<div className="hidden items-center gap-3 lg:flex">
 					<SearchBar className="w-56 xl:w-64" />
@@ -264,7 +346,7 @@ export default function Navbar() {
 						</div>
 						<div className="mt-6 flex-1 overflow-y-auto px-6 pb-10 text-sm">
 							<div className="space-y-4">
-								{[{ href: "/", label: "Home" }, ...navLinks, ...navigation.slice(7, 9)].map(
+								{[...visibleLinks, ...overflowLinks, ...navigation.slice(7, 9)].map(
 									(item, index) => (
 										<Link
 											key={`${item.href}-${item.label}-${index}`}

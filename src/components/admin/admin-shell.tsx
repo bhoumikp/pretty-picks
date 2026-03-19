@@ -14,6 +14,7 @@ const pageTitles = [
 	{ href: "/admin", label: "Dashboard" },
 	{ href: "/admin/products", label: "Products" },
 	{ href: "/admin/media", label: "Media" },
+	{ href: "/admin/banners", label: "Banners" },
 	{ href: "/admin/categories", label: "Categories" },
 	{ href: "/admin/subcategories", label: "Sub Categories" },
 	{ href: "/admin/orders", label: "Orders" },
