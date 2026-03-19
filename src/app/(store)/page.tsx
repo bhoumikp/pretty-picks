@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { instagramPosts, siteConfig, trustBadges } from "@/data/site";
+import { siteConfig, trustBadges } from "@/data/site";
 import ProductCard from "@/components/product-card";
 import CategoryCard from "@/components/category-card";
 import { primaryImage } from "@/lib/images";
@@ -53,6 +53,7 @@ export default async function HomePage() {
 	let mostLovedProducts: ProductSummary[] = [];
 	let categories: CategorySummary[] = [];
 	let under199: ProductSummary[] = [];
+	let galleryProducts: { id: string; name: string; slug: string; images: any }[] = [];
 	let banners: HeroBannerRow[] = [];
 	let serializedBanners: any[] = [];
 	let siteSettings: any = null;
@@ -102,9 +103,15 @@ export default async function HomePage() {
 				orderBy: { priority: "desc" },
 			}),
 			getSiteSettings(),
+			prisma.product.findMany({
+				where: { archivedAt: null, isActive: true },
+				take: 6,
+				orderBy: { createdAt: "desc" },
+				select: { id: true, name: true, slug: true, images: true },
+			}),
 		]);
 
-		const [lovedResult, categoriesResult, underResult, bannersResult, settingsResult] = results;
+		const [lovedResult, categoriesResult, underResult, bannersResult, settingsResult, galleryResult] = results;
 
 		if (settingsResult.status === "fulfilled") {
 			siteSettings = settingsResult.value;
@@ -146,6 +153,10 @@ export default async function HomePage() {
 
 		if (bannersResult.status === "fulfilled") {
 			banners = bannersResult.value.filter(hasRenderableBannerContent);
+		}
+
+		if (galleryResult.status === "fulfilled") {
+			galleryProducts = galleryResult.value;
 		}
 
 		// Serialize Date objects for client components
@@ -200,7 +211,7 @@ export default async function HomePage() {
 			<CelebrationTrigger isLaunched={isLaunched} launchDate={siteSettings?.launchDate?.toISOString() ?? null} />
 			{/* ── Conditional Hero Logic ── */}
 			{siteSettings?.showCountdown && !isLaunched ? (
-				<section className="relative h-[calc(100vh-4rem)] min-h-[500px] w-full overflow-hidden md:h-[calc(100vh-5rem)] bg-[var(--pp-beige)]">
+				<section className="relative h-[70vh] min-h-[420px] w-full overflow-hidden md:h-[calc(100vh-5rem)] md:min-h-[500px] bg-[var(--pp-beige)]">
 					{/* Overlays (Matching Carousel) */}
 					<div className="absolute inset-0 bg-gradient-to-r from-[var(--pp-beige)]/95 via-[var(--pp-beige)]/60 to-transparent" />
 					<div className="absolute inset-0 bg-gradient-to-t from-[var(--pp-beige)]/50 via-transparent to-transparent" />
@@ -219,7 +230,7 @@ export default async function HomePage() {
 											alt={siteSettings.storefrontLogoAlt || "Pretty Picks"}
 											width={240}
 											height={120}
-											className="h-16 w-auto object-contain sm:h-20"
+											className="h-24 w-auto object-contain sm:h-28 md:h-20"
 										/>
 									</div>
 								)}
@@ -348,46 +359,50 @@ export default async function HomePage() {
 				</div>
 			</section>
 
-			{/* ── Instagram (Fade In Staggered) ── */}
-			<section className="section-pad">
-				<div className="page-shell text-center sm:text-left">
-					<ScrollReveal animation="fade-in">
-						<div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-							<div>
-								<p className="eyebrow">Instagram</p>
-								<h2 className="section-title">Follow us on Instagram</h2>
+			{/* ── Instagram / Gallery (Fade In Staggered) ── */}
+			{galleryProducts.length > 0 && (
+				<section className="section-pad">
+					<div className="page-shell text-center sm:text-left">
+						<ScrollReveal animation="fade-in">
+							<div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+								<div>
+									<p className="eyebrow">Instagram</p>
+									<h2 className="section-title">Shop our looks</h2>
+								</div>
+								<a
+									href={siteConfig.instagramUrl}
+									target="_blank"
+									rel="noreferrer"
+									className="btn-secondary text-sm w-full sm:w-auto text-center"
+								>
+									Follow @prettypicksby__rj
+								</a>
 							</div>
-							<a
-								href={siteConfig.instagramUrl}
-								target="_blank"
-								rel="noreferrer"
-								className="btn-secondary text-sm w-full sm:w-auto text-center"
-							>
-								View Instagram
-							</a>
-						</div>
-						<div className="mt-2 grid grid-cols-2 gap-3 sm:pp-scrollbar sm:flex sm:gap-4 sm:overflow-x-auto sm:pb-3 sm:pt-1 sm:-mx-1 sm:px-1 sm:snap-x sm:snap-mandatory">
-							{instagramPosts.map((post, idx) => (
-								<ScrollReveal key={post.postUrl} animation="stagger" delay={idx * 100} className="w-full sm:w-auto">
-									<a
-										href={post.postUrl}
-										target="_blank"
-										rel="noreferrer"
-										className="group relative block aspect-square w-full overflow-hidden bg-[var(--pp-beige)] sm:w-[160px] sm:shrink-0 sm:snap-start md:w-[180px] lg:w-[200px]"
-									>
-										<Image
-											src={post.imageUrl}
-											alt={post.alt}
-											fill
-											className="object-cover transition-transform duration-300 group-hover:scale-105"
-										/>
-									</a>
-								</ScrollReveal>
-							))}
-						</div>
-					</ScrollReveal>
-				</div>
-			</section>
+							<div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+								{galleryProducts.map((product, idx) => (
+									<ScrollReveal key={product.id} animation="stagger" delay={idx * 100} className="w-full">
+										<Link
+											href={`/products/${product.slug}`}
+											className="group relative block aspect-square w-full overflow-hidden bg-[var(--pp-beige)]"
+										>
+											<Image
+												src={primaryImage(product.images)}
+												alt={product.name}
+												fill
+												className="object-cover transition-transform duration-300 group-hover:scale-105"
+											/>
+											<div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/20" />
+											<div className="absolute inset-x-0 bottom-0 translate-y-full bg-gradient-to-t from-black/60 to-transparent px-3 py-2 transition-transform duration-300 group-hover:translate-y-0">
+												<p className="text-[10px] font-semibold text-white truncate">{product.name}</p>
+											</div>
+										</Link>
+									</ScrollReveal>
+								))}
+							</div>
+						</ScrollReveal>
+					</div>
+				</section>
+			)}
 		</>
 	);
 }
