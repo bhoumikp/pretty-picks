@@ -213,6 +213,7 @@ export default function AdminSettings({ initialBranding, initialSettings }: Admi
 					storefrontLogoUrl: branding.storefrontLogoUrl,
 					storefrontMobileLogoUrl: branding.storefrontMobileLogoUrl,
 					storefrontLogoAlt: branding.storefrontLogoAlt,
+					whatsappNumber: branding.whatsappNumber,
 				}),
 			});
 			if (!response.ok) {
@@ -227,12 +228,13 @@ export default function AdminSettings({ initialBranding, initialSettings }: Admi
 				storefrontLogoUrl: string | null;
 				storefrontMobileLogoUrl: string | null;
 				storefrontLogoAlt: string | null;
+				whatsappNumber: string | null;
 			};
 			setBranding({
 				storefrontLogoUrl: data.storefrontLogoUrl ?? "",
 				storefrontMobileLogoUrl: data.storefrontMobileLogoUrl ?? "",
 				storefrontLogoAlt: data.storefrontLogoAlt ?? "",
-				whatsappNumber: branding.whatsappNumber,
+				whatsappNumber: data.whatsappNumber ?? "",
 			});
 			setBrandingStatus("success");
 			setBrandingMessage("Storefront branding updated.");

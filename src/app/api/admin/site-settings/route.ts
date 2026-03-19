@@ -19,45 +19,43 @@ export async function PATCH(request: Request) {
 		showCountdown?: boolean;
 	};
 
-	const nextLogoUrl = body.storefrontLogoUrl?.trim() || null;
-	const nextMobileLogoUrl = body.storefrontMobileLogoUrl?.trim() || null;
-	const nextLogoAlt = body.storefrontLogoAlt?.trim() || null;
-	const nextWhatsAppNumber = body.whatsappNumber?.trim() || null;
-	const nextLaunchDate = body.launchDate ? new Date(body.launchDate) : null;
-	const nextShowCountdown = body.showCountdown ?? false;
+	// Only build update payload for fields explicitly sent
+	const updateData: Record<string, unknown> = {};
+
+	if ("storefrontLogoUrl" in body) updateData.storefrontLogoUrl = body.storefrontLogoUrl?.trim() || null;
+	if ("storefrontMobileLogoUrl" in body) updateData.storefrontMobileLogoUrl = body.storefrontMobileLogoUrl?.trim() || null;
+	if ("storefrontLogoAlt" in body) updateData.storefrontLogoAlt = body.storefrontLogoAlt?.trim() || null;
+	if ("whatsappNumber" in body) updateData.whatsappNumber = body.whatsappNumber?.trim() || null;
+	if ("launchDate" in body) updateData.launchDate = body.launchDate ? new Date(body.launchDate) : null;
+	if ("showCountdown" in body) updateData.showCountdown = body.showCountdown ?? false;
 
 	const existing = await prisma.siteSetting.findUnique({
 		where: { id: SITE_SETTINGS_ID },
 	});
 
-	const changed =
-		(existing?.storefrontLogoUrl ?? null) !== nextLogoUrl ||
-		(existing?.storefrontMobileLogoUrl ?? null) !== nextMobileLogoUrl ||
-		(existing?.storefrontLogoAlt ?? null) !== nextLogoAlt ||
-		(existing?.whatsappNumber ?? null) !== nextWhatsAppNumber ||
-		(existing?.launchDate?.toISOString() ?? null) !== (nextLaunchDate?.toISOString() ?? null) ||
-		(existing?.showCountdown ?? false) !== nextShowCountdown;
-
 	const settings = await prisma.siteSetting.upsert({
 		where: { id: SITE_SETTINGS_ID },
-		update: {
-			storefrontLogoUrl: nextLogoUrl,
-			storefrontMobileLogoUrl: nextMobileLogoUrl,
-			storefrontLogoAlt: nextLogoAlt,
-			whatsappNumber: nextWhatsAppNumber,
-			launchDate: nextLaunchDate,
-			showCountdown: nextShowCountdown,
-		},
+		update: updateData,
 		create: {
 			id: SITE_SETTINGS_ID,
-			storefrontLogoUrl: nextLogoUrl,
-			storefrontMobileLogoUrl: nextMobileLogoUrl,
-			storefrontLogoAlt: nextLogoAlt,
-			whatsappNumber: nextWhatsAppNumber,
-			launchDate: nextLaunchDate,
-			showCountdown: nextShowCountdown,
+			storefrontLogoUrl: (updateData.storefrontLogoUrl as string) ?? null,
+			storefrontMobileLogoUrl: (updateData.storefrontMobileLogoUrl as string) ?? null,
+			storefrontLogoAlt: (updateData.storefrontLogoAlt as string) ?? null,
+			whatsappNumber: (updateData.whatsappNumber as string) ?? null,
+			launchDate: (updateData.launchDate as Date) ?? null,
+			showCountdown: (updateData.showCountdown as boolean) ?? false,
 		},
 	});
+
+	// Check if anything actually changed
+	const changed = existing
+		? Object.keys(updateData).some((key) => {
+				const oldVal = (existing as Record<string, unknown>)[key];
+				const newVal = updateData[key];
+				if (oldVal instanceof Date && newVal instanceof Date) return oldVal.toISOString() !== newVal.toISOString();
+				return oldVal !== newVal;
+			})
+		: true;
 
 	if (changed) {
 		await logAudit({
@@ -65,14 +63,7 @@ export async function PATCH(request: Request) {
 			action: "UPDATE",
 			entity: "SITE_SETTINGS",
 			entityId: settings.id,
-			metadata: {
-				storefrontLogoUrl: nextLogoUrl,
-				storefrontMobileLogoUrl: nextMobileLogoUrl,
-				storefrontLogoAlt: nextLogoAlt,
-				whatsappNumber: nextWhatsAppNumber,
-				launchDate: nextLaunchDate,
-				showCountdown: nextShowCountdown,
-			},
+			metadata: updateData,
 			request,
 		});
 	}
