@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { requireAdmin } from "@/lib/admin";
 import { logAudit } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
@@ -58,12 +59,19 @@ export async function PATCH(request: Request) {
 		: true;
 
 	if (changed) {
+		const auditMetadata: Prisma.InputJsonObject = Object.fromEntries(
+			Object.entries(updateData).map(([key, value]) => [
+				key,
+				value instanceof Date ? value.toISOString() : value === undefined ? null : value,
+			])
+		);
+
 		await logAudit({
 			actorId: session.user.id,
 			action: "UPDATE",
 			entity: "SITE_SETTINGS",
 			entityId: settings.id,
-			metadata: updateData,
+			metadata: auditMetadata,
 			request,
 		});
 	}
