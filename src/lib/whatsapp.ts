@@ -1,8 +1,8 @@
 import { siteConfig } from "@/data/site";
 
-export const buildWhatsAppLink = (message: string) => {
+export const buildWhatsAppLink = (message: string, whatsappNumber?: string) => {
 	const text = encodeURIComponent(message);
-	return `https://wa.me/${siteConfig.whatsappNumber}?text=${text}`;
+	return `https://wa.me/${whatsappNumber || siteConfig.whatsappNumber}?text=${text}`;
 };
 
 /**
@@ -18,8 +18,8 @@ function isMobileDevice(): boolean {
  * On mobile: uses location.href for direct app launch (no blank tab).
  * On desktop: opens a new tab (WhatsApp Web).
  */
-export function openWhatsApp(message: string): void {
-	const link = buildWhatsAppLink(message);
+export function openWhatsApp(message: string, whatsappNumber?: string): void {
+	const link = buildWhatsAppLink(message, whatsappNumber);
 	if (isMobileDevice()) {
 		window.location.href = link;
 	} else {

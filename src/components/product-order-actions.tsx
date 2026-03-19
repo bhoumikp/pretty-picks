@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { openWhatsApp } from "@/lib/whatsapp";
 import { trackEvent } from "@/lib/analytics";
 import { getCart, setCartItemQuantity } from "@/lib/cart";
+import { useStorefrontSettings } from "@/components/storefront/storefront-settings-provider";
 
 interface ProductOrderActionsProps {
 	id: string;
@@ -22,6 +23,7 @@ export default function ProductOrderActions({
 	image,
 	isLaunchMode = false,
 }: ProductOrderActionsProps) {
+	const { whatsappNumber } = useStorefrontSettings();
 	const [quantity, setQuantity] = useState(1);
 	const [isInCart, setIsInCart] = useState(false);
 	const [added, setAdded] = useState(false);
@@ -52,7 +54,7 @@ export default function ProductOrderActions({
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ items: [{ productId: id, quantity }], source: "product" }),
 		}).catch(() => { });
-		openWhatsApp(message);
+		openWhatsApp(message, whatsappNumber);
 	};
 
 	return (
@@ -104,6 +106,17 @@ export default function ProductOrderActions({
 					<span className="btn-sweep-label">
 						{added ? "Successfully Added" : isInCart ? "In Bag" : isLaunchMode ? "Launching Soon" : "Add to Bag"}
 					</span>
+				</button>
+				<button
+					type="button"
+					className={`h-12 rounded-2xl bg-[#25D366] px-6 text-[11px] font-bold uppercase tracking-[0.15em] text-white shadow-sm transition-all hover:bg-[#1fba59] active:scale-[0.99] sm:flex-initial ${isLaunchMode ? "cursor-not-allowed opacity-50" : ""}`}
+					disabled={isLaunchMode}
+					onClick={() => {
+						if (isLaunchMode) return;
+						handleWhatsAppClick();
+					}}
+				>
+					Order on WhatsApp
 				</button>
 			</div>
 

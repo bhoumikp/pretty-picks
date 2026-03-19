@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { siteConfig } from "@/data/site";
 
 export const SITE_SETTINGS_ID = "singleton";
 
@@ -7,6 +8,7 @@ export interface SiteSettings {
 	storefrontLogoUrl: string | null;
 	storefrontMobileLogoUrl: string | null;
 	storefrontLogoAlt: string | null;
+	whatsappNumber: string | null;
 	launchDate: Date | null;
 	showCountdown: boolean;
 	createdAt: Date;
@@ -22,4 +24,8 @@ export async function getSiteSettings(): Promise<SiteSettings | null> {
 		console.error("Site settings fetch failed:", error);
 		return null;
 	}
+}
+
+export function getResolvedWhatsAppNumber(settings?: Pick<SiteSettings, "whatsappNumber"> | null) {
+	return settings?.whatsappNumber?.trim() || siteConfig.whatsappNumber;
 }

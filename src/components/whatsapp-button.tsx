@@ -1,6 +1,7 @@
 "use client";
 
 import { openWhatsApp } from "@/lib/whatsapp";
+import { useStorefrontSettings } from "@/components/storefront/storefront-settings-provider";
 
 interface WhatsAppButtonProps {
 	message: string;
@@ -13,9 +14,10 @@ export default function WhatsAppButton({
 	label = "Order on WhatsApp",
 	floating = false,
 }: WhatsAppButtonProps) {
+	const { whatsappNumber } = useStorefrontSettings();
 	return (
 		<button
-			onClick={() => openWhatsApp(message)}
+			onClick={() => openWhatsApp(message, whatsappNumber)}
 			className={
 				floating
 					? "fixed bottom-20 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg ring-1 ring-white/70 transition-all duration-300 hover:scale-105 md:bottom-6 md:right-6"

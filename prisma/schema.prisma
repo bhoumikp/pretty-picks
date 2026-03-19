@@ -120,6 +120,7 @@ model SiteSetting {
 	storefrontLogoUrl  String?
 	storefrontMobileLogoUrl String?
 	storefrontLogoAlt  String?
+	whatsappNumber     String?
 	launchDate         DateTime?
 	showCountdown      Boolean  @default(false)
 	createdAt          DateTime @default(now())

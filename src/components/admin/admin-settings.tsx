@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { Check, Search } from "lucide-react";
-import { buildFieldErrors, focusFirstInvalid, validateMatch, validateMinLength, validateRequired } from "@/lib/validation";
+import { buildFieldErrors, focusFirstInvalid, validateMatch, validateMinLength, validatePhone, validateRequired } from "@/lib/validation";
 import { RequiredMark } from "@/components/admin/admin-form-helpers";
 import ToastStack from "@/components/ui/toast-stack";
 import AdminMediaViewer from "@/components/admin/admin-media-viewer";
@@ -13,6 +13,7 @@ interface AdminSettingsProps {
 		storefrontLogoUrl: string;
 		storefrontMobileLogoUrl: string;
 		storefrontLogoAlt: string;
+		whatsappNumber: string;
 	};
 	initialSettings: {
 		launchDate: string | null;
@@ -36,6 +37,8 @@ export default function AdminSettings({ initialBranding, initialSettings }: Admi
 	const [message, setMessage] = useState("");
 	const [brandingStatus, setBrandingStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
 	const [brandingMessage, setBrandingMessage] = useState("");
+	const [whatsappStatus, setWhatsappStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
+	const [whatsappMessage, setWhatsappMessage] = useState("");
 	const [launchStatus, setLaunchStatus] = useState<"idle" | "saving" | "success" | "error">("idle");
 	const [launchMessage, setLaunchMessage] = useState("");
 	const [showCurrent, setShowCurrent] = useState(false);
@@ -64,6 +67,7 @@ export default function AdminSettings({ initialBranding, initialSettings }: Admi
 		storefrontLogoUrl?: string;
 		storefrontMobileLogoUrl?: string;
 		storefrontLogoAlt?: string;
+		whatsappNumber?: string;
 	}>({});
 	const clearFieldError = (field: keyof typeof fieldErrors) => {
 		setFieldErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev));
@@ -174,7 +178,7 @@ export default function AdminSettings({ initialBranding, initialSettings }: Admi
 		setBrandingMessage("");
 		setBrandingErrors({});
 
-		const nextErrors = buildFieldErrors<"storefrontLogoAlt">([
+		const nextErrors = buildFieldErrors<"storefrontLogoAlt" | "whatsappNumber">([
 			{
 				key: "storefrontLogoAlt",
 				error:
@@ -183,13 +187,21 @@ export default function AdminSettings({ initialBranding, initialSettings }: Admi
 						? { field: "Logo alt text", message: "Logo alt text is required when a logo is set." }
 						: null,
 			},
+			{
+				key: "whatsappNumber",
+				error: branding.whatsappNumber.trim() ? validatePhone(branding.whatsappNumber) : null,
+				message: "Please enter a valid WhatsApp mobile number.",
+			},
 		]);
 
 		if (Object.keys(nextErrors).length > 0) {
 			setBrandingStatus("error");
 			setBrandingMessage(Object.values(nextErrors)[0] ?? "Please fix the highlighted fields.");
 			setBrandingErrors(nextErrors);
-			focusFirstInvalid(nextErrors, [{ key: "storefrontLogoAlt", selector: "#storefront-logo-alt" }]);
+			focusFirstInvalid(nextErrors, [
+				{ key: "storefrontLogoAlt", selector: "#storefront-logo-alt" },
+				{ key: "whatsappNumber", selector: "#storefront-whatsapp-number" },
+			]);
 			return;
 		}
 
@@ -198,8 +210,9 @@ export default function AdminSettings({ initialBranding, initialSettings }: Admi
 				method: "PATCH",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
-					...branding,
-					...launchSettings,
+					storefrontLogoUrl: branding.storefrontLogoUrl,
+					storefrontMobileLogoUrl: branding.storefrontMobileLogoUrl,
+					storefrontLogoAlt: branding.storefrontLogoAlt,
 				}),
 			});
 			if (!response.ok) {
@@ -214,17 +227,12 @@ export default function AdminSettings({ initialBranding, initialSettings }: Admi
 				storefrontLogoUrl: string | null;
 				storefrontMobileLogoUrl: string | null;
 				storefrontLogoAlt: string | null;
-				launchDate: string | null;
-				showCountdown: boolean;
 			};
 			setBranding({
 				storefrontLogoUrl: data.storefrontLogoUrl ?? "",
 				storefrontMobileLogoUrl: data.storefrontMobileLogoUrl ?? "",
 				storefrontLogoAlt: data.storefrontLogoAlt ?? "",
-			});
-			setLaunchSettings({
-				launchDate: data.launchDate,
-				showCountdown: data.showCountdown,
+				whatsappNumber: branding.whatsappNumber,
 			});
 			setBrandingStatus("success");
 			setBrandingMessage("Storefront branding updated.");
@@ -246,8 +254,8 @@ export default function AdminSettings({ initialBranding, initialSettings }: Admi
 				method: "PATCH",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
-					...branding,
-					...launchSettings,
+					launchDate: launchSettings.launchDate,
+					showCountdown: launchSettings.showCountdown,
 				}),
 			});
 			if (!response.ok) {
@@ -273,6 +281,54 @@ export default function AdminSettings({ initialBranding, initialSettings }: Admi
 			setLaunchStatus("error");
 			setLaunchMessage("Unable to update launch settings.");
 			pushToast("Unable to update launch settings.", "error");
+		}
+	};
+
+	const handleWhatsAppSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+		event.preventDefault();
+		setWhatsappStatus("saving");
+		setWhatsappMessage("");
+		setBrandingErrors((prev) => ({ ...prev, whatsappNumber: undefined }));
+
+		const nextErrors = buildFieldErrors<"whatsappNumber">([
+			{
+				key: "whatsappNumber",
+				error: branding.whatsappNumber.trim() ? validatePhone(branding.whatsappNumber) : null,
+				message: "Please enter a valid WhatsApp mobile number.",
+			},
+		]);
+
+		if (Object.keys(nextErrors).length > 0) {
+			setWhatsappStatus("error");
+			setWhatsappMessage(Object.values(nextErrors)[0] ?? "Please fix the highlighted fields.");
+			setBrandingErrors((prev) => ({ ...prev, ...nextErrors }));
+			focusFirstInvalid(nextErrors, [{ key: "whatsappNumber", selector: "#storefront-whatsapp-number" }]);
+			return;
+		}
+
+		try {
+			const response = await fetch("/api/admin/site-settings", {
+				method: "PATCH",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ whatsappNumber: branding.whatsappNumber }),
+			});
+			if (!response.ok) {
+				const data = (await response.json()) as { error?: string };
+				setWhatsappStatus("error");
+				setWhatsappMessage(data.error ?? "Unable to update WhatsApp number.");
+				pushToast(data.error ?? "Unable to update WhatsApp number.", "error");
+				return;
+			}
+
+			const data = (await response.json()) as { whatsappNumber: string | null };
+			setBranding((prev) => ({ ...prev, whatsappNumber: data.whatsappNumber ?? "" }));
+			setWhatsappStatus("success");
+			setWhatsappMessage("WhatsApp number updated.");
+			pushToast("WhatsApp number updated.", "success");
+		} catch {
+			setWhatsappStatus("error");
+			setWhatsappMessage("Unable to update WhatsApp number.");
+			pushToast("Unable to update WhatsApp number.", "error");
 		}
 	};
 
@@ -420,6 +476,7 @@ export default function AdminSettings({ initialBranding, initialSettings }: Admi
 							</div>
 						</div>
 					</div>
+
 					<div className="flex flex-wrap items-center justify-between gap-3">
 						{brandingMessage ? (
 							<p className={`text-sm ${brandingStatus === "error" ? "text-red-600" : "text-[var(--pp-muted)]"}`}>
@@ -550,6 +607,58 @@ export default function AdminSettings({ initialBranding, initialSettings }: Admi
 					}
 					onClose={() => setBrandingPreviewItem(null)}
 				/>
+
+				{/* ── WhatsApp Contact (Standalone Section) ── */}
+				<form onSubmit={handleWhatsAppSubmit} className="mt-8 grid gap-4 border border-[var(--pp-border)] bg-white p-6">
+					<div>
+						<h2 className="text-lg font-[var(--font-heading)]">WhatsApp contact</h2>
+						<p className="mt-1 text-sm text-[var(--pp-muted)]">
+							Set the WhatsApp number used across all storefront order buttons.
+						</p>
+					</div>
+					<div className="grid gap-2">
+						<label htmlFor="storefront-whatsapp-number" className="admin-label">
+							WhatsApp mobile number
+						</label>
+						<input
+							id="storefront-whatsapp-number"
+							className={`admin-input ${brandingErrors.whatsappNumber ? "is-error" : ""}`}
+							value={branding.whatsappNumber}
+							onChange={(event) => {
+								setBranding((prev) => ({ ...prev, whatsappNumber: event.target.value }));
+								if (brandingErrors.whatsappNumber) clearBrandingError("whatsappNumber");
+							}}
+							placeholder="e.g. 917350682392"
+						/>
+						<p className="text-xs text-[var(--pp-muted)]">
+							Country code without +. Example: 917350682392 for India.
+						</p>
+						<span
+							data-show={Boolean(brandingErrors.whatsappNumber)}
+							className="field-error text-xs normal-case text-red-600"
+						>
+							{brandingErrors.whatsappNumber ?? ""}
+						</span>
+					</div>
+					<div className="flex flex-wrap items-center justify-between gap-3">
+						{whatsappMessage ? (
+							<p className={`text-sm ${whatsappStatus === "error" ? "text-red-600" : "text-[var(--pp-muted)]"}`}>
+								{whatsappMessage}
+							</p>
+						) : (
+							<span />
+						)}
+						<button
+							type="submit"
+							disabled={whatsappStatus === "saving"}
+							className="btn-primary admin-btn admin-btn-size"
+						>
+							<span className="admin-btn-label">
+								{whatsappStatus === "saving" ? "Saving..." : "Save WhatsApp number"}
+							</span>
+						</button>
+					</div>
+				</form>
 
 				{/* ── Launch Countdown ── */}
 				<form onSubmit={handleLaunchSubmit} className="mt-8 grid gap-4 border border-[var(--pp-border)] bg-white p-6">

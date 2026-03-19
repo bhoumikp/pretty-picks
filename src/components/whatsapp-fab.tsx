@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { openWhatsApp } from "@/lib/whatsapp";
 import { trackEvent } from "@/lib/analytics";
+import { useStorefrontSettings } from "@/components/storefront/storefront-settings-provider";
 
 /**
  * Floating WhatsApp button — bottom-right corner.
@@ -11,13 +12,14 @@ import { trackEvent } from "@/lib/analytics";
  */
 export default function WhatsAppFab() {
 	const pathname = usePathname();
+	const { whatsappNumber } = useStorefrontSettings();
 
 	// Product detail pages have their own inline WhatsApp CTA
 	if (pathname.startsWith("/products/") && pathname !== "/products") return null;
 
 	const handleClick = () => {
 		trackEvent("whatsapp_fab_click", { page: pathname });
-		openWhatsApp("Hi, I'd like to know more about your products!");
+		openWhatsApp("Hi, I'd like to know more about your products!", whatsappNumber);
 	};
 
 	return (

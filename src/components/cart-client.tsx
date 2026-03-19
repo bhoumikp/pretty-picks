@@ -15,8 +15,10 @@ import { formatCurrency } from "@/lib/utils";
 import { openWhatsApp } from "@/lib/whatsapp";
 import { trackEvent } from "@/lib/analytics";
 import { siteConfig } from "@/data/site";
+import { useStorefrontSettings } from "@/components/storefront/storefront-settings-provider";
 
 export default function CartClient() {
+	const { whatsappNumber } = useStorefrontSettings();
 	const [items, setItems] = useState<CartItem[]>([]);
 	const [showConfirmModal, setShowConfirmModal] = useState(false);
 
@@ -67,7 +69,7 @@ export default function CartClient() {
 			}),
 		}).catch(() => { });
 
-		openWhatsApp(orderMessage);
+		openWhatsApp(orderMessage, whatsappNumber);
 
 		// Securely clear the local persistent storage now that checkout fired
 		clearCart();

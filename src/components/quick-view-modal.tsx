@@ -7,6 +7,7 @@ import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { primaryImage } from "@/lib/images";
 import { formatCurrency } from "@/lib/utils";
 import { siteConfig } from "@/data/site";
+import { useStorefrontSettings } from "@/components/storefront/storefront-settings-provider";
 import type { ProductSummary } from "@/types/catalog";
 
 interface QuickViewModalProps {
@@ -15,9 +16,10 @@ interface QuickViewModalProps {
 }
 
 export default function QuickViewModal({ product, onClose }: QuickViewModalProps) {
+	const { whatsappNumber } = useStorefrontSettings();
 	const productUrl = `https://${siteConfig.domain}/products/${product.slug}`;
 	const message = `Hi, I want to order this product:\n\nProduct: ${product.name}\nPrice: ₹${product.price}\nQuantity: 1\nLink: ${productUrl}`;
-	const whatsappLink = buildWhatsAppLink(message);
+	const whatsappLink = buildWhatsAppLink(message, whatsappNumber);
 	const onCloseRef = useRef(onClose);
 	useEffect(() => {
 		onCloseRef.current = onClose;

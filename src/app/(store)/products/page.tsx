@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import ProductsClient from "@/components/products-client";
 import type { CategorySummary, ProductSummary } from "@/types/catalog";
+import { getSiteSettings } from "@/lib/site-settings";
 
 export const revalidate = 60;
 export const metadata = {
@@ -21,6 +22,10 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
 
 	let products: ProductSummary[] = [];
 	let categories: CategorySummary[] = [];
+
+	const siteSettings = await getSiteSettings();
+	const isLaunched = siteSettings?.launchDate ? new Date() >= siteSettings.launchDate : true;
+	const isLaunchMode = Boolean(siteSettings?.showCountdown && !isLaunched);
 
 	try {
 		[products, categories] = await Promise.all([
@@ -59,6 +64,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
 				initialCategory={category}
 				initialPriceCap={priceCap}
 				initialSort={sort}
+				isLaunchMode={isLaunchMode}
 			/>
 		</div>
 	);

@@ -14,6 +14,7 @@ interface ProductsClientProps {
 	initialCategory: string;
 	initialPriceCap?: number;
 	initialSort?: string;
+	isLaunchMode?: boolean;
 }
 
 const MATERIALS = ["Alloy", "Enamel", "Faux Pearl", "Anti-tarnish"];
@@ -25,6 +26,7 @@ export default function ProductsClient({
 	initialCategory,
 	initialPriceCap,
 	initialSort = "newest",
+	isLaunchMode = false,
 }: ProductsClientProps) {
 	const [query, setQuery] = useState(initialQuery);
 	const [category, setCategory] = useState(initialCategory);
@@ -489,11 +491,11 @@ export default function ProductsClient({
 						<>
 							<div key={`${category}-${query}-${priceRange[1]}-${material}`} className="grid grid-cols-2 gap-3 animate-in fade-in slide-in-from-bottom-4 duration-700 md:hidden">
 								{visibleItems.map((product, idx) => (
-									<ProductCard key={product.id} product={product} index={idx} size="compact" />
+									<ProductCard key={product.id} product={product} index={idx} size="compact" isLaunchMode={isLaunchMode} />
 								))}
 							</div>
 							<div key={`grid-${category}-${query}-${priceRange[1]}-${material}`} className="hidden animate-in fade-in slide-in-from-bottom-4 duration-700 md:block">
-								<ProductGrid products={visibleItems} size="compact" />
+								<ProductGrid products={visibleItems} size="compact" isLaunchMode={isLaunchMode} />
 							</div>
 							{visible < filtered.length && (
 								<div className="flex justify-center">

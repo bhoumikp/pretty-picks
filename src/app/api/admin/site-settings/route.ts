@@ -14,6 +14,7 @@ export async function PATCH(request: Request) {
 		storefrontLogoUrl?: string | null;
 		storefrontMobileLogoUrl?: string | null;
 		storefrontLogoAlt?: string | null;
+		whatsappNumber?: string | null;
 		launchDate?: string | null;
 		showCountdown?: boolean;
 	};
@@ -21,6 +22,7 @@ export async function PATCH(request: Request) {
 	const nextLogoUrl = body.storefrontLogoUrl?.trim() || null;
 	const nextMobileLogoUrl = body.storefrontMobileLogoUrl?.trim() || null;
 	const nextLogoAlt = body.storefrontLogoAlt?.trim() || null;
+	const nextWhatsAppNumber = body.whatsappNumber?.trim() || null;
 	const nextLaunchDate = body.launchDate ? new Date(body.launchDate) : null;
 	const nextShowCountdown = body.showCountdown ?? false;
 
@@ -32,6 +34,7 @@ export async function PATCH(request: Request) {
 		(existing?.storefrontLogoUrl ?? null) !== nextLogoUrl ||
 		(existing?.storefrontMobileLogoUrl ?? null) !== nextMobileLogoUrl ||
 		(existing?.storefrontLogoAlt ?? null) !== nextLogoAlt ||
+		(existing?.whatsappNumber ?? null) !== nextWhatsAppNumber ||
 		(existing?.launchDate?.toISOString() ?? null) !== (nextLaunchDate?.toISOString() ?? null) ||
 		(existing?.showCountdown ?? false) !== nextShowCountdown;
 
@@ -41,6 +44,7 @@ export async function PATCH(request: Request) {
 			storefrontLogoUrl: nextLogoUrl,
 			storefrontMobileLogoUrl: nextMobileLogoUrl,
 			storefrontLogoAlt: nextLogoAlt,
+			whatsappNumber: nextWhatsAppNumber,
 			launchDate: nextLaunchDate,
 			showCountdown: nextShowCountdown,
 		},
@@ -49,6 +53,7 @@ export async function PATCH(request: Request) {
 			storefrontLogoUrl: nextLogoUrl,
 			storefrontMobileLogoUrl: nextMobileLogoUrl,
 			storefrontLogoAlt: nextLogoAlt,
+			whatsappNumber: nextWhatsAppNumber,
 			launchDate: nextLaunchDate,
 			showCountdown: nextShowCountdown,
 		},
@@ -64,6 +69,7 @@ export async function PATCH(request: Request) {
 				storefrontLogoUrl: nextLogoUrl,
 				storefrontMobileLogoUrl: nextMobileLogoUrl,
 				storefrontLogoAlt: nextLogoAlt,
+				whatsappNumber: nextWhatsAppNumber,
 				launchDate: nextLaunchDate,
 				showCountdown: nextShowCountdown,
 			},
@@ -75,6 +81,7 @@ export async function PATCH(request: Request) {
 		storefrontLogoUrl: settings.storefrontLogoUrl,
 		storefrontMobileLogoUrl: settings.storefrontMobileLogoUrl,
 		storefrontLogoAlt: settings.storefrontLogoAlt,
+		whatsappNumber: settings.whatsappNumber,
 		launchDate: settings.launchDate,
 		showCountdown: settings.showCountdown,
 	});

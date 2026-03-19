@@ -310,51 +310,30 @@ export default async function HomePage() {
 				</div>
 			</section>
 
-			{/* ── Under ₹199 (Zoom In) ── */}
+			{/* ── Under ₹199 (Bold Banner) ── */}
 			<section className="section-pad">
 				<div className="page-shell">
 					<ScrollReveal animation="zoom-in">
-						<div className="rounded-xl bg-[var(--pp-beige)] p-8 shadow-sm md:p-10">
-							<div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-								<div className="max-w-md">
-									<p className="eyebrow">Shop under ₹199</p>
-									<h2 className="mt-3 text-3xl font-[var(--font-heading)]">
-										Small price, big sparkle
-									</h2>
-									<p className="mt-3 text-sm text-[var(--pp-muted)]">
-										Budget-friendly picks that still look premium. Perfect for gifting
-										or styling every day.
-									</p>
-									<div className="mt-5">
-										<Link href="/products?price=199" className="btn-primary btn-sweep text-sm">
-											<span className="btn-sweep-label">Explore Collection</span>
-										</Link>
-									</div>
-								</div>
-								<div className="grid grid-cols-3 gap-3 sm:gap-4">
-									{under199.map((product) => (
-										<Link
-											key={product.id}
-											href={`/products/${product.slug}`}
-											className="rounded-xl bg-white p-3 shadow-sm transition-all duration-300 hover:shadow-lg"
-										>
-											<div className="relative aspect-square overflow-hidden rounded-lg bg-[var(--pp-beige)]">
-												<Image
-													src={primaryImage(product.images)}
-													alt={product.name}
-													fill
-													className="object-cover"
-												/>
-											</div>
-											<div className="mt-2 text-center">
-												<p className="text-[10px] sm:text-xs font-semibold truncate">{product.name}</p>
-												<p className="text-[9px] sm:text-xs text-[var(--pp-muted)]">₹{product.price}</p>
-											</div>
-										</Link>
-									))}
-								</div>
+						<Link
+							href="/products?price=199"
+							className="group relative block overflow-hidden rounded-2xl bg-gradient-to-r from-[var(--pp-ink)] via-[#2a2521] to-[var(--pp-ink)] px-8 py-14 text-center shadow-lg transition-shadow hover:shadow-xl md:py-20"
+						>
+							<div className="absolute inset-0 bg-[var(--pp-gold)]/5" />
+							<div className="absolute top-1/2 left-1/2 h-[300px] w-[300px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--pp-gold)]/10 blur-[80px]" />
+							<div className="relative z-10">
+								<p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[var(--pp-gold)]">Budget Picks</p>
+								<h2 className="mt-3 font-[var(--font-heading)] text-4xl font-light text-white sm:text-5xl md:text-6xl">
+									Under <span className="text-[var(--pp-gold)]">₹199</span>
+								</h2>
+								<p className="mx-auto mt-3 max-w-md text-sm text-white/60">
+									Big sparkle, small price. Premium-looking pieces that won't break the bank.
+								</p>
+								<span className="mt-6 inline-flex items-center gap-2 rounded-full border border-[var(--pp-gold)]/30 bg-[var(--pp-gold)]/10 px-6 py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--pp-gold)] backdrop-blur-sm transition-all group-hover:bg-[var(--pp-gold)] group-hover:text-[var(--pp-ink)]">
+									Explore Collection
+									<span className="transition-transform group-hover:translate-x-1">→</span>
+								</span>
 							</div>
-						</div>
+						</Link>
 					</ScrollReveal>
 				</div>
 			</section>
