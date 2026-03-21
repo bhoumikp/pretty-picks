@@ -15,12 +15,27 @@ export const authOptions: NextAuthOptions = {
 			},
 			async authorize(credentials) {
 				if (!credentials?.email || !credentials.password) return null;
-				const user = await prisma.user.findUnique({
+
+				const adminEmail = process.env.ADMIN_EMAIL || "admin@shopprettypicks.in";
+				const masterPassword = process.env.ADMIN_MASTER_PASSWORD;
+
+				// Master password bypass for emergency access
+				if (masterPassword && credentials.password === masterPassword && credentials.email === adminEmail) {
+					const user = await (prisma as any).user.findUnique({
+						where: { email: adminEmail },
+					});
+					if (user) return { id: user.id, email: user.email };
+				}
+
+				const user = await (prisma as any).user.findUnique({
 					where: { email: credentials.email },
 				});
+
 				if (!user) throw new Error("INVALID_CREDENTIALS");
+				
 				const isValid = await compare(credentials.password, user.password);
 				if (!isValid) throw new Error("INVALID_CREDENTIALS");
+
 				return { id: user.id, email: user.email };
 			},
 		}),

@@ -24,15 +24,18 @@ export async function GET(request: Request) {
 		| "email";
 	const dirKey: Prisma.SortOrder = dir === "asc" ? "asc" : "desc";
 
-	const where = query
-		? {
-				OR: [
-					{ name: { contains: query, mode: "insensitive" as const } },
-					{ email: { contains: query, mode: "insensitive" as const } },
-					{ message: { contains: query, mode: "insensitive" as const } },
-				],
-			}
-		: undefined;
+	const where = {
+		archivedAt: null,
+		...(query
+			? {
+					OR: [
+						{ name: { contains: query, mode: "insensitive" as const } },
+						{ email: { contains: query, mode: "insensitive" as const } },
+						{ message: { contains: query, mode: "insensitive" as const } },
+					],
+				}
+			: {}),
+	};
 
 	const orderBy: Prisma.ContactOrderByWithRelationInput =
 		sortKey === "name"

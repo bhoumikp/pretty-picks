@@ -53,7 +53,10 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
 	if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 	const { id } = await params;
 
-	await prisma.order.delete({ where: { id } });
+	await prisma.order.update({
+		where: { id },
+		data: { archivedAt: new Date() },
+	});
 	await logAudit({
 		actorId: session.user.id,
 		action: "DELETE",

@@ -99,7 +99,7 @@ export default async function HomePage() {
 				},
 			}),
 			prisma.heroBanner.findMany({
-				where: { isActive: true },
+				where: { isActive: true, archivedAt: null },
 				orderBy: { priority: "desc" },
 			}),
 			getSiteSettings(),

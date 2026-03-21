@@ -11,6 +11,7 @@ export async function GET() {
 		}
 
 		const banners = await prisma.heroBanner.findMany({
+			where: { archivedAt: null },
 			orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
 		});
 
@@ -47,6 +48,16 @@ export async function POST(req: Request) {
 				priority: parseInt(priority) || 0,
 				isActive: isActive ?? true,
 			},
+		});
+
+		const { logAudit } = await import("@/lib/audit");
+		await logAudit({
+			actorId: session.user.id,
+			action: "CREATE",
+			entity: "BANNER",
+			entityId: banner.id,
+			metadata: { title: banner.title },
+			request: req,
 		});
 
 		return NextResponse.json(banner);

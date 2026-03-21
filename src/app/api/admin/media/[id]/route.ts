@@ -17,13 +17,10 @@ export async function DELETE(
 	const media = await prisma.media.findUnique({ where: { id } });
 	if (!media) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-	if (media.publicId) {
-		await cloudinary.uploader.destroy(media.publicId, {
-			resource_type: "image",
-		});
-	}
-
-	await prisma.media.delete({ where: { id } });
+	await prisma.media.update({
+		where: { id },
+		data: { archivedAt: new Date() },
+	});
 
 	await logAudit({
 		actorId: session.user.id,

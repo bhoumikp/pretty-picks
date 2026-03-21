@@ -36,6 +36,16 @@ export async function PATCH(
 			},
 		});
 
+		const { logAudit } = await import("@/lib/audit");
+		await logAudit({
+			actorId: session.user.id,
+			action: "UPDATE",
+			entity: "BANNER",
+			entityId: banner.id,
+			metadata: { title: banner.title },
+			request: req,
+		});
+
 		return NextResponse.json(banner);
 	} catch (error) {
 		console.error("[BANNER_PATCH]", error);
@@ -44,7 +54,7 @@ export async function PATCH(
 }
 
 export async function DELETE(
-	_req: Request,
+	req: Request,
 	{ params }: { params: Promise<{ id: string }> }
 ) {
 	try {
@@ -58,8 +68,19 @@ export async function DELETE(
 			return new NextResponse("Banner ID is required", { status: 400 });
 		}
 
-		const banner = await prisma.heroBanner.delete({
-			where: { id },
+		const banner = await prisma.heroBanner.update({
+			where: { id: (await params).id },
+			data: { archivedAt: new Date() },
+		});
+
+		const { logAudit } = await import("@/lib/audit");
+		await logAudit({
+			actorId: session.user.id,
+			action: "DELETE",
+			entity: "BANNER",
+			entityId: id,
+			metadata: { title: banner.title },
+			request: req,
 		});
 
 		return NextResponse.json(banner);

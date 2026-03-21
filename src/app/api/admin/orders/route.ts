@@ -30,6 +30,7 @@ export async function GET(request: Request) {
 	const status = allowedStatuses.has(rawStatus) ? rawStatus : "all";
 
 	const where = {
+		archivedAt: null,
 		...(status !== "all" ? { status } : {}),
 		...(query
 			? {
@@ -101,6 +102,15 @@ export async function PATCH(request: Request) {
 			data: { status },
 		});
 
+		const { logAudit } = await import("@/lib/audit");
+		await logAudit({
+			actorId: session.user.id,
+			action: "BULK_UPDATE_STATUS",
+			entity: "ORDER",
+			metadata: { ids, status },
+			request,
+		});
+
 		return NextResponse.json({ ok: true });
 	} catch {
 		return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -117,8 +127,18 @@ export async function DELETE(request: Request) {
 			return NextResponse.json({ error: "Missing ids" }, { status: 400 });
 		}
 
-		await prisma.order.deleteMany({
+		await prisma.order.updateMany({
 			where: { id: { in: ids } },
+			data: { archivedAt: new Date() },
+		});
+
+		const { logAudit } = await import("@/lib/audit");
+		await logAudit({
+			actorId: session.user.id,
+			action: "BULK_DELETE",
+			entity: "ORDER",
+			metadata: { ids },
+			request,
 		});
 
 		return NextResponse.json({ ok: true });

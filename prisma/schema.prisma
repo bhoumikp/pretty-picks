@@ -11,6 +11,7 @@ model User {
 	id        String   @id @default(cuid())
 	email     String   @unique
 	password  String
+	archivedAt DateTime?
 	createdAt DateTime @default(now())
 	updatedAt DateTime @updatedAt
 
@@ -57,8 +58,11 @@ model Order {
 	phone        String
 	status       String
 	totalAmount  Int         @default(0)
+	archivedAt   DateTime?
 	items        OrderItem[]
 	createdAt    DateTime    @default(now())
+
+	@@index([archivedAt])
 }
 
 model OrderItem {
@@ -77,6 +81,7 @@ model Contact {
 	email     String
 	message   String
 	readAt    DateTime?
+	archivedAt DateTime?
 	createdAt DateTime  @default(now())
 }
 
@@ -90,11 +95,13 @@ model Media {
 	bytes     Int?
 	alt       String?
 	folder    String?
+	archivedAt DateTime?
 	createdAt DateTime @default(now())
 
 	@@index([createdAt])
 	@@index([publicId])
 	@@index([folder])
+	@@index([archivedAt])
 }
 
 model AuditLog {
@@ -123,6 +130,7 @@ model SiteSetting {
 	whatsappNumber     String?
 	launchDate         DateTime?
 	showCountdown      Boolean  @default(false)
+	archivedAt         DateTime?
 	createdAt          DateTime @default(now())
 	updatedAt          DateTime @updatedAt
 }
@@ -138,8 +146,11 @@ model HeroBanner {
 	ctaLabel String?
 	priority  Int      @default(0)
 	isActive  Boolean  @default(true)
+	archivedAt DateTime?
 	createdAt DateTime @default(now())
 	updatedAt DateTime @updatedAt
+
+	@@index([archivedAt])
 }
 
 model Waitlist {
@@ -147,5 +158,6 @@ model Waitlist {
 	email      String   @unique
 	couponCode String?  @unique
 	isUsed     Boolean  @default(false)
+	archivedAt DateTime?
 	createdAt  DateTime @default(now())
 }

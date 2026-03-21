@@ -68,12 +68,9 @@ export async function DELETE(request: Request) {
 		return NextResponse.json({ error: "Missing publicId" }, { status: 400 });
 	}
 
-	await cloudinary.uploader.destroy(body.publicId, {
-		resource_type: "image",
-	});
-
-	await prisma.media.deleteMany({
+	await prisma.media.updateMany({
 		where: { publicId: body.publicId },
+		data: { archivedAt: new Date() },
 	});
 
 	await logAudit({

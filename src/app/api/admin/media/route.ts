@@ -16,6 +16,7 @@ export async function GET(request: Request) {
 	const query = (searchParams.get("q") ?? "").trim();
 
 	const where = {
+		archivedAt: null,
 		...(query
 			? {
 					OR: [
