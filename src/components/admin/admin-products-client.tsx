@@ -77,6 +77,7 @@ export default function AdminProductsClient({
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 	const [deleteTarget, setDeleteTarget] = useState<ProductRow | null>(null);
 	const [deleteLoading, setDeleteLoading] = useState(false);
+	const [reordering, setReordering] = useState(false);
 	const userTypedRef = useRef(false);
 	const restoredRef = useRef(false);
 	const cacheRef = useRef(new Map<string, { items: ProductRow[]; total: number }>());
@@ -381,6 +382,29 @@ export default function AdminProductsClient({
 		await Promise.all(ids.map((id) => fetch(`/api/products/${id}`, { method: "DELETE" })));
 	};
 
+	const handleReorder = async (nextProducts: ProductRow[]) => {
+		setReordering(true);
+		const orders = nextProducts.map((p, i) => ({ id: p.id, priority: i }));
+		
+		// Optimistic update
+		setProducts(nextProducts);
+
+		const response = await fetch("/api/admin/products/reorder", {
+			method: "PUT",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ orders }),
+		});
+
+		if (!response.ok) {
+			onToastRef.current?.({ message: "Failed to save new order.", type: "error" });
+			// Rollback
+			fetchProducts(query, page, sort, dir, status, { force: true });
+		} else {
+			onToastRef.current?.({ message: "Order updated successfully.", type: "success" });
+		}
+		setReordering(false);
+	};
+
 	const handleDelete = (product: ProductRow) => {
 		setDeleteTarget(product);
 	};
@@ -523,6 +547,8 @@ export default function AdminProductsClient({
 					const target = products.find((product) => product.id === id);
 					if (target) handleDelete(target);
 				}}
+				onReorder={handleReorder}
+				isReordering={reordering}
 				isLoading={loading}
 				footerSlot={
 					<div className="flex items-center gap-2 text-xs text-[var(--pp-muted)]">

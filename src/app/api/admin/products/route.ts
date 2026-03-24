@@ -15,12 +15,13 @@ export async function GET(request: Request) {
 	const page = Math.max(1, Number(searchParams.get("page") ?? "1") || 1);
 	const pageSize = Math.min(50, Math.max(1, Number(searchParams.get("pageSize") ?? "15") || 15));
 	const query = (searchParams.get("q") ?? "").trim();
-	const sort = (searchParams.get("sort") ?? "updatedAt").trim();
-	const dir = (searchParams.get("dir") ?? "desc").trim();
+	const sort = (searchParams.get("sort") ?? "priority").trim();
+	const dir = (searchParams.get("dir") ?? "asc").trim();
 	const status = (searchParams.get("status") ?? "all").trim();
 
-	const allowedSorts = new Set(["name", "category", "price", "stock", "status", "updatedAt"]);
-	const sortKey = (allowedSorts.has(sort) ? sort : "updatedAt") as
+	const allowedSorts = new Set(["priority", "name", "category", "price", "stock", "status", "updatedAt"]);
+	const sortKey = (allowedSorts.has(sort) ? sort : "priority") as
+		| "priority"
 		| "name"
 		| "category"
 		| "price"
@@ -46,6 +47,7 @@ export async function GET(request: Request) {
 	};
 
 	const orderBy: Prisma.ProductOrderByWithRelationInput = (() => {
+		if (sortKey === "priority") return { priority: dirKey };
 		if (sortKey === "name") return { name: dirKey };
 		if (sortKey === "category") return { category: { name: dirKey } };
 		if (sortKey === "price") return { price: dirKey };

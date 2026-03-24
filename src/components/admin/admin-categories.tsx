@@ -106,6 +106,7 @@ export default function AdminCategories({
 	const [deleteTarget, setDeleteTarget] = useState<CategoryRow | null>(null);
 	const [deleteLoading, setDeleteLoading] = useState(false);
 	const [bulkLoading, setBulkLoading] = useState(false);
+	const [reordering, setReordering] = useState(false);
 
 	const [libraryOpen, setLibraryOpen] = useState(false);
 	const [libraryQuery, setLibraryQuery] = useState("");
@@ -619,6 +620,37 @@ export default function AdminCategories({
 		setBulkLoading(false);
 	};
 
+	const handleReorder = async (nextCategories: CategoryRow[]) => {
+		setReordering(true);
+		const orders = nextCategories.map((c, i) => ({ id: c.id, priority: i }));
+		
+		// Optimistic update
+		setCategories(nextCategories);
+
+		const response = await fetch("/api/admin/categories/reorder", {
+			method: "PUT",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ orders }),
+		});
+
+		if (!response.ok) {
+			const toastId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+			setToasts((prev) => [
+				...prev,
+				{ id: toastId, type: "error", message: "Failed to save new order." },
+			]);
+			// Rollback
+			fetchCategories(query, page, sort, dir, status, { force: true });
+		} else {
+			const toastId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+			setToasts((prev) => [
+				...prev,
+				{ id: toastId, type: "success", message: "Order updated successfully." },
+			]);
+		}
+		setReordering(false);
+	};
+
 	return (
 		<>
 			<div className="grid gap-4">
@@ -730,6 +762,8 @@ export default function AdminCategories({
 					selectedIds={selectedIds}
 					onToggleSelect={handleSelect}
 					onToggleSelectAll={handleSelectAll}
+					onReorder={handleReorder}
+					isReordering={reordering}
 					isLoading={loading}
 					footerSlot={
 						<div className="flex items-center gap-2 text-xs text-[var(--pp-muted)]">

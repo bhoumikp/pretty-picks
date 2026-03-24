@@ -19,8 +19,9 @@ export async function GET(request: Request) {
 	const type = (searchParams.get("type") ?? "parent").trim();
 	const status = (searchParams.get("status") ?? "all").trim();
 
-	const allowedSorts = new Set(["name", "slug", "parent", "status", "createdAt", "updatedAt"]);
-	const sortKey = (allowedSorts.has(sort) ? sort : "name") as
+	const allowedSorts = new Set(["priority", "name", "slug", "parent", "status", "createdAt", "updatedAt"]);
+	const sortKey = (allowedSorts.has(sort) ? sort : "priority") as
+		| "priority"
 		| "name"
 		| "slug"
 		| "parent"
@@ -51,7 +52,9 @@ export async function GET(request: Request) {
 	};
 
 	const orderBy: Prisma.CategoryOrderByWithRelationInput =
-		sortKey === "name"
+		sortKey === "priority"
+			? { priority: dirKey }
+			: sortKey === "name"
 			? { name: dirKey }
 			: sortKey === "slug"
 			? { slug: dirKey }

@@ -33,7 +33,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
 				.findMany({
 				where: { archivedAt: null, isActive: true },
 				include: { category: true, _count: { select: { orderItems: true } } },
-				orderBy: { createdAt: "desc" },
+				orderBy: [{ priority: "asc" }, { createdAt: "desc" }],
 			})
 				.then((items) =>
 					items.map((item) => {
@@ -49,7 +49,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
 						};
 					})
 				),
-			prisma.category.findMany({ where: { archivedAt: null, isActive: true }, orderBy: { name: "asc" } }),
+			prisma.category.findMany({ where: { archivedAt: null, isActive: true }, orderBy: { priority: "asc" } }),
 		]);
 	} catch (error) {
 		console.error("ProductsPage: Prisma unavailable, rendering empty lists.", error);

@@ -28,7 +28,7 @@ export default async function CategoriesPage({ searchParams }: CategoriesPagePro
 		const [categoriesData, settings] = await Promise.all([
 			prisma.category.findMany({
 				where: { archivedAt: null, isActive: true },
-				orderBy: { name: "asc" },
+				orderBy: { priority: "asc" },
 				select: { id: true, name: true, slug: true, image: true },
 			}),
 			getSiteSettings(),
@@ -49,7 +49,7 @@ export default async function CategoriesPage({ searchParams }: CategoriesPagePro
 			selectedCategoryName = selectedCategory?.name ?? selectedCategoryName;
 			selectedProducts = await prisma.product.findMany({
 				where: { category: { slug: fallbackSlug }, archivedAt: null, isActive: true },
-				orderBy: { createdAt: "desc" },
+				orderBy: [{ priority: "asc" }, { createdAt: "desc" }],
 				select: {
 					id: true,
 					name: true,

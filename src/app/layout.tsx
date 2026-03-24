@@ -3,6 +3,7 @@ import { Manrope, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/providers";
 import { siteConfig } from "@/data/site";
+import { GoogleAnalytics } from "@next/third-parties/google";
 
 const headingFont = Playfair_Display({
 	variable: "--font-heading",
@@ -49,6 +50,7 @@ export default function RootLayout({
 				className={`${headingFont.variable} ${bodyFont.variable} antialiased`}
 				suppressHydrationWarning
 			>
+				{process.env.NEXT_PUBLIC_GA_ID && <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />}
 				<script
 					type="application/ld+json"
 					dangerouslySetInnerHTML={{

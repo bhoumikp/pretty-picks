@@ -19,11 +19,12 @@ export default async function AdminProductsPage({
 	const pageSize = 15;
 	const page = Math.max(1, Number(params.page ?? "1") || 1);
 	const query = (params.q ?? "").trim();
-	const sort = (params.sort ?? "updatedAt").trim();
-	const dir = (params.dir ?? "desc").trim();
+	const sort = (params.sort ?? "priority").trim();
+	const dir = (params.dir ?? "asc").trim();
 	const status = (params.status ?? "all").trim();
-	const allowedSorts = new Set(["name", "category", "price", "stock", "status", "updatedAt"]);
-	const sortKey = (allowedSorts.has(sort) ? sort : "updatedAt") as
+	const allowedSorts = new Set(["priority", "name", "category", "price", "stock", "status", "updatedAt"]);
+	const sortKey = (allowedSorts.has(sort) ? sort : "priority") as
+		| "priority"
 		| "name"
 		| "category"
 		| "price"

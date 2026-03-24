@@ -64,7 +64,7 @@ export default async function HomePage() {
 			prisma.product.findMany({
 				where: { archivedAt: null, isActive: true },
 				take: 4,
-				orderBy: [{ orderItems: { _count: "desc" } }, { createdAt: "desc" }],
+				orderBy: [{ priority: "asc" }, { orderItems: { _count: "desc" } }, { createdAt: "desc" }],
 				select: {
 					id: true,
 					name: true,
@@ -83,7 +83,7 @@ export default async function HomePage() {
 			}),
 			prisma.category.findMany({
 				where: { archivedAt: null, isActive: true },
-				orderBy: { name: "asc" },
+				orderBy: { priority: "asc" },
 				select: { id: true, name: true, slug: true, image: true },
 			}),
 			prisma.product.findMany({
@@ -106,7 +106,7 @@ export default async function HomePage() {
 			prisma.product.findMany({
 				where: { archivedAt: null, isActive: true },
 				take: 6,
-				orderBy: { createdAt: "desc" },
+				orderBy: [{ priority: "asc" }, { createdAt: "desc" }],
 				select: { id: true, name: true, slug: true, images: true },
 			}),
 		]);

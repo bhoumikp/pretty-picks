@@ -3,7 +3,7 @@
 import { memo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Power, PowerOff, Pencil, Trash2 } from "lucide-react";
+import { GripVertical, Power, PowerOff, Pencil, Trash2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import type { ProductImage } from "@/types/catalog";
 import AdminTableShell from "@/components/admin/admin-table-shell";
@@ -40,6 +40,8 @@ interface AdminProductsTableProps {
 	onDelete: (id: string) => void;
 	isLoading?: boolean;
 	footerSlot?: React.ReactNode;
+	onReorder?: (nextProducts: ProductRow[]) => void;
+	isReordering?: boolean;
 }
 
 function AdminProductsTable({
@@ -59,8 +61,34 @@ function AdminProductsTable({
 	onDelete,
 	isLoading = false,
 	footerSlot,
+	onReorder,
+	isReordering = false,
 }: AdminProductsTableProps) {
 	const [previewItem, setPreviewItem] = useState<{ url: string; title?: string | null } | null>(null);
+	const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+
+	const canReorder = !query && sort.length === 1 && sort[0] === "priority" && dir[0] === "asc";
+
+	const handleDragStart = (index: number) => {
+		if (!canReorder) return;
+		setDraggedIndex(index);
+	};
+
+	const handleDragOver = (event: React.DragEvent, index: number) => {
+		if (!canReorder || draggedIndex === null || draggedIndex === index) return;
+		event.preventDefault();
+
+		const nextProducts = [...products];
+		const item = nextProducts.splice(draggedIndex, 1)[0];
+		nextProducts.splice(index, 0, item);
+
+		setDraggedIndex(index);
+		if (onReorder) onReorder(nextProducts);
+	};
+
+	const handleDragEnd = () => {
+		setDraggedIndex(null);
+	};
 	const getDirFor = (key: string) => {
 		const index = sort.indexOf(key);
 		return index >= 0 ? dir[index] ?? "desc" : undefined;
@@ -86,6 +114,21 @@ function AdminProductsTable({
 			<table className="admin-table w-full text-left text-sm">
 				<thead className="border-b border-[var(--pp-border)] bg-white/70 text-xs uppercase tracking-[0.2em] text-[var(--pp-muted)]">
 					<tr>
+						<th className="w-16 px-5 py-4">
+							<button
+								type="button"
+								onClick={() => onSort("priority")}
+								className={`inline-flex items-center gap-1 cursor-pointer transition-colors ${sort[0] === "priority" && dir[0] === "asc" ? "text-[var(--pp-gold)]" : "hover:text-[var(--pp-ink)]"}`}
+								title="Sort by custom order to enable dragging"
+							>
+								Order
+								{getDirFor("priority") && (
+									<span className="text-[10px]">
+										{getDirFor("priority") === "asc" ? "↑" : "↓"}
+									</span>
+								)}
+							</button>
+						</th>
 						<th className="px-5 py-4">
 							<input
 								type="checkbox"
@@ -230,10 +273,29 @@ function AdminProductsTable({
 					) : products.length === 0 ? (
 						<AdminEmptyState colSpan={8} message="No products found." />
 					) : (
-						products.map((product) => {
+						products.map((product, index) => {
 							const isActive = product.isActive;
 							return (
-								<tr key={product.id} className="border-b border-[var(--pp-border)] last:border-b-0">
+								<tr
+									key={product.id}
+									draggable={canReorder}
+									onDragStart={() => handleDragStart(index)}
+									onDragOver={(e) => handleDragOver(e, index)}
+									onDragEnd={handleDragEnd}
+									className={`border-b border-[var(--pp-border)] last:border-b-0 transition-colors ${
+										draggedIndex === index ? "bg-[var(--pp-beige)]/30 opacity-50" : ""
+									} ${canReorder ? "cursor-grab active:cursor-grabbing" : ""}`}
+								>
+									<td className="w-16 px-5 py-4 text-[var(--pp-muted)]">
+										<div
+											className={`inline-flex items-center justify-center p-1 rounded transition-colors ${
+												canReorder ? "text-[var(--pp-ink)] hover:bg-[var(--pp-beige)]" : "opacity-30 cursor-not-allowed"
+											}`}
+											title={canReorder ? "Drag to reorder" : "Sort by 'Order' ascending to enable dragging"}
+										>
+											<GripVertical className="h-4 w-4" />
+										</div>
+									</td>
 									<td className="px-5 py-4" data-label="Select">
 										<input
 											type="checkbox"

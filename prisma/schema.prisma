@@ -24,6 +24,7 @@ model Category {
 	slug      String    @unique
 	image     String?
 	isActive  Boolean   @default(true)
+	priority  Int       @default(0)
 	archivedAt DateTime?
 	parentId  String?
 	parent    Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
@@ -31,6 +32,9 @@ model Category {
 	products  Product[]
 	createdAt DateTime  @default(now())
 	updatedAt DateTime  @updatedAt
+
+	@@index([priority])
+	@@index([archivedAt])
 }
 
 model Product {
@@ -43,12 +47,16 @@ model Product {
 	images      Json
 	stock       Int      @default(0)
 	isActive    Boolean  @default(true)
+	priority    Int      @default(0)
 	archivedAt  DateTime?
 	categoryId  String
 	category    Category @relation(fields: [categoryId], references: [id])
 	orderItems  OrderItem[]
 	createdAt   DateTime @default(now())
 	updatedAt   DateTime @updatedAt
+
+	@@index([priority])
+	@@index([archivedAt])
 }
 
 model Order {
