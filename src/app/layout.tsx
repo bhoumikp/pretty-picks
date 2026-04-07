@@ -4,6 +4,7 @@ import "./globals.css";
 import Providers from "@/components/providers";
 import { siteConfig } from "@/data/site";
 import { GoogleAnalytics } from "@next/third-parties/google";
+import { getSiteSettings } from "@/lib/site-settings";
 
 const headingFont = Playfair_Display({
 	variable: "--font-heading",
@@ -17,27 +18,42 @@ const bodyFont = Manrope({
 	subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-	metadataBase: new URL(`https://${siteConfig.domain}`),
-	title: {
-		default: `${siteConfig.name} | Affordable Artificial Jewellery`,
-		template: `%s | ${siteConfig.name}`,
-	},
-	description: siteConfig.description,
-	openGraph: {
-		title: siteConfig.name,
+export async function generateMetadata(): Promise<Metadata> {
+	const settings = await getSiteSettings();
+	const logoUrl = settings?.storefrontLogoUrl || "/favicon.ico";
+
+	return {
+		metadataBase: new URL(`https://${siteConfig.domain}`),
+		title: {
+			default: `${siteConfig.name} | Affordable Artificial Jewellery`,
+			template: `%s | ${siteConfig.name}`,
+		},
 		description: siteConfig.description,
-		url: `https://${siteConfig.domain}`,
-		siteName: siteConfig.name,
-		locale: "en_IN",
-		type: "website",
-	},
-	twitter: {
-		card: "summary_large_image",
-		title: siteConfig.name,
-		description: siteConfig.description,
-	},
-};
+		icons: {
+			icon: logoUrl,
+			apple: logoUrl,
+			shortcut: logoUrl,
+		},
+		openGraph: {
+			title: siteConfig.name,
+			description: siteConfig.description,
+			url: `https://${siteConfig.domain}`,
+			siteName: siteConfig.name,
+			locale: "en_IN",
+			type: "website",
+			images: [{ url: logoUrl }],
+		},
+		twitter: {
+			card: "summary_large_image",
+			title: siteConfig.name,
+			description: siteConfig.description,
+			images: [logoUrl],
+		},
+		verification: {
+			google: '6CiV3u526oPHhSCrfcZoCgVBzaa6j-IbxDbB21MC-EE',
+		},
+	};
+}
 
 export default function RootLayout({
 	children,
