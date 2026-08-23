@@ -1,61 +1,171 @@
 generator client {
-  provider = "prisma-client-js"
+	provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+	provider = "postgresql"
+	url      = env("DATABASE_URL")
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+	id        String   @id @default(cuid())
+	email     String   @unique
+	password  String
+	archivedAt DateTime?
+	createdAt DateTime @default(now())
+	updatedAt DateTime @updatedAt
+
+	auditLogs AuditLog[]
 }
 
 model Category {
-  id        String    @id @default(cuid())
-  name      String
-  slug      String    @unique
-  image     String?
-  products  Product[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+	id        String    @id @default(cuid())
+	name      String
+	slug      String    @unique
+	image     String?
+	isActive  Boolean   @default(true)
+	priority  Int       @default(0)
+	archivedAt DateTime?
+	parentId  String?
+	parent    Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
+	children  Category[] @relation("CategoryHierarchy")
+	products  Product[]
+	createdAt DateTime  @default(now())
+	updatedAt DateTime  @updatedAt
+
+	@@index([priority])
+	@@index([archivedAt])
 }
 
 model Product {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique
-  price       Int
-  description String
-  material    String
-  images      Json
-  featured    Boolean  @default(false)
-  stock       Int      @default(0)
-  categoryId  String
-  category    Category @relation(fields: [categoryId], references: [id])
-  orders      Order[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+	id          String   @id @default(cuid())
+	name        String
+	slug        String   @unique
+	price       Int
+	description String
+	material    String
+	images      Json
+	stock       Int      @default(0)
+	isActive    Boolean  @default(true)
+	priority    Int      @default(0)
+	archivedAt  DateTime?
+	categoryId  String
+	category    Category @relation(fields: [categoryId], references: [id])
+	orderItems  OrderItem[]
+	createdAt   DateTime @default(now())
+	updatedAt   DateTime @updatedAt
+
+	@@index([priority])
+	@@index([archivedAt])
 }
 
 model Order {
-  id           String   @id @default(cuid())
-  productId    String
-  product      Product  @relation(fields: [productId], references: [id])
-  customerName String
-  phone        String
-  status       String
-  createdAt    DateTime @default(now())
+	id           String      @id @default(cuid())
+	orderNumber  String      @unique
+	customerName String
+	phone        String
+	status       String
+	totalAmount  Int         @default(0)
+	archivedAt   DateTime?
+	items        OrderItem[]
+	createdAt    DateTime    @default(now())
+
+	@@index([archivedAt])
+}
+
+model OrderItem {
+	id          String  @id @default(cuid())
+	orderId     String
+	order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+	productId   String
+	product     Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+	quantity    Int     @default(1)
+	priceAtTime Int     @default(0)
 }
 
 model Contact {
-  id        String   @id @default(cuid())
-  name      String
-  email     String
-  message   String
-  createdAt DateTime @default(now())
+	id        String    @id @default(cuid())
+	name      String
+	email     String
+	message   String
+	readAt    DateTime?
+	archivedAt DateTime?
+	createdAt DateTime  @default(now())
+}
+
+model Media {
+	id        String   @id @default(cuid())
+	url       String
+	publicId  String?
+	format    String?
+	width     Int?
+	height    Int?
+	bytes     Int?
+	alt       String?
+	folder    String?
+	archivedAt DateTime?
+	createdAt DateTime @default(now())
+
+	@@index([createdAt])
+	@@index([publicId])
+	@@index([folder])
+	@@index([archivedAt])
+}
+
+model AuditLog {
+	id        String   @id @default(cuid())
+	actorId   String
+	actor     User     @relation(fields: [actorId], references: [id])
+	action    String
+	entity    String
+	entityId  String?
+	metadata  Json?
+	ipAddress String?
+	userAgent String?
+	createdAt DateTime @default(now())
+
+	@@index([actorId, createdAt])
+	@@index([entity, entityId])
+	@@index([action, createdAt])
+	@@index([createdAt])
+}
+
+model SiteSetting {
+	id                 String   @id @default("singleton")
+	storefrontLogoUrl  String?
+	storefrontMobileLogoUrl String?
+	storefrontLogoAlt  String?
+	whatsappNumber     String?
+	launchDate         DateTime?
+	showCountdown      Boolean  @default(false)
+	archivedAt         DateTime?
+	createdAt          DateTime @default(now())
+	updatedAt          DateTime @updatedAt
+}
+
+model HeroBanner {
+	id        String   @id @default(cuid())
+	eyebrow  String?
+	title     String
+	subtitle  String?
+	image     String
+	mobileImage String?
+	link      String?
+	ctaLabel String?
+	priority  Int      @default(0)
+	isActive  Boolean  @default(true)
+	archivedAt DateTime?
+	createdAt DateTime @default(now())
+	updatedAt DateTime @updatedAt
+
+	@@index([archivedAt])
+}
+
+model Waitlist {
+	id         String   @id @default(cuid())
+	email      String   @unique
+	couponCode String?  @unique
+	isUsed     Boolean  @default(false)
+	archivedAt DateTime?
+	createdAt  DateTime @default(now())
 }

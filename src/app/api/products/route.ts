@@ -2,30 +2,53 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin";
 import { slugify } from "@/lib/utils";
+import { logAudit } from "@/lib/audit";
 
 export async function GET() {
-  const products = await prisma.product.findMany({ include: { category: true } });
-  return NextResponse.json(products);
+	const products = await prisma.product.findMany({
+		where: { archivedAt: null, isActive: true },
+		include: { category: true },
+	});
+	const sanitized = products.map((product) => {
+		const isCategoryVisible =
+			product.category &&
+			product.category.isActive &&
+			!product.category.archivedAt;
+		return {
+			...product,
+			category: isCategoryVisible ? product.category : null,
+		};
+	});
+	return NextResponse.json(sanitized);
 }
 
 export async function POST(request: Request) {
-  const session = await requireAdmin();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+	const session = await requireAdmin();
+	if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await request.json();
-  const product = await prisma.product.create({
-    data: {
-      name: body.name,
-      slug: slugify(body.name),
-      price: Number(body.price),
-      description: body.description,
-      material: body.material,
-      images: body.images ?? [],
-      featured: Boolean(body.featured),
-      stock: Number(body.stock ?? 0),
-      categoryId: body.categoryId,
-    },
-  });
+	const body = await request.json();
+	const product = await prisma.product.create({
+		data: {
+			name: body.name,
+			slug: slugify(body.name),
+			price: Number(body.price),
+			description: body.description,
+			material: body.material,
+			images: body.images ?? [],
+			stock: Number(body.stock ?? 0),
+			isActive: body.isActive ?? true,
+			categoryId: body.categoryId,
+		},
+	});
 
-  return NextResponse.json(product, { status: 201 });
+	await logAudit({
+		actorId: session.user.id,
+		action: "CREATE",
+		entity: "PRODUCT",
+		entityId: product.id,
+		metadata: { name: product.name, price: product.price, stock: product.stock },
+		request,
+	});
+
+	return NextResponse.json(product, { status: 201 });
 }
